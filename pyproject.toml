@@ -1,0 +1,18 @@
+[project]
+name = "kaizo-discord-bot"
+version = "1.0.0"
+description = "Kaizo Discord Bot - Advanced Modular Discord Bot & Dashboard"
+authors = [{ name = "pheonix14" }]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "discord-py>=2.3.0",
+    "flask>=2.3.0",
+    "supabase>=2.3.0",
+    "python-dotenv>=1.0.0",
+    "jinja2>=3.1.0",
+    "uvicorn>=0.22.0",
+    "PyNaCl>=1.5.0",
+    "yt-dlp>=2023.03.04"
+]

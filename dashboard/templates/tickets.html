@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block page_title %}TICKET_SYSTEM{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="glow-panel p-6 text-center">
+            <div class="hud-label">OPEN</div>
+            <div class="stat-value" style="font-size: 1.5rem;">24</div>
+        </div>
+        <div class="glow-panel p-6 text-center">
+            <div class="hud-label">IN_PROGRESS</div>
+            <div class="stat-value" style="font-size: 1.5rem; color: #fbbf24;">12</div>
+        </div>
+        <div class="glow-panel p-6 text-center">
+            <div class="hud-label">CLOSED</div>
+            <div class="stat-value" style="font-size: 1.5rem; color: #10b981;">842</div>
+        </div>
+        <div class="glow-panel p-6 text-center">
+            <div class="hud-label">AVG_RESPONSE</div>
+            <div class="stat-value" style="font-size: 1.5rem; color: #6366f1;">14m</div>
+        </div>
+    </div>
+
+    <div class="glow-panel p-8">
+        <div class="hud-label">Active Support Queue</div>
+        <div class="space-y-4">
+            {% for i in range(1, 4) %}
+            <div class="p-6 bg-white/5 border border-white/5 hover:border-[#6366f1]/30 transition-all flex justify-between items-center group">
+                <div class="flex items-center gap-6">
+                    <div class="w-12 h-12 bg-[#6366f1]/10 rounded flex items-center justify-center text-[#6366f1]">
+                        <i class="fas fa-ticket-alt"></i>
+                    </div>
+                    <div>
+                        <h4 style="font-size: 14px; font-weight: 700;">TK_00{{ i }}: "ACCESS_DENIED_ERROR"</h4>
+                        <p style="font-family: monospace; font-size: 10px; color: #666;">SUBMITTED_BY: USR_{{ i * 123 }} | 12m ago</p>
+                    </div>
+                </div>
+                <div class="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button class="px-4 py-2 border border-[#6366f1]/30 text-[#6366f1] text-[10px] font-bold">CLAIM</button>
+                    <button class="px-4 py-2 border border-red-500/30 text-red-500 text-[10px] font-bold">CLOSE</button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

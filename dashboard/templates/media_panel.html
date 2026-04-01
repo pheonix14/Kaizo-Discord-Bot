@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block page_title %}MEDIA_INFRASTRUCTURE{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="glow-panel p-8">
+        <div class="hud-label">Audio Stream Controller</div>
+        <div class="flex items-center gap-12 p-8 bg-black/40 rounded-xl border border-white/5">
+            <div class="w-32 h-32 bg-gradient-to-br from-[#6366f1] to-[#d946ef] rounded-lg flex items-center justify-center animate-pulse">
+                <i class="fas fa-music text-4xl text-black"></i>
+            </div>
+            <div class="flex-1 space-y-4">
+                <div>
+                    <h2 style="font-size: 24px; font-weight: 800; letter-spacing: 2px;">NEURAL_DREAM.WAV</h2>
+                    <p style="font-family: monospace; font-size: 12px; color: #6366f1;">BITRATE: 320KBPS | STATUS: STREAMING</p>
+                </div>
+                <div class="flex gap-6">
+                    <button style="background: none; border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.8rem 1.5rem; font-size: 10px; font-weight: 800;">PREVIOUS</button>
+                    <button style="background: white; color: black; border: none; padding: 0.8rem 2rem; font-size: 10px; font-weight: 800;">PAUSE</button>
+                    <button style="background: none; border: 1px solid rgba(255,255,255,0.1); color: white; padding: 0.8rem 1.5rem; font-size: 10px; font-weight: 800;">NEXT</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div class="glow-panel p-8">
+            <div class="hud-label">Audio Quality Protocols</div>
+            <div class="space-y-4">
+                <div class="flex justify-between items-center text-[11px] font-mono border-b border-white/5 pb-2">
+                    <span>Lossless Compression</span>
+                    <span style="color: #10b981;">ENABLED</span>
+                </div>
+                <div class="flex justify-between items-center text-[11px] font-mono border-b border-white/5 pb-2">
+                    <span>Multi-Node Sync</span>
+                    <span style="color: #10b981;">ACTIVE</span>
+                </div>
+                <div class="flex justify-between items-center text-[11px] font-mono border-b border-white/5 pb-2">
+                    <span>Dynamic Equalization</span>
+                    <span style="color: #666;">BYPASS</span>
+                </div>
+            </div>
+        </div>
+        <div class="glow-panel p-8">
+            <div class="hud-label">Voice Channel Distribution</div>
+            <div id="voiceNodes" class="space-y-3">
+                <div class="p-3 bg-white/5 rounded text-[10px] font-mono flex justify-between">
+                    <span>VC_ALPHA_LOUNGE</span>
+                    <span style="color: #6366f1;">4 USERS</span>
+                </div>
+                <div class="p-3 bg-white/5 rounded text-[10px] font-mono flex justify-between">
+                    <span>VC_GAMING_HUB</span>
+                    <span style="color: #6366f1;">12 USERS</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

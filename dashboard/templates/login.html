@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaizo - Admin Login</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;800&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body {
+            background-color: #0d0e12; color: #ffffff;
+            display: flex; justify-content: center; align-items: center;
+            height: 100vh; overflow: hidden; perspective: 1000px;
+        }
+
+        .parallax-bg {
+            position: fixed; top: -50px; left: -50px; width: calc(100vw + 100px); height: calc(100vh + 100px);
+            background: radial-gradient(circle at 50% 50%, #1a1c23 0%, #0d0e12 100%);
+            z-index: -1; transition: transform 0.1s ease-out;
+        }
+
+        .orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.5; animation: float 10s infinite alternate; }
+        .orb-1 { width: 400px; height: 400px; background: #ef4444; top: 10%; left: 20%; }
+        .orb-2 { width: 300px; height: 300px; background: #6366f1; bottom: 10%; right: 20%; animation-delay: -5s; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .login-box {
+            background: rgba(20, 22, 28, 0.6); backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 16px;
+            padding: 3rem; box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            text-align: center; width: 400px;
+            transform: translateZ(30px); transition: transform 0.3s;
+        }
+
+        .login-box:hover { transform: translateZ(40px) scale(1.02); border-color: rgba(99, 102, 241, 0.5); }
+
+        h1 { font-weight: 800; font-size: 2rem; margin-bottom: 2rem;
+             background: linear-gradient(90deg, #6366f1, #ef4444);
+             -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        input {
+            width: 100%; padding: 1rem; margin-bottom: 1rem; background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 8px; outline: none;
+            transition: border 0.3s;
+        }
+        input:focus { border: 1px solid #6366f1; }
+
+        button {
+            width: 100%; padding: 1rem; background: linear-gradient(45deg, #6366f1, #ef4444);
+            border: none; color: white; font-weight: 800; border-radius: 8px; cursor: pointer;
+            transition: opacity 0.3s, transform 0.2s; margin-top: 1rem;
+        }
+        button:hover { opacity: 0.9; transform: translateY(-2px); }
+
+        .error { color: #ef4444; margin-bottom: 1rem; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <div class="parallax-bg" id="parallaxBg">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+    </div>
+
+    <div class="login-box">
+        <a href="http://localhost:3000" style="text-decoration: none;">
+            <h1>Kaizo</h1>
+        </a>
+        {% if error %}<div class="error">{{ error }}</div>{% endif %}
+        <form method="POST" action="/kaizer-gate">
+            <input type="text" name="username" placeholder="Username" required autocomplete="off">
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit">AUTHORIZE WITH KEYCODE</button>
+        </form>
+        
+        <div style="margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.5rem;">
+            <a href="{{ discord_login_url }}" style="display: block; width: 100%; padding: 1rem; background: #5865F2; color: white; text-decoration: none; border-radius: 8px; font-weight: 800; transition: opacity 0.3s, transform 0.2s;">
+                LOGIN WITH DISCORD
+            </a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('mousemove', (e) => {
+            const xAxis = (window.innerWidth / 2 - e.pageX) / 50;
+            const yAxis = (window.innerHeight / 2 - e.pageY) / 50;
+            document.getElementById('parallaxBg').style.transform = `translate(${xAxis}px, ${yAxis}px)`;
+            document.querySelector('.login-box').style.transform = `translateZ(30px) rotateY(${xAxis/2}deg) rotateX(${-yAxis/2}deg)`;
+        });
+    </script>
+</body>
+</html>

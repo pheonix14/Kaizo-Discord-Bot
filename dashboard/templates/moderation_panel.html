@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block page_title %}MODERATION_MATRIX{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="glow-panel p-8">
+            <div class="hud-label">Automated Protection Settings</div>
+            <div class="space-y-6">
+                <div class="flex justify-between items-center p-4 bg-white/5 rounded">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700;">Anti-Raid Shield</div>
+                        <div style="font-size: 10px; color: #666;">PREVENTS RAPID MASS JOINING</div>
+                    </div>
+                    <div style="color: #10b981; font-weight: 800; font-size: 10px;">ACTIVE</div>
+                </div>
+                <div class="flex justify-between items-center p-4 bg-white/5 rounded">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700;">Invite Blocker</div>
+                        <div style="font-size: 10px; color: #666;">BLOCKS EXTERNAL LINKS</div>
+                    </div>
+                    <div style="color: #ef4444; font-weight: 800; font-size: 10px;">OFFLINE</div>
+                </div>
+                <div class="flex justify-between items-center p-4 bg-white/5 rounded">
+                    <div>
+                        <div style="font-size: 13px; font-weight: 700;">Word Filter</div>
+                        <div style="font-size: 10px; color: #666;">AI-BASED CONTENT SCANNING</div>
+                    </div>
+                    <div style="color: #10b981; font-weight: 800; font-size: 10px;">ACTIVE</div>
+                </div>
+            </div>
+            <button class="btn-action" style="margin-top: 2rem;">Update Security Protocols</button>
+        </div>
+
+        <div class="glow-panel p-8">
+            <div class="hud-label">Security Incident Feed</div>
+            <div class="terminal-output" style="height: 350px;">
+                [01:42:04] SHIELD: Mass join detected in #general. Lockdown initiated.<br>
+                [01:42:05] SHIELD: Blocked 12 suspicious accounts.<br>
+                [01:42:10] SYSTEM: Normal operations resumed.<br>
+                [01:45:22] FILTER: Blocked blacklisted link from USR_8291.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
