@@ -14,3 +14,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-02] feat(web): add Flask app initialization
 - [2026-04-02] refactor(zero-emoji): refactor ASCII status indicators
 - [2026-04-02] perf(server-builder): optimize channel structure generator
+- [2026-04-02] fix(ui): align settings forms
