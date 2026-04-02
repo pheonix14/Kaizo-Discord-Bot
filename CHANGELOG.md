@@ -17,3 +17,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-02] fix(ui): align settings forms
 - [2026-04-02] refactor(db): streamline transaction helper
 - [2026-04-02] feat(config): implement env loader
+- [2026-04-02] feat(tickets): enhance transcript exporter
