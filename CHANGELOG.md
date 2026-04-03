@@ -28,3 +28,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-03] fix(db): fix Supabase connection pool
 - [2026-04-03] feat(giveaways): update scheduler
 - [2026-04-03] feat(music): implement filters
+- [2026-04-03] style(stats): polish server stats voice channels
