@@ -26,3 +26,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-03] refactor(leveling): refactor rank calculation
 - [2026-04-03] feat(tickets): update ticket creation modal
 - [2026-04-03] fix(db): fix Supabase connection pool
+- [2026-04-03] feat(giveaways): update scheduler
