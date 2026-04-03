@@ -19,3 +19,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-02] feat(config): implement env loader
 - [2026-04-02] feat(tickets): enhance transcript exporter
 - [2026-04-02] feat(developer): implement guild leave utility
+- [2026-04-03] fix(tickets): align transcript exporter
