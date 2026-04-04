@@ -35,3 +35,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-04] feat(config): harden default fallbacks
 - [2026-04-04] refactor(perf): refactor query index optimization
 - [2026-04-04] feat(server-builder): add community preset
+- [2026-04-04] perf(music): tune filters
