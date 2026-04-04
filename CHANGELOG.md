@@ -29,3 +29,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-03] feat(giveaways): update scheduler
 - [2026-04-03] feat(music): implement filters
 - [2026-04-03] style(stats): polish server stats voice channels
+- [2026-04-04] feat(temp-vc): add room limit controls
