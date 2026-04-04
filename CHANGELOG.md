@@ -32,3 +32,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-04] feat(temp-vc): add room limit controls
 - [2026-04-04] refactor(web): streamline session management
 - [2026-04-04] feat(help): enhance interactive pagination view
+- [2026-04-04] feat(config): harden default fallbacks
