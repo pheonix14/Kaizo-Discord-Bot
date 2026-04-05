@@ -41,3 +41,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-04] docs(docs): harden commands guide
 - [2026-04-05] feat(developer): harden maintenance mode toggle
 - [2026-04-05] fix(fun): align coinflip randomness
+- [2026-04-05] perf(moderation): tune warn tracker
