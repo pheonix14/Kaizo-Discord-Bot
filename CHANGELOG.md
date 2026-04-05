@@ -46,3 +46,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-05] feat(fun): enhance ascii art cards
 - [2026-04-05] feat(leveling): implement rank calculation
 - [2026-04-05] feat(config): update runtime options
+- [2026-04-05] feat(music): add PyNaCl voice socket
