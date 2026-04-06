@@ -51,3 +51,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-05] feat(tickets): harden close button
 - [2026-04-06] feat(temp-vc): harden owner room lock
 - [2026-04-06] refactor(automod): refactor caps limit
+- [2026-04-06] fix(server-builder): align gaming preset
