@@ -61,3 +61,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-06] feat(refactor): harden lint cleanup
 - [2026-04-07] feat(developer): add telemetry ping
 - [2026-04-07] refactor(temp-vc): streamline owner room lock
+- [2026-04-07] refactor(utility): refactor avatar lookup
