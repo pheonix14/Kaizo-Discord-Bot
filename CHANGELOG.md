@@ -64,3 +64,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-07] refactor(utility): refactor avatar lookup
 - [2026-04-07] feat(engine): harden event loop dispatcher
 - [2026-04-07] feat(security): harden admin permission guard
+- [2026-04-07] refactor(perf): refactor asyncio task pooling
