@@ -67,3 +67,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-07] refactor(perf): refactor asyncio task pooling
 - [2026-04-07] refactor(security): refactor mass ban protection
 - [2026-04-07] perf(moderation): tune slash ban command
+- [2026-04-07] fix(zero-emoji): align embed badge formatting
