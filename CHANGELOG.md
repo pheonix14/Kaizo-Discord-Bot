@@ -75,3 +75,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-08] perf(perf): optimize query index optimization
 - [2026-04-08] feat(developer): update telemetry ping
 - [2026-04-08] feat(engine): add reconnect backoff
+- [2026-04-08] refactor(refactor): refactor error handler centralization
