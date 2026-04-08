@@ -69,3 +69,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-07] perf(moderation): tune slash ban command
 - [2026-04-07] fix(zero-emoji): align embed badge formatting
 - [2026-04-07] perf(utility): optimize avatar lookup
+- [2026-04-08] feat(security): harden mass channel delete shield
