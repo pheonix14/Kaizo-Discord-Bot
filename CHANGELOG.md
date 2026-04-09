@@ -79,3 +79,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-08] feat(config): enhance host port bindings
 - [2026-04-08] feat(db): add transaction helper
 - [2026-04-08] style(db): polish query builder
+- [2026-04-09] feat(automod): harden mention mass limiter
