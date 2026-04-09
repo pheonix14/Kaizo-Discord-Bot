@@ -86,3 +86,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-09] refactor(docs): refactor README setup instructions
 - [2026-04-09] feat(ui): harden giveaway clocks
 - [2026-04-09] style(stats): polish active voice count
+- [2026-04-09] feat(security): enhance anti-nuke lock
