@@ -81,3 +81,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-08] style(db): polish query builder
 - [2026-04-09] feat(automod): harden mention mass limiter
 - [2026-04-09] perf(fun): optimize dice simulator
+- [2026-04-09] refactor(utility): streamline role info
