@@ -97,3 +97,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-10] style(tickets): polish channel permissions
 - [2026-04-10] refactor(zero-emoji): streamline clean logging output
 - [2026-04-10] perf(server-builder): tune community preset
+- [2026-04-10] feat(tickets): add ticket creation modal
