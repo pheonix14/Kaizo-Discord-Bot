@@ -93,3 +93,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-10] fix(db): align Supabase connection pool
 - [2026-04-10] feat(server-builder): add channel structure generator
 - [2026-04-10] feat(leveling): add role rewards
+- [2026-04-10] refactor(server-builder): refactor community preset
