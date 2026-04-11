@@ -99,3 +99,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-10] perf(server-builder): tune community preset
 - [2026-04-10] feat(tickets): add ticket creation modal
 - [2026-04-10] fix(ui): fix giveaway clocks
+- [2026-04-11] fix(reaction-roles): fix menu customizer
