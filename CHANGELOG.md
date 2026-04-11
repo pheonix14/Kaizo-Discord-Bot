@@ -103,3 +103,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-11] feat(zero-emoji): implement strict zero-emoji architecture
 - [2026-04-11] fix(config): fix credentials validation
 - [2026-04-11] feat(refactor): add error handler centralization
+- [2026-04-11] feat(tickets): enhance transcript exporter
