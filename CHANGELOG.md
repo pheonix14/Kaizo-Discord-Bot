@@ -106,3 +106,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-11] feat(tickets): enhance transcript exporter
 - [2026-04-11] perf(stats): optimize active voice count
 - [2026-04-11] refactor(moderation): refactor warn tracker
+- [2026-04-11] feat(server-builder): add community preset
