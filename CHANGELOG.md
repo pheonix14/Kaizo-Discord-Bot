@@ -115,3 +115,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-12] perf(config): optimize runtime options
 - [2026-04-12] fix(engine): fix reconnect backoff
 - [2026-04-12] perf(refactor): tune typing annotations
+- [2026-04-12] fix(reaction-roles): align menu customizer
