@@ -110,3 +110,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-11] style(refactor): polish cog modularization
 - [2026-04-11] feat(config): harden host port bindings
 - [2026-04-12] feat(engine): add gateway connection
+- [2026-04-12] fix(moderation): fix warn tracker
