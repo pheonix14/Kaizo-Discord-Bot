@@ -112,3 +112,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-12] feat(engine): add gateway connection
 - [2026-04-12] fix(moderation): fix warn tracker
 - [2026-04-12] feat(welcome): enhance auto role assignment
+- [2026-04-12] perf(config): optimize runtime options
