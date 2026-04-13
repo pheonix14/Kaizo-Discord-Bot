@@ -120,3 +120,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-12] feat(tickets): implement transcript exporter
 - [2026-04-12] style(zero-emoji): polish strict zero-emoji architecture
 - [2026-04-13] feat(zero-emoji): update strict zero-emoji architecture
+- [2026-04-13] refactor(config): streamline runtime options
