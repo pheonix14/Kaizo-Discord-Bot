@@ -123,3 +123,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-13] refactor(config): streamline runtime options
 - [2026-04-13] style(utility): polish serverinfo card
 - [2026-04-13] style(config): polish env loader
+- [2026-04-13] feat(moderation): add purge messages
