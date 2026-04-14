@@ -134,3 +134,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-14] refactor(server-builder): refactor community preset
 - [2026-04-14] feat(automod): harden action triggers
 - [2026-04-14] perf(economy): tune coin minting
+- [2026-04-14] feat(perf): add query index optimization
