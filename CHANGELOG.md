@@ -138,3 +138,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-14] refactor(stats): streamline server stats voice channels
 - [2026-04-14] style(db): polish query builder
 - [2026-04-14] refactor(utility): refactor serverinfo card
+- [2026-04-14] feat(giveaways): add reaction entrant collector
