@@ -146,3 +146,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-15] feat(economy): harden wallet balance
 - [2026-04-15] refactor(automod): refactor invite filter
 - [2026-04-15] fix(security): align admin permission guard
+- [2026-04-15] refactor(automod): refactor spam rate limiter
