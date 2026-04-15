@@ -144,3 +144,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-15] feat(developer): harden guild leave utility
 - [2026-04-15] feat(engine): harden heartbeat listener
 - [2026-04-15] feat(economy): harden wallet balance
+- [2026-04-15] refactor(automod): refactor invite filter
