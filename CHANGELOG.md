@@ -149,3 +149,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-15] refactor(automod): refactor spam rate limiter
 - [2026-04-15] feat(developer): enhance eval command
 - [2026-04-15] feat(tickets): harden support role ping
+- [2026-04-16] perf(utility): tune userinfo embed
