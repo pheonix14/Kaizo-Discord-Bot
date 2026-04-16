@@ -152,3 +152,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-16] perf(utility): tune userinfo embed
 - [2026-04-16] feat(config): add runtime options
 - [2026-04-16] feat(music): implement yt-dlp extractor
+- [2026-04-16] perf(leveling): optimize level up notifications
