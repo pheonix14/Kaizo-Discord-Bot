@@ -151,3 +151,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-15] feat(tickets): harden support role ping
 - [2026-04-16] perf(utility): tune userinfo embed
 - [2026-04-16] feat(config): add runtime options
+- [2026-04-16] feat(music): implement yt-dlp extractor
