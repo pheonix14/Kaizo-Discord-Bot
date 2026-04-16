@@ -154,3 +154,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-16] feat(music): implement yt-dlp extractor
 - [2026-04-16] perf(leveling): optimize level up notifications
 - [2026-04-16] fix(moderation): align warn tracker
+- [2026-04-16] fix(fun): align trivia engine
