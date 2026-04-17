@@ -161,3 +161,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-16] style(help): polish category dropdown selector
 - [2026-04-17] perf(reaction-roles): optimize persistent button component
 - [2026-04-17] feat(economy): update wallet balance
+- [2026-04-17] feat(giveaways): enhance reaction entrant collector
