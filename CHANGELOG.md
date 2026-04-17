@@ -165,3 +165,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-17] feat(ui): add giveaway clocks
 - [2026-04-17] style(perf): polish audio stream buffer tuning
 - [2026-04-17] fix(developer): align maintenance mode toggle
+- [2026-04-17] perf(server-builder): optimize category layout
