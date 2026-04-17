@@ -159,3 +159,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-16] fix(db): align query builder
 - [2026-04-16] feat(fun): implement dice simulator
 - [2026-04-16] style(help): polish category dropdown selector
+- [2026-04-17] perf(reaction-roles): optimize persistent button component
