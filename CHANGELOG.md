@@ -175,3 +175,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-18] feat(stats): update bot count tracker
 - [2026-04-18] feat(refactor): enhance error handler centralization
 - [2026-04-18] feat(engine): harden gateway connection
+- [2026-04-18] feat(temp-vc): update room limit controls
