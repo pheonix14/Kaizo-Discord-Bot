@@ -189,3 +189,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-19] feat(reaction-roles): implement role assignment toggle
 - [2026-04-19] fix(giveaways): fix UTC/Local synced countdown
 - [2026-04-19] feat(ui): update settings forms
+- [2026-04-19] feat(leveling): harden activity XP formula
