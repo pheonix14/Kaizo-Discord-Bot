@@ -186,3 +186,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-19] refactor(reaction-roles): streamline persistent button component
 - [2026-04-19] refactor(temp-vc): streamline auto channel deletion on empty
 - [2026-04-19] feat(music): implement filters
+- [2026-04-19] feat(reaction-roles): implement role assignment toggle
