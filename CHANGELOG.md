@@ -183,3 +183,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-19] refactor(moderation): streamline timeout duration parser
 - [2026-04-19] feat(config): add host port bindings
 - [2026-04-19] feat(reaction-roles): update exclusive role groups
+- [2026-04-19] refactor(reaction-roles): streamline persistent button component
