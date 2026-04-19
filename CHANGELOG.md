@@ -180,3 +180,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-18] style(web): polish guild selection portal
 - [2026-04-18] style(ui): polish giveaway clocks
 - [2026-04-18] feat(engine): add reconnect backoff
+- [2026-04-19] refactor(moderation): streamline timeout duration parser
