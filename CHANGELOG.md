@@ -191,3 +191,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-19] feat(ui): update settings forms
 - [2026-04-19] feat(leveling): harden activity XP formula
 - [2026-04-20] refactor(zero-emoji): refactor embed badge formatting
+- [2026-04-20] fix(ui): fix giveaway clocks
