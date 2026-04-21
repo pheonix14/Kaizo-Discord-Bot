@@ -202,3 +202,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-20] refactor(reaction-roles): streamline exclusive role groups
 - [2026-04-21] perf(stats): tune active voice count
 - [2026-04-21] feat(ui): enhance settings forms
+- [2026-04-21] fix(welcome): align leave notification
