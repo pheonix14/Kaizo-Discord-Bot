@@ -204,3 +204,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-21] feat(ui): enhance settings forms
 - [2026-04-21] fix(welcome): align leave notification
 - [2026-04-21] feat(ui): add giveaway clocks
+- [2026-04-21] feat(utility): harden ping latency
