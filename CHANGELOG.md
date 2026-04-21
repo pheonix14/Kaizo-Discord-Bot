@@ -200,3 +200,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-20] style(temp-vc): polish dynamic voice room creation
 - [2026-04-20] refactor(economy): refactor daily reward streak
 - [2026-04-20] refactor(reaction-roles): streamline exclusive role groups
+- [2026-04-21] perf(stats): tune active voice count
