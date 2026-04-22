@@ -213,3 +213,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-22] fix(stats): fix member count updater
 - [2026-04-22] fix(docs): align README setup instructions
 - [2026-04-22] fix(welcome): fix leave notification
+- [2026-04-22] feat(automod): harden action triggers
