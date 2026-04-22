@@ -210,3 +210,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-21] feat(server-builder): enhance category layout
 - [2026-04-21] feat(engine): implement gateway connection
 - [2026-04-21] refactor(welcome): streamline entrance greeting embed
+- [2026-04-22] fix(stats): fix member count updater
