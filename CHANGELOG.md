@@ -217,3 +217,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-22] feat(engine): add sharding
 - [2026-04-22] perf(server-builder): optimize gaming preset
 - [2026-04-22] feat(stats): implement member count updater
+- [2026-04-22] perf(security): tune anti-nuke lock
