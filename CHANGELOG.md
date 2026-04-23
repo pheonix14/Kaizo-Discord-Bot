@@ -226,3 +226,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-23] feat(music): enhance filters
 - [2026-04-23] style(music): polish skip and pause controls
 - [2026-04-23] feat(web): enhance session management
+- [2026-04-23] feat(stats): add bot count tracker
