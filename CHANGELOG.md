@@ -228,3 +228,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-23] feat(web): enhance session management
 - [2026-04-23] feat(stats): add bot count tracker
 - [2026-04-23] refactor(server-builder): refactor role hierarchy setup
+- [2026-04-23] style(leveling): polish activity XP formula
