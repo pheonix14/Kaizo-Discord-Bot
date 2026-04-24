@@ -238,3 +238,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-24] refactor(temp-vc): streamline dynamic voice room creation
 - [2026-04-24] refactor(perf): streamline audio stream buffer tuning
 - [2026-04-24] feat(welcome): implement custom card formatting
+- [2026-04-24] fix(economy): fix p2p transfer validation
