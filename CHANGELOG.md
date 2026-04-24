@@ -230,3 +230,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-23] refactor(server-builder): refactor role hierarchy setup
 - [2026-04-23] style(leveling): polish activity XP formula
 - [2026-04-23] perf(automod): optimize caps limit
+- [2026-04-24] fix(temp-vc): align auto channel deletion on empty
