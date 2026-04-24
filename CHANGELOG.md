@@ -232,3 +232,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-23] perf(automod): optimize caps limit
 - [2026-04-24] fix(temp-vc): align auto channel deletion on empty
 - [2026-04-24] docs(docs): enhance commands guide
+- [2026-04-24] fix(reaction-roles): fix exclusive role groups
