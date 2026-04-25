@@ -242,3 +242,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-24] fix(fun): align ascii art cards
 - [2026-04-25] refactor(fun): streamline coinflip randomness
 - [2026-04-25] feat(welcome): enhance custom card formatting
+- [2026-04-25] perf(reaction-roles): tune persistent button component
