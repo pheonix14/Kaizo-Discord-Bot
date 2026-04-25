@@ -248,3 +248,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-25] refactor(automod): streamline bad word filter
 - [2026-04-25] fix(engine): fix heartbeat listener
 - [2026-04-25] feat(help): harden interactive pagination view
+- [2026-04-25] feat(db): harden transaction helper
