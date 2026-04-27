@@ -264,3 +264,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-27] feat(welcome): harden entrance greeting embed
 - [2026-04-27] feat(help): enhance slash command sync
 - [2026-04-27] refactor(docs): refactor MIT open-source license
+- [2026-04-27] refactor(moderation): streamline purge messages
