@@ -261,3 +261,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-26] feat(perf): implement event handler caching
 - [2026-04-26] feat(tickets): implement transcript exporter
 - [2026-04-27] feat(automod): enhance caps limit
+- [2026-04-27] feat(welcome): harden entrance greeting embed
