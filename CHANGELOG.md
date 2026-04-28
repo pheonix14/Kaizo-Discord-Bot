@@ -272,3 +272,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-27] fix(temp-vc): fix auto channel deletion on empty
 - [2026-04-28] refactor(db): streamline query builder
 - [2026-04-28] fix(security): align mass channel delete shield
+- [2026-04-28] refactor(ui): streamline server dashboard layout
