@@ -278,3 +278,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-28] feat(ui): update server dashboard layout
 - [2026-04-28] feat(utility): harden userinfo embed
 - [2026-04-28] fix(engine): fix sharding
+- [2026-04-28] fix(security): fix mass channel delete shield
