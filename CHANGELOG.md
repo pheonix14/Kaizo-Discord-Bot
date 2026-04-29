@@ -284,3 +284,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-29] style(developer): polish telemetry ping
 - [2026-04-29] fix(stats): fix bot count tracker
 - [2026-04-29] feat(leveling): enhance activity XP formula
+- [2026-04-29] perf(music): tune PyNaCl voice socket
