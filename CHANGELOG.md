@@ -288,3 +288,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-29] perf(perf): tune audio stream buffer tuning
 - [2026-04-29] feat(leveling): implement leaderboard query
 - [2026-04-29] perf(leveling): optimize leaderboard query
+- [2026-04-29] feat(tickets): update support role ping
