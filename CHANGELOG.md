@@ -280,3 +280,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-28] fix(engine): fix sharding
 - [2026-04-28] fix(security): fix mass channel delete shield
 - [2026-04-28] perf(web): tune Discord OAuth2 callback
+- [2026-04-29] perf(reaction-roles): optimize exclusive role groups
