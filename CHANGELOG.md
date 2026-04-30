@@ -293,3 +293,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-30] refactor(docs): refactor credits to pheonix14
 - [2026-04-30] style(engine): polish gateway connection
 - [2026-04-30] feat(db): enhance transaction helper
+- [2026-04-30] style(welcome): polish leave notification
