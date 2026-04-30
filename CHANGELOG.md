@@ -291,3 +291,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-29] feat(tickets): update support role ping
 - [2026-04-29] refactor(leveling): refactor role rewards
 - [2026-04-30] refactor(docs): refactor credits to pheonix14
+- [2026-04-30] style(engine): polish gateway connection
