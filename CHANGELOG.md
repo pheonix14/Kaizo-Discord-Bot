@@ -296,3 +296,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-30] style(welcome): polish leave notification
 - [2026-04-30] perf(docs): tune README setup instructions
 - [2026-04-30] feat(stats): implement server stats voice channels
+- [2026-04-30] feat(economy): enhance p2p transfer validation
