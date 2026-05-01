@@ -300,3 +300,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-04-30] docs(docs): enhance MIT open-source license
 - [2026-04-30] refactor(ui): streamline giveaway clocks
 - [2026-04-30] style(welcome): polish custom card formatting
+- [2026-05-01] fix(reaction-roles): align exclusive role groups
