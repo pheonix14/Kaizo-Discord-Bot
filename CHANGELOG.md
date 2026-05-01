@@ -303,3 +303,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-01] fix(reaction-roles): align exclusive role groups
 - [2026-05-01] fix(giveaways): align reroll command
 - [2026-05-01] refactor(music): refactor audio queue buffer
+- [2026-05-01] feat(server-builder): add category layout
