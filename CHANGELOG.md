@@ -317,3 +317,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-02] fix(economy): align daily reward streak
 - [2026-05-02] perf(web): tune Flask app initialization
 - [2026-05-02] refactor(engine): streamline reconnect backoff
+- [2026-05-02] perf(welcome): tune auto role assignment
