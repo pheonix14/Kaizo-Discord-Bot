@@ -322,3 +322,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-02] perf(music): tune yt-dlp extractor
 - [2026-05-03] fix(db): fix transaction helper
 - [2026-05-03] refactor(db): streamline Supabase connection pool
+- [2026-05-03] perf(automod): optimize bad word filter
