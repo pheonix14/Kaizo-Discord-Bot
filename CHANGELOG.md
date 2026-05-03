@@ -325,3 +325,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-03] perf(automod): optimize bad word filter
 - [2026-05-03] feat(economy): add daily reward streak
 - [2026-05-03] style(security): polish mass ban protection
+- [2026-05-03] refactor(developer): streamline guild leave utility
