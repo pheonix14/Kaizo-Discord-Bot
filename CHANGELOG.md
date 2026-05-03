@@ -328,3 +328,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-03] refactor(developer): streamline guild leave utility
 - [2026-05-03] style(server-builder): polish community preset
 - [2026-05-03] perf(stats): tune bot count tracker
+- [2026-05-03] fix(help): fix command argument specs
