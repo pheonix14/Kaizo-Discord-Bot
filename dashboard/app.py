@@ -4,11 +4,12 @@ import json
 import asyncio
 import aiohttp
 from quart import Quart, request, jsonify, render_template, session, redirect, url_for
-from config import Config
-
-# Add parent directory to path to import bot logic
+# Ensure we can import from parent directory (config.py, bot.py)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from config import Config
 import bot as bot_logic
+
 
 app = Quart(__name__)
 app.secret_key = os.getenv("DASHBOARD_SECRET_KEY", "KAIZER_X_SECRET_DASHBOARD_KEY")
@@ -76,15 +77,21 @@ async def start_bot_instance(bot_id):
         # Stop existing instance if running
         await stop_bot_instance(bot_id)
 
-    print(f"[ DASHBOARD ] Launching Bot Instance: {bot_id} (In-Process)")
+    print(f"[PROCESS] Launching Bot Instance: {bot_id} (In-Process)...")
     
     # Create the bot object using our refactored bot_logic
-    bot_obj = bot_logic.create_bot(config["token"], bot_id)
-    
-    # Start it as a background task
-    task = asyncio.create_task(bot_obj.start(config["token"]))
-    running_bots[bot_id] = {"bot": bot_obj, "task": task}
-    return True
+    try:
+        bot_obj = bot_logic.create_bot(config["token"], bot_id)
+        
+        # Start it as a background task
+        task = asyncio.create_task(bot_obj.start(config["token"]))
+        running_bots[bot_id] = {"bot": bot_obj, "task": task}
+        print(f"[SUCCESS] Bot Instance {bot_id} started successfully.")
+        return True
+    except Exception as e:
+        print(f"[ERROR] Failed to launch bot {bot_id}: {e}")
+        return False
+
 
 async def stop_bot_instance(bot_id):
     if bot_id in running_bots:
@@ -100,11 +107,16 @@ async def stop_bot_instance(bot_id):
 
 @app.before_serving
 async def startup():
-    print("[ DASHBOARD ] Initializing Multi-Instance Controller...")
+    print("[PROCESS] Initializing Multi-Instance Controller...")
     # Auto-start all configured bots
-    configs = load_bots_config()
-    for bot_id in configs:
-        await start_bot_instance(bot_id)
+    try:
+        configs = load_bots_config()
+        print(f"[SUCCESS] Loaded {len(configs)} bot configurations.")
+        for bot_id in configs:
+            await start_bot_instance(bot_id)
+    except Exception as e:
+        print(f"[ERROR] Startup bot initialization failed: {e}")
+
 
 @app.route('/')
 async def index():
@@ -112,18 +124,47 @@ async def index():
         return redirect(url_for('login'))
     return await render_template('index.html')
 
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/kaizer-gate', methods=['GET', 'POST'])
 async def login():
     error = None
     if request.method == 'POST':
         form = await request.form
-        # Hardcoded fallback credentials as requested for quick access
         if form.get('username') == 'kali' and form.get('password') == 'kali':
             session['admin_logged_in'] = True
+            session['role'] = 'SUPER_ADMIN'
             return redirect(url_for('index'))
         else:
-            error = "Invalid Credentials. Access denied."
-    return await render_template('login.html', error=error)
+            error = "ACCESS DENIED: INVALID KEYCODE."
+    return await render_template('auth.html', error=error)
+
+@app.route('/server-portal')
+async def server_portal():
+    """
+    Portal for normal server managers to login via Discord.
+    """
+    if not session.get('user_id'):
+        # For now, redirect to the same gate or a discord login if implemented
+        return redirect(url_for('login'))
+    return await render_template('server_portal.html')
+
+# --- Command Category Pages ---
+
+@app.route('/manage/moderation')
+async def manage_moderation():
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    return await render_template('moderation_panel.html')
+
+@app.route('/manage/economy')
+async def manage_economy():
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    return await render_template('economy_panel.html')
+
+@app.route('/manage/media')
+async def manage_media():
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    return await render_template('media_panel.html')
+
+
 
 @app.route('/callback')
 async def callback():

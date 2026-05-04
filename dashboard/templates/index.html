@@ -1,275 +1,106 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KAIZER X - Admin Dashboard</title>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;500;800&display=swap');
+{% extends "base.html" %}
+
+{% block page_title %}Core Monitor{% endblock %}
+
+{% block content %}
+<div class="container" style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem;">
+    <!-- Controls Panel -->
+    <div class="glass-card">
+        <h2>Deploy Instance</h2>
+        <p class="subtitle">Launch a new bot node.</p>
         
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            background-color: #0d0e12;
-            color: #ffffff;
-            overflow-x: hidden;
-            perspective: 1000px; /* For 3D Parallax */
-        }
-
-        /* 3D Parallax Background Layer */
-        .parallax-bg {
-            position: fixed;
-            top: -50px;
-            left: -50px;
-            width: calc(100vw + 100px);
-            height: calc(100vh + 100px);
-            background: radial-gradient(circle at 50% 50%, #1a1c23 0%, #0d0e12 100%);
-            z-index: -1;
-            transition: transform 0.1s ease-out;
-        }
-
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.5;
-            animation: float 10s infinite alternate;
-        }
+        <input type="text" id="botId" placeholder="Unique Bot Name" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; margin-bottom: 1rem;">
+        <input type="password" id="botToken" placeholder="Discord Token" style="width: 100%; padding: 1rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; margin-bottom: 1rem;">
         
-        .orb-1 { width: 400px; height: 400px; background: #6366f1; top: 10%; left: 20%; }
-        .orb-2 { width: 300px; height: 300px; background: #8b5cf6; bottom: 10%; right: 20%; animation-delay: -5s; }
+        <button onclick="deployBot()" class="btn-primary" style="width: 100%;">DEPLOY SYSTEM</button>
 
-        @keyframes float {
-            0% { transform: translate(0, 0); }
-            100% { transform: translate(50px, 50px); }
-        }
-
-        header {
-            padding: 2rem;
-            text-align: center;
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            transform: translateZ(20px); /* 3D pop */
-        }
-
-        header h1 {
-            font-weight: 800;
-            font-size: 2.5rem;
-            letter-spacing: 2px;
-            background: linear-gradient(90deg, #6366f1, #d946ef);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 3rem auto;
-            display: grid;
-            grid-template-columns: 1fr 2fr;
-            gap: 2rem;
-            padding: 0 2rem;
-            transform-style: preserve-3d;
-        }
-
-        .glass-panel {
-            background: rgba(20, 22, 28, 0.6);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            padding: 2rem;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
-            transform: translateZ(30px);
-            transition: transform 0.3s, border-color 0.3s;
-        }
-
-        .glass-panel:hover {
-            border-color: rgba(99, 102, 241, 0.5);
-            transform: translateZ(40px) scale(1.02);
-        }
-
-        h2 { font-size: 1.5rem; margin-bottom: 1.5rem; font-weight: 500; }
-
-        input {
-            width: 100%;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid rgba(255,255,255,0.1);
-            color: white;
-            border-radius: 8px;
-            outline: none;
-            transition: border 0.3s;
-        }
-
-        input:focus { border: 1px solid #6366f1; }
-
-        button {
-            width: 100%;
-            padding: 1rem;
-            background: linear-gradient(45deg, #6366f1, #8b5cf6);
-            border: none;
-            color: white;
-            font-weight: 800;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: opacity 0.3s, transform 0.2s;
-        }
-
-        button:hover { opacity: 0.9; transform: translateY(-2px); }
-
-        .console {
-            background: #0a0a0c;
-            border-radius: 8px;
-            padding: 1rem;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 0.9rem;
-            color: #10b981;
-            height: 400px;
-            overflow-y: auto;
-            border: 1px solid rgba(255,255,255,0.05);
-            white-space: pre-wrap;
-        }
-
-        .bot-list {
-            margin-top: 1rem;
-        }
-        
-        .bot-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            background: rgba(255,255,255,0.02);
-            border-radius: 8px;
-            margin-bottom: 0.5rem;
-            border: 1px solid rgba(255,255,255,0.05);
-            cursor: pointer;
-        }
-        .bot-item.active { border-color: #10b981; }
-        
-        .status-dot {
-            width: 10px; height: 10px; border-radius: 50%;
-            background: #ef4444; display: inline-block; margin-right: 10px;
-        }
-        .status-dot.online { background: #10b981; box-shadow: 0 0 10px #10b981;}
-
-    </style>
-</head>
-<body>
-
-    <div class="parallax-bg" id="parallaxBg">
-        <div class="orb orb-1"></div>
-        <div class="orb orb-2"></div>
-    </div>
-
-    <header>
-        <h1>KAIZER X CONTROL</h1>
-        <p>Master Watchdog Node</p>
-    </header>
-
-    <div class="container">
-        <!-- Controls Panel -->
-        <div class="glass-panel" id="controlsPanel">
-            <h2><span class="status-dot online"></span>Deploy New Bot</h2>
-            <input type="text" id="botId" placeholder="Unique Bot Name (e.g. KaizerMain)">
-            <input type="password" id="botToken" placeholder="Discord Bot Token">
-            <button onclick="deployBot()">DEPLOY BOT</button>
-
-            <h2 style="margin-top: 2rem;">Active Instances</h2>
-            <div class="bot-list" id="botList">
-                <!-- Dynamically populated -->
-            </div>
-        </div>
-
-        <!-- Console Panel -->
-        <div class="glass-panel" id="consolePanel">
-            <h2>Live Console: <span id="currentConsoleTarget">None</span></h2>
-            <div class="console" id="consoleOutput">
-                Waiting for bot selection...
-            </div>
+        <h2 style="margin-top: 3rem;">Active Nodes</h2>
+        <div id="botList">
+            <!-- Dynamically populated -->
         </div>
     </div>
 
-    <script>
-        // 3D Parallax Effect Mouse Move
-        document.addEventListener('mousemove', (e) => {
-            const xAxis = (window.innerWidth / 2 - e.pageX) / 50;
-            const yAxis = (window.innerHeight / 2 - e.pageY) / 50;
-            document.getElementById('parallaxBg').style.transform = `translate(${xAxis}px, ${yAxis}px)`;
+    <!-- Console Panel -->
+    <div class="glass-card">
+        <h2>Live Matrix: <span id="currentConsoleTarget" style="color: #6366f1;">None</span></h2>
+        <p class="subtitle">Real-time bot logs and events.</p>
+        
+        <div id="consoleOutput" style="background: #000; padding: 1.5rem; border-radius: 12px; height: 500px; overflow-y: auto; font-family: monospace; color: #10b981; white-space: pre-wrap; font-size: 0.9rem; border: 1px solid rgba(255,255,255,0.05);">
+            Select a node to begin monitoring...
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentViewingBot = null;
+
+    async function fetchBots() {
+        const res = await fetch('/api/bots');
+        const data = await res.json();
+        const list = document.getElementById('botList');
+        list.innerHTML = '';
+        
+        for (const [id, info] of Object.entries(data)) {
+            const item = document.createElement('div');
+            item.style.padding = '1rem';
+            item.style.background = 'rgba(255,255,255,0.02)';
+            item.style.borderRadius = '12px';
+            item.style.marginBottom = '0.8rem';
+            item.style.border = '1px solid rgba(255,255,255,0.05)';
+            item.style.cursor = 'pointer';
+            item.style.display = 'flex';
+            item.style.justifyContent = 'space-between';
+            item.style.alignItems = 'center';
             
-            const panels = document.querySelectorAll('.glass-panel');
-            panels.forEach(panel => {
-                panel.style.transform = `translateZ(30px) rotateY(${xAxis/2}deg) rotateX(${-yAxis/2}deg)`;
-            });
+            if (currentViewingBot === id) item.style.borderColor = '#6366f1';
+
+            item.innerHTML = `
+                <div>
+                    <span style="width: 10px; height: 10px; background: ${info.running ? '#10b981' : '#ef4444'}; border-radius: 50%; display: inline-block; margin-right: 10px;"></span>
+                    <strong>${id}</strong>
+                </div>
+                <div style="font-size: 0.7rem; opacity: 0.5;">
+                    ${info.running ? 'ONLINE' : 'OFFLINE'}
+                </div>
+            `;
+            item.onclick = () => viewConsole(id);
+            list.appendChild(item);
+        }
+    }
+
+    async function deployBot() {
+        const id = document.getElementById('botId').value;
+        const token = document.getElementById('botToken').value;
+        if(!id || !token) return alert("All fields required.");
+        
+        await fetch('/api/bots/add', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({id, token})
         });
-
-        let currentViewingBot = null;
-
-        async function fetchBots() {
-            const res = await fetch('/api/bots');
-            const data = await res.json();
-            const list = document.getElementById('botList');
-            list.innerHTML = '';
-            
-            for (const [id, info] of Object.entries(data)) {
-                const item = document.createElement('div');
-                item.className = `bot-item ${currentViewingBot === id ? 'active' : ''}`;
-                item.innerHTML = `
-                    <div>
-                        <span class="status-dot ${info.running ? 'online' : ''}"></span>
-                        <strong>${id}</strong>
-                    </div>
-                    <div style="font-size: 0.8rem; opacity: 0.5;">
-                        ${info.running ? 'Running' : 'Offline'}
-                    </div>
-                `;
-                item.onclick = () => viewConsole(id);
-                list.appendChild(item);
-            }
-        }
-
-        async function deployBot() {
-            const id = document.getElementById('botId').value;
-            const token = document.getElementById('botToken').value;
-            
-            if(!id || !token) return alert("Please fill all fields.");
-
-            await fetch('/api/bots/add', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, token })
-            });
-            
-            document.getElementById('botId').value = '';
-            document.getElementById('botToken').value = '';
-            fetchBots();
-        }
-
-        function viewConsole(id) {
-            currentViewingBot = id;
-            document.getElementById('currentConsoleTarget').innerText = id;
-            fetchBots(); // refresh active state
-        }
-
-        async function updateConsole() {
-            if (!currentViewingBot) return;
-            const res = await fetch(`/api/logs/${currentViewingBot}`);
-            const data = await res.json();
-            const consoleBox = document.getElementById('consoleOutput');
-            consoleBox.innerText = data.logs;
-            consoleBox.scrollTop = consoleBox.scrollHeight;
-        }
-
-        // Loops
-        setInterval(fetchBots, 3000);
-        setInterval(updateConsole, 2000);
+        
+        document.getElementById('botId').value = '';
+        document.getElementById('botToken').value = '';
         fetchBots();
-    </script>
-</body>
-</html>
+    }
+
+    function viewConsole(id) {
+        currentViewingBot = id;
+        document.getElementById('currentConsoleTarget').innerText = id;
+        fetchBots();
+    }
+
+    async function updateConsole() {
+        if (!currentViewingBot) return;
+        const res = await fetch(`/api/logs/${currentViewingBot}`);
+        const data = await res.json();
+        const consoleBox = document.getElementById('consoleOutput');
+        consoleBox.innerText = data.logs;
+        consoleBox.scrollTop = consoleBox.scrollHeight;
+    }
+
+    setInterval(fetchBots, 3000);
+    setInterval(updateConsole, 2000);
+    fetchBots();
+</script>
+{% endblock %}

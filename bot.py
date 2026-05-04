@@ -43,27 +43,31 @@ def create_bot(token, instance_id):
     @bot.event
     async def on_ready():
         logger.info("====================================")
-        logger.info("[ STARTING KAIZER X CORE ]")
-        logger.info(f"Instance ID: {bot.instance_id}")
-        logger.info(f"Logged in as: {bot.user.name} ({bot.user.id})")
+        logger.info("[PROCESS] STARTING KAIZER X CORE")
+        logger.info(f"[PROCESS] Instance ID: {bot.instance_id}")
+        logger.info(f"[SUCCESS] Logged in as: {bot.user.name}")
         logger.info("====================================")
         
         try:
+            logger.info("[PROCESS] Initializing Databases...")
             db_setup.init_db()
+            logger.info("[SUCCESS] Databases Ready.")
         except Exception as e:
-            logger.error(f"CRITICAL: Database initialization failed: {e}")
+            logger.error(f"[ERROR] Database initialization failed: {e}")
         
         cogs_dir = os.path.join(os.path.dirname(__file__), 'cogs')
         if os.path.exists(cogs_dir):
             for filename in os.listdir(cogs_dir):
                 if filename.endswith('.py') and not filename.startswith('__'):
+                    logger.info(f"[PROCESS] Loading Module: {filename}...")
                     try:
                         bot.load_extension(f'cogs.{filename[:-3]}')
-                        logger.info(f"[+] Loaded Module: {filename}")
+                        logger.info(f"[SUCCESS] Module {filename} is now PLUG-AND-PLAY active.")
                     except Exception as e:
-                        logger.error(f"[-] Failed to load Module {filename}: {e}")
+                        logger.error(f"[ERROR] Failed to plug in {filename}: {e}. Skipping to next module.")
         else:
-            logger.warning("Cogs directory not found.")
+            logger.warning("[ERROR] Cogs directory not found. Running core only.")
+
 
     @bot.event
     async def on_error(event, *args, **kwargs):
@@ -93,10 +97,10 @@ if __name__ == "__main__":
         try:
             bot.run(token)
         except Exception as e:
-            logger.critical(f"FATAL: {e}")
-            sys.exit(1)
+            logger.error(f"Failed to start bot instance {args.id}: {e}")
     else:
-        logger.critical("CRITICAL ERROR: No Discord Token Provided.")
-        sys.exit(1)
+        logger.warning(f"No Discord Token provided for instance {args.id}. Bot is idle and waiting for token via Dashboard.")
+        # Keep the process alive if needed, or just let it exit if it's meant to be managed by the dashboard
+
 
 
