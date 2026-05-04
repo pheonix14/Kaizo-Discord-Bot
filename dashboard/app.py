@@ -120,22 +120,32 @@ async def startup():
 
 @app.route('/')
 async def index():
+    return redirect(url_for('login'))
+
+@app.route('/admin')
+async def admin():
     if not session.get('admin_logged_in'):
         return redirect(url_for('login'))
-    return await render_template('index.html')
+    return await render_template('admin.html')
 
 @app.route('/kaizer-gate', methods=['GET', 'POST'])
 async def login():
     error = None
     if request.method == 'POST':
         form = await request.form
-        if form.get('username') == 'kali' and form.get('password') == 'kali':
+        
+        expected_username = os.getenv("ADMIN_USERNAME", "admin")
+        expected_password = os.getenv("ADMIN_PASSWORD", "kaizerx_secure_pass")
+        
+        if form.get('username') == expected_username and form.get('password') == expected_password:
             session['admin_logged_in'] = True
             session['role'] = 'SUPER_ADMIN'
-            return redirect(url_for('index'))
+            return redirect(url_for('admin'))
         else:
             error = "ACCESS DENIED: INVALID KEYCODE."
-    return await render_template('auth.html', error=error)
+    
+    discord_login_url = f"https://discord.com/api/oauth2/authorize?client_id={Config.CLIENT_ID}&redirect_uri={Config.REDIRECT_URI}&response_type=code&scope=identify" if Config.CLIENT_ID else "#"
+    return await render_template('login.html', error=error, discord_login_url=discord_login_url)
 
 @app.route('/server-portal')
 async def server_portal():
@@ -164,6 +174,11 @@ async def manage_media():
     if not session.get('admin_logged_in'): return redirect(url_for('login'))
     return await render_template('media_panel.html')
 
+@app.route('/tickets')
+async def tickets():
+    if not session.get('admin_logged_in'): return redirect(url_for('login'))
+    return await render_template('tickets.html')
+
 
 
 @app.route('/callback')
@@ -181,7 +196,7 @@ async def callback():
     session['user_id'] = user_info.get('id')
     session['username'] = user_info.get('username')
     
-    return redirect(url_for('index'))
+    return redirect(url_for('admin'))
 
 @app.route('/logout')
 async def logout():

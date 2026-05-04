@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block page_title %}ECONOMY_SYSTEM_V4{% endblock %}
+
+{% block content %}
+<style>
+    .market-card {
+        background: rgba(15, 17, 23, 0.4);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 2rem;
+        border-radius: 12px;
+        transition: all 0.3s;
+    }
+    .market-card:hover {
+        border-color: rgba(99, 102, 241, 0.3);
+        background: rgba(15, 17, 23, 0.6);
+    }
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #6366f1;
+        letter-spacing: -1px;
+    }
+</style>
+
+<div class="space-y-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="market-card">
+            <div class="hud-label">Global Circulation</div>
+            <div class="stat-value">8.42M</div>
+            <div style="font-size: 10px; color: #10b981; margin-top: 0.5rem;">+2.4% INCREASE_24H</div>
+        </div>
+        <div class="market-card">
+            <div class="hud-label">Active Wallets</div>
+            <div class="stat-value">12,492</div>
+            <div style="font-size: 10px; color: #666; margin-top: 0.5rem;">SYNC_STATE: STABLE</div>
+        </div>
+        <div class="market-card">
+            <div class="hud-label">Ecosystem Liquidity</div>
+            <div class="stat-value">$1.22M</div>
+            <div style="font-size: 10px; color: #666; margin-top: 0.5rem;">PROTOCOL: ALPHA_STREAM</div>
+        </div>
+    </div>
+
+    <div class="glow-panel p-8">
+        <div class="hud-label">Economy Configuration</div>
+        <div class="grid grid-cols-2 gap-8">
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label class="hud-label" style="font-size: 9px;">Currency Name</label>
+                    <input type="text" value="K-COIN" style="width: 100%; padding: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); color: white;">
+                </div>
+                <div class="space-y-2">
+                    <label class="hud-label" style="font-size: 9px;">Daily Allowance</label>
+                    <input type="number" value="100" style="width: 100%; padding: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); color: white;">
+                </div>
+            </div>
+            <div class="space-y-4">
+                <div class="space-y-2">
+                    <label class="hud-label" style="font-size: 9px;">Transfer Tax (%)</label>
+                    <input type="number" value="5" style="width: 100%; padding: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.05); color: white;">
+                </div>
+                <button class="btn-action" style="margin-top: 1.5rem;">Synchronize Parameters</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

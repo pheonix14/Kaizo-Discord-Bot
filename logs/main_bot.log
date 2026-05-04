@@ -45,3 +45,240 @@ Traceback (most recent call last):
   File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 100, in _get_source_fast
     raise TemplateNotFound(template)
 jinja2.exceptions.TemplateNotFound: moderation_panel.html
+2026-05-05 00:19:20,882 | INFO     | hypercorn.error | Running on http://0.0.0.0:5000 (CTRL + C to quit)
+2026-05-05 00:48:33,429 | INFO     | hypercorn.error | Running on http://0.0.0.0:5000 (CTRL + C to quit)
+2026-05-05 01:20:35,868 | INFO     | hypercorn.error | Running on http://0.0.0.0:5000 (CTRL + C to quit)
+2026-05-05 01:24:31,512 | INFO     | hypercorn.error | Running on http://0.0.0.0:5000 (CTRL + C to quit)
+2026-05-05 01:39:31,907 | INFO     | hypercorn.error | Running on http://0.0.0.0:5000 (CTRL + C to quit)
+2026-05-05 01:42:13,287 | INFO     | hypercorn.error | Running on http://0.0.0.0:5000 (CTRL + C to quit)
+2026-05-05 01:42:47,180 | ERROR    | app | Exception on request GET /manage/economy
+Traceback (most recent call last):
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1464, in handle_request
+    return await self.full_dispatch_request(request_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1502, in full_dispatch_request
+    result = await self.handle_user_exception(error)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1059, in handle_user_exception
+    raise error
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1500, in full_dispatch_request
+    result = await self.dispatch_request(request_context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1597, in dispatch_request
+    return await self.ensure_async(handler)(**request_.view_args)  # type: ignore[return-value]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\acer\Desktop\KAIZER X\dashboard\app.py", line 170, in manage_economy
+    return await render_template('economy_panel.html')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\templating.py", line 57, in render_template
+    template = current_app.jinja_env.get_or_select_template(template_name_or_list)  # type: ignore
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: economy_panel.html
+2026-05-05 01:42:50,446 | ERROR    | app | Exception on request GET /manage/media
+Traceback (most recent call last):
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1464, in handle_request
+    return await self.full_dispatch_request(request_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1502, in full_dispatch_request
+    result = await self.handle_user_exception(error)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1059, in handle_user_exception
+    raise error
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1500, in full_dispatch_request
+    result = await self.dispatch_request(request_context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1597, in dispatch_request
+    return await self.ensure_async(handler)(**request_.view_args)  # type: ignore[return-value]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\acer\Desktop\KAIZER X\dashboard\app.py", line 175, in manage_media
+    return await render_template('media_panel.html')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\templating.py", line 57, in render_template
+    template = current_app.jinja_env.get_or_select_template(template_name_or_list)  # type: ignore
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: media_panel.html
+2026-05-05 01:45:23,605 | INFO     | hypercorn.error | Running on http://0.0.0.0:5000 (CTRL + C to quit)
+2026-05-05 01:55:42,502 | ERROR    | app | Exception on request GET /manage/moderation
+Traceback (most recent call last):
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1464, in handle_request
+    return await self.full_dispatch_request(request_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1502, in full_dispatch_request
+    result = await self.handle_user_exception(error)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1059, in handle_user_exception
+    raise error
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1500, in full_dispatch_request
+    result = await self.dispatch_request(request_context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1597, in dispatch_request
+    return await self.ensure_async(handler)(**request_.view_args)  # type: ignore[return-value]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\acer\Desktop\KAIZER X\dashboard\app.py", line 165, in manage_moderation
+    return await render_template('moderation_panel.html')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\templating.py", line 57, in render_template
+    template = current_app.jinja_env.get_or_select_template(template_name_or_list)  # type: ignore
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: moderation_panel.html
+2026-05-05 01:58:37,572 | INFO     | hypercorn.error | Running on http://0.0.0.0:5000 (CTRL + C to quit)
+2026-05-05 01:58:49,612 | ERROR    | app | Exception on request GET /manage/moderation
+Traceback (most recent call last):
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1464, in handle_request
+    return await self.full_dispatch_request(request_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1502, in full_dispatch_request
+    result = await self.handle_user_exception(error)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1059, in handle_user_exception
+    raise error
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1500, in full_dispatch_request
+    result = await self.dispatch_request(request_context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1597, in dispatch_request
+    return await self.ensure_async(handler)(**request_.view_args)  # type: ignore[return-value]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\acer\Desktop\KAIZER X\dashboard\app.py", line 165, in manage_moderation
+    return await render_template('moderation_panel.html')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\templating.py", line 57, in render_template
+    template = current_app.jinja_env.get_or_select_template(template_name_or_list)  # type: ignore
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: moderation_panel.html
+2026-05-05 02:02:35,467 | ERROR    | app | Exception on request GET /manage/moderation
+Traceback (most recent call last):
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1464, in handle_request
+    return await self.full_dispatch_request(request_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1502, in full_dispatch_request
+    result = await self.handle_user_exception(error)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1059, in handle_user_exception
+    raise error
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1500, in full_dispatch_request
+    result = await self.dispatch_request(request_context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1597, in dispatch_request
+    return await self.ensure_async(handler)(**request_.view_args)  # type: ignore[return-value]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\acer\Desktop\KAIZER X\dashboard\app.py", line 165, in manage_moderation
+    return await render_template('moderation_panel.html')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\templating.py", line 57, in render_template
+    template = current_app.jinja_env.get_or_select_template(template_name_or_list)  # type: ignore
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: moderation_panel.html
+2026-05-05 02:03:23,846 | ERROR    | app | Exception on request GET /manage/economy
+Traceback (most recent call last):
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1464, in handle_request
+    return await self.full_dispatch_request(request_context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1502, in full_dispatch_request
+    result = await self.handle_user_exception(error)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1059, in handle_user_exception
+    raise error
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1500, in full_dispatch_request
+    result = await self.dispatch_request(request_context)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\app.py", line 1597, in dispatch_request
+    return await self.ensure_async(handler)(**request_.view_args)  # type: ignore[return-value]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\acer\Desktop\KAIZER X\dashboard\app.py", line 170, in manage_economy
+    return await render_template('economy_panel.html')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\quart\templating.py", line 57, in render_template
+    template = current_app.jinja_env.get_or_select_template(template_name_or_list)  # type: ignore
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\jinja2\loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 66, in get_source
+    return self._get_source_fast(environment, template)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\acer\AppData\Local\Programs\Python\Python313\Lib\site-packages\flask\templating.py", line 100, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: economy_panel.html
+2026-05-05 02:07:20,383 | INFO     | hypercorn.error | Running on http://0.0.0.0:5000 (CTRL + C to quit)
