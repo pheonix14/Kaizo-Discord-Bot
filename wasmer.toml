@@ -1,0 +1,24 @@
+[package]
+name = "kaizer-x"
+version = "0.1.0"
+description = "KAIZER X Ultimate Discord Bot & Dashboard"
+license = "MIT"
+publish = false
+
+[[module]]
+name = "app"
+source = "python"
+abi = "wasi"
+
+[[command]]
+name = "run"
+module = "app"
+runner = "python"
+
+[command.run.env]
+PYTHONPATH = "."
+PORT = "8080"
+DASHBOARD_SECRET_KEY = "KAIZER_X_WASM_KEY"
+
+[command.run.args]
+args = ["dashboard/app.py"]
