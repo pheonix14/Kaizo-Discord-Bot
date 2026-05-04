@@ -3,7 +3,7 @@ import sys
 import json
 import asyncio
 import subprocess
-from quart import Quart, request, jsonify, render_template
+from quart import Quart, request, jsonify, render_template, session, redirect, url_for
 
 app = Quart(__name__)
 app.secret_key = "KAIZER_X_SECRET_DASHBOARD_KEY"
@@ -72,10 +72,30 @@ async def startup():
 
 @app.route('/')
 async def index():
+    if not session.get('admin_logged_in'):
+        return redirect('/login')
     return await render_template('index.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+async def login():
+    error = None
+    if request.method == 'POST':
+        form = await request.form
+        if form.get('username') == 'kali' and form.get('password') == 'kali':
+            session['admin_logged_in'] = True
+            return redirect('/')
+        else:
+            error = "Invalid Credentials. Intruders will be logged."
+    return await render_template('login.html', error=error)
+
+@app.route('/logout')
+async def logout():
+    session.clear()
+    return redirect('/login')
 
 @app.route('/api/bots', methods=['GET'])
 async def get_bots():
+    if not session.get('admin_logged_in'): return jsonify({"error": "Unauthorized"}), 401
     configs = load_bots_config()
     status = {}
     for bid, cfg in configs.items():
@@ -87,6 +107,7 @@ async def get_bots():
 
 @app.route('/api/bots/add', methods=['POST'])
 async def add_bot():
+    if not session.get('admin_logged_in'): return jsonify({"error": "Unauthorized"}), 401
     data = await request.json
     bot_id = data.get("id")
     token = data.get("token")
@@ -103,6 +124,7 @@ async def add_bot():
 
 @app.route('/api/bots/stop', methods=['POST'])
 async def stop_bot():
+    if not session.get('admin_logged_in'): return jsonify({"error": "Unauthorized"}), 401
     data = await request.json
     bot_id = data.get("id")
     
@@ -117,6 +139,7 @@ async def get_logs(bot_id):
     """
     Returns the last 100 lines of the bot's log file.
     """
+    if not session.get('admin_logged_in'): return jsonify({"error": "Unauthorized"}), 401
     log_path = os.path.join(LOGS_DIR, f"{bot_id}.log")
     if not os.path.exists(log_path):
         return jsonify({"logs": "No logs found yet."})
