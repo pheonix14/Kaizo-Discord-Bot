@@ -33,11 +33,21 @@ async def watchdog_task():
     If a bot subprocess dies unexpectedly, it restarts it.
     """
     while True:
-        for bot_id, proc in list(running_bots.items()):
-            if proc.poll() is not None:
-                print(f"[ WATCHDOG ] Bot {bot_id} crashed with exit code {proc.returncode}. Restarting...")
-                await start_bot_process(bot_id)
+        try:
+            for bot_id, proc in list(running_bots.items()):
+                # poll() returns None if process is still running
+                if proc.poll() is not None:
+                    print(f"[ WATCHDOG ] Bot {bot_id} crashed or stopped (Exit Code: {proc.returncode}). Restarting...")
+                    try:
+                        # Ensure old process is cleaned up
+                        proc.kill()
+                    except:
+                        pass
+                    await start_bot_process(bot_id)
+        except Exception as e:
+            print(f"[ WATCHDOG ERROR ] Monitor cycle failed: {e}")
         await asyncio.sleep(5)
+
 
 async def start_bot_process(bot_id):
     config = load_bots_config().get(bot_id)

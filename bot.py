@@ -44,26 +44,45 @@ async def on_ready():
     logger.info(f"Logged in as: {bot.user.name} ({bot.user.id})")
     logger.info("====================================")
     
-    # Initialize Pandas CSV Databases
-    db_setup.init_db()
+    # Initialize Pandas CSV Databases with fallback
+    try:
+        db_setup.init_db()
+    except Exception as e:
+        logger.error(f"CRITICAL: Database initialization failed: {e}. Bot may have limited functionality.")
     
-    # Load all modules (cogs) dynamically
-    for filename in os.listdir('./cogs'):
-        if filename.endswith('.py') and not filename.startswith('__'):
-            try:
-                bot.load_extension(f'cogs.{filename[:-3]}')
-                logger.info(f"[+] Loaded Module: {filename}")
-            except Exception as e:
-                logger.error(f"[-] Failed to load Module {filename}: {e}")
+    # Load all modules (cogs) dynamically with individual fallbacks
+    cogs_dir = './cogs'
+    if os.path.exists(cogs_dir):
+        for filename in os.listdir(cogs_dir):
+            if filename.endswith('.py') and not filename.startswith('__'):
+                try:
+                    bot.load_extension(f'cogs.{filename[:-3]}')
+                    logger.info(f"[+] Loaded Module: {filename}")
+                except Exception as e:
+                    logger.error(f"[-] Failed to load Module {filename}: {e}")
+    else:
+        logger.warning("Cogs directory not found. Running in minimal mode.")
 
 @bot.event
 async def on_error(event, *args, **kwargs):
     logger.exception(f"Unhandled exception in {event}")
 
+@bot.event
+async def on_disconnect():
+    logger.warning(f"Bot {bot.instance_id} disconnected from Discord. Attempting to reconnect...")
+
 if __name__ == "__main__":
-    if args.token and args.token != "YOUR_DISCORD_BOT_TOKEN_HERE":
+    # Final Fallback: Check if token is actually provided or use env as backup
+    token = args.token or os.getenv("DISCORD_TOKEN")
+    
+    if token and token != "YOUR_DISCORD_BOT_TOKEN_HERE":
         logger.info(f"Starting bot instance {args.id}...")
-        bot.run(args.token)
+        try:
+            bot.run(token)
+        except Exception as e:
+            logger.critical(f"FATAL: Bot failed to start: {e}")
+            sys.exit(1)
     else:
         logger.critical("CRITICAL ERROR: No Discord Token Provided.")
         sys.exit(1)
+
