@@ -330,3 +330,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-03] perf(stats): tune bot count tracker
 - [2026-05-03] fix(help): fix command argument specs
 - [2026-05-03] refactor(help): streamline interactive pagination view
+- [2026-05-04] fix(developer): align cog hot reloader
