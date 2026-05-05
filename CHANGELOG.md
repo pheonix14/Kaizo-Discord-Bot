@@ -346,3 +346,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-05] style(security): polish anti-nuke lock
 - [2026-05-05] perf(web): optimize session management
 - [2026-05-05] feat(automod): add invite filter
+- [2026-05-05] refactor(moderation): refactor purge messages
