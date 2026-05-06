@@ -350,3 +350,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-05] refactor(zero-emoji): streamline embed badge formatting
 - [2026-05-05] feat(stats): add active voice count
 - [2026-05-05] refactor(docs): refactor README setup instructions
+- [2026-05-06] style(music): polish volume normalizer
