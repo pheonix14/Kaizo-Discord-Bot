@@ -357,3 +357,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-06] feat(engine): add gateway connection
 - [2026-05-06] refactor(ui): streamline settings forms
 - [2026-05-06] feat(engine): harden reconnect backoff
+- [2026-05-06] feat(help): implement category dropdown selector
