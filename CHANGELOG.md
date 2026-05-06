@@ -354,3 +354,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-06] perf(welcome): tune entrance greeting embed
 - [2026-05-06] feat(developer): implement telemetry ping
 - [2026-05-06] feat(zero-emoji): update embed badge formatting
+- [2026-05-06] feat(engine): add gateway connection
