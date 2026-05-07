@@ -360,3 +360,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-06] feat(help): implement category dropdown selector
 - [2026-05-06] style(welcome): polish auto role assignment
 - [2026-05-06] perf(music): optimize volume normalizer
+- [2026-05-07] feat(reaction-roles): harden menu customizer
