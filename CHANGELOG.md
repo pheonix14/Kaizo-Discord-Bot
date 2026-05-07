@@ -362,3 +362,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-06] perf(music): optimize volume normalizer
 - [2026-05-07] feat(reaction-roles): harden menu customizer
 - [2026-05-07] perf(db): tune guild config cache
+- [2026-05-07] feat(reaction-roles): update exclusive role groups
