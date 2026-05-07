@@ -365,3 +365,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-07] feat(reaction-roles): update exclusive role groups
 - [2026-05-07] feat(ui): add AutoMod builder studio
 - [2026-05-07] fix(leveling): fix leaderboard query
+- [2026-05-07] feat(economy): harden p2p transfer validation
