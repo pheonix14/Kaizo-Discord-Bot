@@ -363,3 +363,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-07] feat(reaction-roles): harden menu customizer
 - [2026-05-07] perf(db): tune guild config cache
 - [2026-05-07] feat(reaction-roles): update exclusive role groups
+- [2026-05-07] feat(ui): add AutoMod builder studio
