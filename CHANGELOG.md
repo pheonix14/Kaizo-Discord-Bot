@@ -379,3 +379,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-08] perf(economy): tune gambling dice
 - [2026-05-08] feat(welcome): add entrance greeting embed
 - [2026-05-08] refactor(web): streamline Discord OAuth2 callback
+- [2026-05-08] perf(docs): optimize MIT open-source license
