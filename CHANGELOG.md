@@ -370,3 +370,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-07] feat(stats): add bot count tracker
 - [2026-05-07] feat(music): update yt-dlp extractor
 - [2026-05-07] fix(perf): fix query index optimization
+- [2026-05-08] style(ui): polish dark mode responsive styling
