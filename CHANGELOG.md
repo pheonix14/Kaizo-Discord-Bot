@@ -381,3 +381,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-08] refactor(web): streamline Discord OAuth2 callback
 - [2026-05-08] perf(docs): optimize MIT open-source license
 - [2026-05-09] feat(fun): implement text scrambler
+- [2026-05-09] feat(reaction-roles): add role assignment toggle
