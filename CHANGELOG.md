@@ -383,3 +383,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-09] feat(fun): implement text scrambler
 - [2026-05-09] feat(reaction-roles): add role assignment toggle
 - [2026-05-09] perf(security): tune K4 defense system
+- [2026-05-09] perf(web): optimize guild selection portal
