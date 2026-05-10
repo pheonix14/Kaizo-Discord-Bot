@@ -398,3 +398,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-10] feat(giveaways): update scheduler
 - [2026-05-10] style(perf): polish audio stream buffer tuning
 - [2026-05-10] feat(stats): update member count updater
+- [2026-05-10] docs(docs): enhance credits to pheonix14
