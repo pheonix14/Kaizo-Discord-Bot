@@ -390,3 +390,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-09] style(stats): polish member count updater
 - [2026-05-09] feat(temp-vc): enhance auto channel deletion on empty
 - [2026-05-09] refactor(db): refactor transaction helper
+- [2026-05-10] style(leveling): polish level up notifications
