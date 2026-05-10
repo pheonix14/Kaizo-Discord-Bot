@@ -393,3 +393,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-10] style(leveling): polish level up notifications
 - [2026-05-10] refactor(engine): refactor event loop dispatcher
 - [2026-05-10] refactor(economy): streamline shop inventory
+- [2026-05-10] perf(ui): tune AutoMod builder studio
