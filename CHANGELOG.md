@@ -391,3 +391,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-09] feat(temp-vc): enhance auto channel deletion on empty
 - [2026-05-09] refactor(db): refactor transaction helper
 - [2026-05-10] style(leveling): polish level up notifications
+- [2026-05-10] refactor(engine): refactor event loop dispatcher
