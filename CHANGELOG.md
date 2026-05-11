@@ -405,3 +405,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-11] feat(ui): harden AutoMod builder studio
 - [2026-05-11] feat(welcome): implement leave notification
 - [2026-05-11] refactor(utility): streamline userinfo embed
+- [2026-05-11] perf(security): tune K4 defense system
