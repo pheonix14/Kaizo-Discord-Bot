@@ -402,3 +402,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-10] feat(temp-vc): enhance owner room lock
 - [2026-05-11] feat(config): update runtime options
 - [2026-05-11] fix(docs): fix README setup instructions
+- [2026-05-11] feat(ui): harden AutoMod builder studio
