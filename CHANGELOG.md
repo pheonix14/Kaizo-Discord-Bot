@@ -413,3 +413,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-12] fix(developer): align telemetry ping
 - [2026-05-12] feat(web): add session management
 - [2026-05-12] style(ui): polish dark mode responsive styling
+- [2026-05-12] feat(leveling): harden leaderboard query
