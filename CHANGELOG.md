@@ -416,3 +416,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-12] feat(leveling): harden leaderboard query
 - [2026-05-12] feat(fun): implement text scrambler
 - [2026-05-12] feat(db): enhance guild config cache
+- [2026-05-12] fix(server-builder): align channel structure generator
