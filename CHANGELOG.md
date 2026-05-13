@@ -422,3 +422,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-12] feat(engine): implement reconnect backoff
 - [2026-05-13] feat(refactor): implement typing annotations
 - [2026-05-13] feat(giveaways): update reroll command
+- [2026-05-13] feat(automod): enhance bad word filter
