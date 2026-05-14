@@ -438,3 +438,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-14] feat(economy): enhance p2p transfer validation
 - [2026-05-14] feat(welcome): add leave notification
 - [2026-05-14] refactor(temp-vc): streamline room limit controls
+- [2026-05-14] refactor(help): refactor command argument specs
