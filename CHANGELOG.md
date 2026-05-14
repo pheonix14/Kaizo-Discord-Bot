@@ -435,3 +435,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-14] perf(db): tune guild config cache
 - [2026-05-14] refactor(help): refactor slash command sync
 - [2026-05-14] refactor(docs): refactor README setup instructions
+- [2026-05-14] feat(economy): enhance p2p transfer validation
