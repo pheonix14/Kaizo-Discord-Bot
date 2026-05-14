@@ -430,3 +430,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-13] perf(help): optimize category dropdown selector
 - [2026-05-13] feat(stats): harden bot count tracker
 - [2026-05-13] refactor(stats): refactor server stats voice channels
+- [2026-05-14] perf(refactor): tune typing annotations
