@@ -432,3 +432,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-13] refactor(stats): refactor server stats voice channels
 - [2026-05-14] perf(refactor): tune typing annotations
 - [2026-05-14] style(ui): polish AutoMod builder studio
+- [2026-05-14] perf(db): tune guild config cache
