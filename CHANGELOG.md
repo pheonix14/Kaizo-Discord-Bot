@@ -440,3 +440,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-14] refactor(temp-vc): streamline room limit controls
 - [2026-05-14] refactor(help): refactor command argument specs
 - [2026-05-14] feat(engine): harden sharding
+- [2026-05-15] feat(music): implement volume normalizer
