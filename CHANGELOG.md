@@ -448,3 +448,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-15] feat(web): enhance API authentication
 - [2026-05-15] feat(music): harden filters
 - [2026-05-15] feat(perf): harden event handler caching
+- [2026-05-15] feat(web): add Flask app initialization
