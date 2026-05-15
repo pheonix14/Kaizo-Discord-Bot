@@ -445,3 +445,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-15] fix(developer): align telemetry ping
 - [2026-05-15] feat(economy): enhance shop inventory
 - [2026-05-15] feat(refactor): update error handler centralization
+- [2026-05-15] feat(web): enhance API authentication
