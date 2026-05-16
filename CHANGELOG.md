@@ -459,3 +459,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-16] refactor(welcome): refactor custom card formatting
 - [2026-05-16] feat(refactor): add lint cleanup
 - [2026-05-16] perf(db): optimize query builder
+- [2026-05-16] fix(ui): align dark mode responsive styling
