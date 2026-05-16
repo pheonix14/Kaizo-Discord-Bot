@@ -452,3 +452,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-15] perf(economy): tune wallet balance
 - [2026-05-16] feat(help): update category dropdown selector
 - [2026-05-16] refactor(db): refactor guild config cache
+- [2026-05-16] fix(zero-emoji): fix ASCII status indicators
