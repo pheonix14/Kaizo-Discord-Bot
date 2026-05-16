@@ -454,3 +454,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-16] refactor(db): refactor guild config cache
 - [2026-05-16] fix(zero-emoji): fix ASCII status indicators
 - [2026-05-16] perf(tickets): optimize transcript exporter
+- [2026-05-16] style(giveaways): polish scheduler
