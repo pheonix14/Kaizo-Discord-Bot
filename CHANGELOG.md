@@ -458,3 +458,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-16] perf(music): optimize audio queue buffer
 - [2026-05-16] refactor(welcome): refactor custom card formatting
 - [2026-05-16] feat(refactor): add lint cleanup
+- [2026-05-16] perf(db): optimize query builder
