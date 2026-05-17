@@ -468,3 +468,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-17] feat(security): harden anti-nuke lock
 - [2026-05-17] feat(welcome): implement custom card formatting
 - [2026-05-17] feat(developer): enhance cog hot reloader
+- [2026-05-17] perf(web): tune session management
