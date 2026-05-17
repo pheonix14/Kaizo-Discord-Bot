@@ -465,3 +465,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-17] style(music): polish yt-dlp extractor
 - [2026-05-17] feat(stats): update bot count tracker
 - [2026-05-17] fix(help): fix command argument specs
+- [2026-05-17] feat(security): harden anti-nuke lock
