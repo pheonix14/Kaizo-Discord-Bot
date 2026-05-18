@@ -470,3 +470,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-17] feat(developer): enhance cog hot reloader
 - [2026-05-17] perf(web): tune session management
 - [2026-05-17] fix(web): fix Flask app initialization
+- [2026-05-18] feat(automod): implement invite filter
