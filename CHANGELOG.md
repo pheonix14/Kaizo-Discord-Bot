@@ -474,3 +474,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-18] perf(economy): tune wallet balance
 - [2026-05-18] feat(security): enhance admin permission guard
 - [2026-05-18] fix(automod): fix mention mass limiter
+- [2026-05-18] feat(giveaways): harden scheduler
