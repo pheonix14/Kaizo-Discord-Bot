@@ -487,3 +487,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-19] feat(tickets): add close button
 - [2026-05-19] feat(db): harden query builder
 - [2026-05-19] feat(web): harden API authentication
+- [2026-05-19] feat(engine): implement reconnect backoff
