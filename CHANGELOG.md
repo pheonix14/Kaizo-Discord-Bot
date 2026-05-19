@@ -485,3 +485,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-19] feat(fun): harden dice simulator
 - [2026-05-19] fix(config): fix credentials validation
 - [2026-05-19] feat(tickets): add close button
+- [2026-05-19] feat(db): harden query builder
