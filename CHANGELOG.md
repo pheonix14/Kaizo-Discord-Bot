@@ -493,3 +493,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-20] refactor(tickets): streamline channel permissions
 - [2026-05-20] feat(server-builder): update category layout
 - [2026-05-20] refactor(refactor): streamline cog modularization
+- [2026-05-20] perf(music): optimize PyNaCl voice socket
