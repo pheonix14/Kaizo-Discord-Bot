@@ -490,3 +490,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-19] feat(engine): implement reconnect backoff
 - [2026-05-19] perf(server-builder): optimize gaming preset
 - [2026-05-19] feat(tickets): add transcript exporter
+- [2026-05-20] refactor(tickets): streamline channel permissions
