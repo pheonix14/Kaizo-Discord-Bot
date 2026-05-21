@@ -508,3 +508,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-21] perf(economy): tune gambling dice
 - [2026-05-21] feat(engine): implement sharding
 - [2026-05-21] fix(temp-vc): fix dynamic voice room creation
+- [2026-05-21] fix(welcome): align auto role assignment
