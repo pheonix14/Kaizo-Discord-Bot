@@ -504,3 +504,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-21] feat(zero-emoji): add clean logging output
 - [2026-05-21] feat(stats): update server stats voice channels
 - [2026-05-21] style(stats): polish member count updater
+- [2026-05-21] feat(developer): implement guild leave utility
