@@ -1,66 +1,126 @@
-import os
-import sys
-import subprocess
-import webbrowser
+import asyncio
+import logging
+import uvicorn
+import errno
+import discord
+from src import config
+from src.bot.engine import bot
+# Removed FastAPI server import; using Flask backend
 
-# Add current directory to path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+class ColorFormatter(logging.Formatter):
+    # ANSI color codes
+    grey = "\x1b[38;20m"
+    yellow = "\x1b[33;20m"
+    red = "\x1b[31;20m"
+    bold_red = "\x1b[31;1m"
+    cyan = "\x1b[36;20m"
+    blue = "\x1b[34;20m"
+    green = "\x1b[32;20m"
+    reset = "\x1b[0m"
 
-def start_kaizer_x():
-    """
-    Main entry point for KAIZER X.
-    This launches the Dashboard which manages all bot instances.
-    """
-    print("====================================")
-    print("\033[94m[PROCESS] STARTING KAIZER X SYSTEM\033[0m")
-    print("\033[96m[STATUS]  Initializing Tactical OS...\033[0m")
-    print("")
-    print("\033[1;91m[ADMIN COMMAND CENTER (RESTRICTED)]\033[0m")
-    print("\033[91m > http://localhost:5000/kaizer-gate\033[0m")
-    print("")
-    print("\033[1;92m[PUBLIC INFRASTRUCTURE (AUTO-OPENING)]\033[0m")
-    print("\033[92m > http://localhost:3000/\033[0m")
-    print("====================================")
-    
-    # Auto-open the homepage
+    format_str = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+
+    FORMATS = {
+        logging.DEBUG: grey + format_str + reset,
+        logging.INFO: cyan + format_str + reset,
+        logging.WARNING: yellow + format_str + reset,
+        logging.ERROR: red + format_str + reset,
+        logging.CRITICAL: bold_red + format_str + reset
+    }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        # Apply specific colors to specific categories if desired
+        if record.levelno == logging.INFO:
+            if "discord" in record.name:
+                log_fmt = self.blue + self.format_str + self.reset
+            elif "kaizer" in record.name:
+                log_fmt = self.green + self.format_str + self.reset
+
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+# Configure root logger
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setFormatter(ColorFormatter())
+root_logger.addHandler(handler)
+logger = logging.getLogger("kaizer_k5.main")
+
+def run_web():
+    """Start the Flask Web Server using the Flask app defined in src.web.flask_app."""
+    from src.web.flask_app import app as flask_app
+    host = "127.0.0.1"  # Override to localhost to avoid socket permission issues
+    port = config.PORT
+    logger.info(f"Starting Flask Dashboard on http://{host}:{port}")
+    # Flask's built‑in server is sufficient for development; for production consider a WSGI server.
+    flask_app.run(host=host, port=port, debug=False)
+
+
+async def run_bot():
+    """Start the Discord Bot client with automatic reconnect/retry logic."""
+    logger.info("Initializing Discord Bot Client...")
+    retry_delay = 5
+    max_delay = 60
     try:
-        webbrowser.open("http://localhost:3000/")
-    except Exception as e:
-        print(f"\033[93m[WARNING] Could not auto-open browser: {e}\033[0m")
-    
-    dashboard_path = os.path.join("dashboard", "app.py")
-    web_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
-    
-    if not os.path.exists(dashboard_path):
-        print(f"[ERROR] Could not find {dashboard_path}!")
-        return
+        while True:
+            try:
+                await bot.start(config.DISCORD_BOT_TOKEN)
+                break
+            except discord.errors.LoginFailure:
+                logger.critical("Failed to log in: Invalid Discord Bot Token.")
+                break
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                logger.error(f"Discord Bot encountered a startup exception: {e}")
+                try:
+                    await bot.close()
+                except Exception as close_err:
+                    logger.warning(f"Failed to close bot client during cleanup: {close_err}")
+                logger.info(f"Retrying connection in {retry_delay} seconds...")
+                await asyncio.sleep(retry_delay)
+                retry_delay = min(retry_delay * 2, max_delay)
+    finally:
+        logger.info("Shutting down Discord Bot Client...")
+        try:
+            await asyncio.shield(bot.close())
+        except Exception as e:
+            logger.warning(f"Error closing bot in finally block: {e}")
 
-    processes = []
+
+async def main():
+    # Run the web server and bot client concurrently, cleanly shutting down if either stops
+    web_task = asyncio.create_task(asyncio.to_thread(run_web))
+    bot_task = asyncio.create_task(run_bot())
     
     try:
-        project_root = os.path.dirname(os.path.abspath(__file__))
+        done, pending = await asyncio.wait(
+            [web_task, bot_task],
+            return_when=asyncio.FIRST_COMPLETED
+        )
+    finally:
+        # Clean up all pending tasks
+        logger.info("Main loop exited. Starting cleanup...")
+        pending_tasks = []
+        for t in [web_task, bot_task]:
+            if not t.done():
+                pending_tasks.append(t)
+                t.cancel()
         
-        # Start the Next.js Frontend in the background
-        print("\033[96m[SYSTEM] Launching Frontend (Next.js)...\033[0m")
-        if os.path.exists(web_dir):
-            # Using shell=True for npm commands on Windows is usually safer
-            frontend_process = subprocess.Popen(["npm", "run", "dev"], cwd=web_dir, shell=True)
-            processes.append(frontend_process)
-        else:
-            print("\033[93m[WARNING] 'web' directory not found. Frontend will not start.\033[0m")
-
-        # Start the Quart Dashboard (foreground)
-        print("\033[96m[SYSTEM] Launching Backend (Quart)...\033[0m")
-        subprocess.run([sys.executable, dashboard_path], cwd=project_root)
-
-    except KeyboardInterrupt:
-        print("\n\033[91m[PROCESS] KAIZER X System shutting down...\033[0m")
-        for p in processes:
-            p.terminate()
-    except Exception as e:
-        print(f"[ERROR] System failed to start: {e}")
-        for p in processes:
-            p.terminate()
+        if pending_tasks:
+            logger.info(f"Cancelling {len(pending_tasks)} pending tasks...")
+            await asyncio.gather(*pending_tasks, return_exceptions=True)
+            
+        logger.info("Ensuring Discord Bot is cleanly closed...")
+        try:
+            await bot.close()
+        except Exception as e:
+            logger.warning(f"Error closing bot in main cleanup: {e}")
 
 if __name__ == "__main__":
-    start_kaizer_x()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Project Kaizer K5 shutting down...")

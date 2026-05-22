@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KAIZER K5</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <script>
+        window.KAIZER_STATE = {
+            user: {{ (user if user is defined else none) | tojson }},
+            guild_id: {{ (guild_id if guild_id is defined else none) | tojson }},
+            active_page: "index"
+        };
+    </script>
+    <script src="/static/js/navigationbar.js"></script>
+    
+    
+
+    <!-- WIPE OVERLAY -->
+    
+
+    <!-- ══ 01 HERO ══ -->
+    <section id="s01">
+        <div class="smoke sm1"></div>
+        <div class="smoke sm2"></div>
+        <div class="smoke sm3"></div>
+        <div class="hero-inner">
+            <div class="showreel-btn" id="showreel">
+                <div class="play-circle">&#9654;</div>
+                <span class="showreel-label">[ SHOWREEL ]</span>
+            </div>
+            <div class="slash-divider">/</div>
+            <div class="hero-text">
+                <span class="hero-name display" id="heroName">KAIZER</span>
+                <span class="hero-sub display" id="heroSub">WE MOVE</span>
+                <span class="hero-tagline italic-accent" id="heroTag">&amp; the world watches</span>
+            </div>
+        </div>
+        <div class="ticker-wrap">
+            <div class="ticker-track" id="tickerTrack"></div>
+        </div>
+    </section>
+
+    <!-- ══ 02 IDENTITY ══ -->
+    <section id="s02">
+        <div class="micro-block" id="micro">
+            <div class="micro-label">[ KAIZER STUDIO ]</div>
+            <div class="micro-desc">CRAFTING VISION / THROUGH MOTION</div>
+        </div>
+        <div class="big-make display" id="bigMake">MAKE</div>
+        <div class="big-awesome display" id="bigAwesome">AWESOME</div>
+        <div class="scroll-label" id="scrollLabel">SCROLL</div>
+    </section>
+
+    <!-- ══ 03 POWER ══ -->
+    <section id="s03">
+        <nav class="power-nav">
+            <span>KAIZER</span>
+            <span>[ KAIZER.IMMERSIVE ]</span>
+            <span>[ SOUND ON ] &nbsp; [ 001 ]</span>
+        </nav>
+        <div class="power-center-block">
+            <div class="innovate-text display" id="innov">INNOVATE</div>
+            <div class="morph-shape" id="morphShape"></div>
+            <div class="drag-ring" id="dragRing"></div>
+            <div class="drag-hint" id="dragHint">HOLD AND DRAG</div>
+            <div class="purpose-text display" id="purp">PURPOSE</div>
+        </div>
+        <div class="power-bottom" id="pwrBot">
+            <span>[ SCROLL FOR MORE ]</span>
+            <span>[ AR ]</span>
+        </div>
+    </section>
+
+    <!-- ══ 04 MANIFESTO ══ -->
+    <section id="s04">
+        <div class="manifesto-lines">
+            <span class="m-line display" id="ml0">WE DON'T</span>
+            <span class="m-line display" id="ml1">FOLLOW</span>
+            <span class="gold-diamond" id="gd">◆</span>
+            <span class="m-line display" id="ml2">TRENDS —</span>
+            <span class="m-line display" id="ml3">WE SET THEM</span>
+        </div>
+        <p class="manifesto-body" id="mBody">Every frame is a statement. Every scroll is a declaration. KAIZER builds
+            experiences that don't ask permission.</p>
+        <div class="cta-btn" id="ctaBtn">[ SEE THE WORK &rarr; ]</div>
+    </section>
+
+        <!-- -- 05 CONTACT -- -->
+    <section id="s05">
+        <span class="contact-title-let display" id="cLet">LOGIN</span>
+        <span class="contact-title-create display" id="cCreate">REQUIRED</span>
+        
+        <div style="margin-top: 40px; display: flex; gap: 20px; justify-content: center; position: relative; z-index: 5;">
+            {% if user %}
+                <a href="/dashboard" style="display: inline-block; padding: 16px 40px; background: var(--teal); color: var(--navy); text-decoration: none; font-size: 14px; font-weight: bold; border-radius: 100px; letter-spacing: 0.2em; text-transform: uppercase;">OPEN DASHBOARD</a>
+            {% else %}
+                <a href="/login" style="display: inline-block; padding: 16px 40px; background: var(--teal); color: var(--navy); text-decoration: none; font-size: 14px; font-weight: bold; border-radius: 100px; letter-spacing: 0.2em; text-transform: uppercase;">LOGIN WITH DISCORD</a>
+            {% endif %}
+            <a href="{{ get_invite_url() | safe }}" target="_blank" style="display: inline-block; padding: 16px 40px; background: transparent; color: var(--teal); border: 2px solid var(--teal); text-decoration: none; font-size: 14px; font-weight: bold; border-radius: 100px; letter-spacing: 0.2em; text-transform: uppercase; transition: all 0.3s;">INVITE BOT</a>
+        </div>
+        
+        <div class="footer-tag" id="footerTag">KAIZER &copy; MMXXV</div>
+    </section>
+
+    
+    
+    <script src="/static/js/core.js"></script>
+</body>
+</html>

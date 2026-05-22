@@ -1,0 +1,7 @@
+- [ ] Create `src/bot/admin_utils.py` with `is_admin(user_id: int) -> bool` reading `config.ADMIN_USER_IDS` and a `admin_only` decorator for discord commands.
+- [ ] Refactor existing admin-restricted commands (`dashboard_command`, `status_command`, etc.) to use `@admin_only` instead of `@commands.has_permissions(administrator=True)`.
+- [ ] Ensure `admin_only` returns a friendly error message when a non‑admin invokes the command.
+- [ ] Add import of `admin_utils` in `src/bot/engine.py` and update command definitions accordingly.
+- [ ] Write unit tests for `admin_utils.is_admin` and the decorator behavior.
+- [ ] Update `README.md` with a note about the new admin handling.
+- [ ] Verify bot loads without errors and commands work for admin IDs defined in `.env`.

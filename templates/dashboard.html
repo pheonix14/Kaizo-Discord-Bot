@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KAIZER K5 - Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        body { overflow-y: auto; background: var(--dark); padding-top: 80px; padding-bottom: 50px; }
+        .dashboard-container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .header-title { font-size: clamp(40px, 12vw, 80px); color: #fff; line-height: 0.9; margin-bottom: 40px; }
+        .server-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .server-card { 
+            background: rgba(255, 255, 255, 0.03); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            border-radius: 12px; 
+            padding: 24px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            text-decoration: none; 
+            color: #fff; 
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        .server-card:hover { 
+            transform: translateY(-5px); 
+            background: rgba(78, 205, 196, 0.08); 
+            border-color: rgba(78, 205, 196, 0.3); 
+        }
+        .server-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at top right, rgba(201, 168, 76, 0.1), transparent 70%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .server-card:hover::before { opacity: 1; }
+        .server-icon { width: 80px; height: 80px; border-radius: 50%; margin-bottom: 20px; border: 2px solid rgba(255, 255, 255, 0.1); }
+        .server-icon-placeholder { width: 80px; height: 80px; border-radius: 50%; background: #1a1a2e; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: bold; margin-bottom: 20px; color: var(--teal); border: 2px solid rgba(255, 255, 255, 0.1); }
+        .server-name { font-size: 20px; font-weight: 500; text-align: center; letter-spacing: -0.02em; z-index: 2; }
+    </style>
+</head>
+<body>
+    <script>
+        window.KAIZER_STATE = {
+            user: {{ (user if user is defined else none) | tojson }},
+            guild_id: {{ (guild_id if guild_id is defined else none) | tojson }},
+            active_page: "dashboard"
+        };
+    </script>
+    <script src="/static/js/navigationbar.js"></script>
+    
+    <div class="dashboard-container">
+        <h1 class="header-title display">SELECT<br><span style="color: var(--teal)">SERVER</span></h1>
+        
+        <div class="server-grid">
+            {% if user and user.guilds %}
+                {% for guild in user.guilds %}
+                    {% if guild.bot_in_guild %}
+                    <a href="/dashboard/{{ guild.id }}" class="server-card">
+                        {% if guild.icon %}
+                            <img src="https://cdn.discordapp.com/icons/{{ guild.id }}/{{ guild.icon }}.png" class="server-icon">
+                        {% else %}
+                            <div class="server-icon-placeholder display">{{ guild.name[0] }}</div>
+                        {% endif %}
+                        <div class="server-name">{{ guild.name }}</div>
+                    </a>
+                    {% else %}
+                    <a href="{{ get_invite_url() }}&guild_id={{ guild.id }}" target="_blank" class="server-card" style="opacity: 0.7; border-color: rgba(255, 56, 0, 0.2);">
+                        {% if guild.icon %}
+                            <img src="https://cdn.discordapp.com/icons/{{ guild.id }}/{{ guild.icon }}.png" class="server-icon" style="filter: grayscale(0.8);">
+                        {% else %}
+                            <div class="server-icon-placeholder display" style="color: var(--orange);">{{ guild.name[0] }}</div>
+                        {% endif %}
+                        <div class="server-name">{{ guild.name }}</div>
+                        <div style="font-size: 11px; color: var(--orange); margin-top: 10px; letter-spacing: 0.1em; font-weight: bold;">[ ADD BOT ]</div>
+                    </a>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <div style="color: var(--orange); font-size: 18px; letter-spacing: 0.1em;">NO SERVERS FOUND. PLEASE LOGIN.</div>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaizer K5 - Help Center</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <style>body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; margin: 0; padding: 20px; }</style>
+</head>
+<body>
+    <script>
+        window.KAIZER_STATE = {
+            user: {{ (user if user is defined else none) | tojson }},
+            guild_id: {{ (guild_id if guild_id is defined else none) | tojson }},
+            active_page: "help"
+        };
+    </script>
+    <script src="/static/js/navigationbar.js"></script>
+    <div style="margin-top: 80px; text-align: center;">
+        <h1>Help & Commands Manual</h1>
+        <p>This is the official Kaizer K5 bot manual. Here you can find all commands and configuration instructions.</p>
+        <div style="max-width: 800px; margin: 40px auto; text-align: left; background: #1e293b; padding: 20px; border-radius: 8px;">
+            <h3>K4 Defence (Automod)</h3>
+            <p>Automatically detects spam, massive mentions, and text duplication. Mutes spammers with a flagged role.</p>
+            <h3>Economy & Shop</h3>
+            <p>Users can earn currency, use `!buy` commands, and interact with the synced Supabase database.</p>
+            <h3>Music Downloader</h3>
+            <p>Special downloader and uploader commands via slash and prefix methods.</p>
+        </div>
+    </div>
+</body>
+</html>

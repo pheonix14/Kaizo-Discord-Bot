@@ -1,0 +1,1481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KAIZER K5 — Server Dashboard</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="icon" type="image/png" href="https://img.icons8.com/nolan/64/security-shield.png">
+  <style>
+    .server-dashboard-container {
+      display: flex;
+      min-height: calc(100vh - 80px);
+      margin-top: 80px;
+      position: relative;
+      z-index: 20;
+    }
+    
+    .sidebar-nav {
+      width: 260px;
+      background: rgba(20, 20, 25, 0.85);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      flex-shrink: 0;
+      position: relative;
+      z-index: 25;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.5);
+    }
+    
+    .nav-category {
+      padding: 12px 20px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
+    }
+    
+    .nav-category:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+    }
+    
+    .nav-category.active {
+      background: rgba(10, 254, 228, 0.1);
+      color: var(--c2);
+      border-left-color: var(--c2);
+    }
+    
+    .content-area {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+    }
+    
+    .tab-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .commands-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      padding-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .cmd-tab {
+      padding: 8px 16px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--text-muted);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .cmd-tab:hover {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text);
+    }
+    
+    .cmd-tab.active {
+      background: rgba(10, 254, 228, 0.1);
+      border-color: var(--c2);
+      color: var(--c2);
+    }
+
+    .command-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .command-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .command-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .command-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--c2);
+    }
+
+    .command-desc {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 5px;
+    }
+
+    .command-controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 15px;
+      border-radius: 6px;
+    }
+
+    .svg-icon {
+      width: 18px;
+      height: 18px;
+      stroke: currentColor;
+      fill: none;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Include Shared Layout Skeleton -->
+  {% set active_page = 'settings' %}
+  <script>
+    window.KAIZER_STATE = {
+      user: {{ user | tojson | default('null', true) }},
+      guild_id: {{ guild_id | tojson | default('null', true) }},
+      active_page: "{{ active_page | default('') }}"
+    };
+  </script>
+  <script src="/static/js/navigationbar.js"></script>
+  
+  <div class="server-dashboard-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar-nav" id="sidebar">
+      <div class="nav-category active" data-target="overview">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg> Overview
+      </div>
+      <div class="nav-category" data-target="commands">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"></polyline><line x1="9" y1="20" x2="15" y2="20"></line><line x1="12" y1="4" x2="12" y2="20"></line></svg> Commands
+      </div>
+      <div class="nav-category" data-target="moderation">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg> Moderation Settings
+      </div>
+      <div class="nav-category" data-target="welcome">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg> Welcome & Goodbye
+      </div>
+      <div class="nav-category" data-target="leveling">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg> Leveling
+      </div>
+      <div class="nav-category" data-target="logging">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg> Logging
+      </div>
+      <div class="nav-category" data-target="tickets">
+        <svg class="svg-icon" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg> Tickets
+      </div>
+      <div class="nav-category" data-target="reaction">
+        <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><path d="M8 14s1.5 2 4 2 4-2 4-2"></path><line x1="9" y1="9" x2="9.01" y2="9"></line><line x1="15" y1="9" x2="15.01" y2="9"></line></svg> Reaction Roles
+      </div>
+      <div class="nav-category" data-target="customcmd">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg> Custom Commands
+      </div>
+      <div class="nav-category" data-target="giveaways">
+        <svg class="svg-icon" viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M12 22V7"></path><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"></path><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"></path></svg> Giveaways
+      </div>
+      <div class="nav-category" data-target="settings">
+        <svg class="svg-icon" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg> Bot Settings
+      </div>
+      <div style="padding: 10px 20px; font-size:0.7rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-muted); margin-top:10px;">Features</div>
+      <div class="nav-category" data-target="automod-settings">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg> AutoMod
+      </div>
+      <div class="nav-category" data-target="music-settings">
+        <svg class="svg-icon" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg> Music
+      </div>
+      <div class="nav-category" data-target="economy-settings">
+        <svg class="svg-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg> Economy
+      </div>
+      <div class="nav-category" data-target="stats-settings">
+        <svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg> Live Stats
+      </div>
+      <div class="nav-category" data-target="tempvc-settings">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></svg> Temp VC
+      </div>
+      <div class="nav-category" data-target="serverbuilder-settings">
+        <svg class="svg-icon" viewBox="0 0 24 24"><polygon points="12 2 2 7 12 12 22 7 12 2"></polygon><polyline points="2 17 12 22 22 17"></polyline><polyline points="2 12 12 17 22 12"></polyline></svg> Server Builder
+      </div>
+    </aside>
+
+    <!-- Content Area -->
+    <main class="content-area">
+      <!-- 1. Overview -->
+      <div id="overview" class="tab-content active">
+        <h2>Server Overview</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Guild ID: {{ guild_id }}</p>
+        <div class="glass-panel" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+          <div class="stat-box">
+            <h4 style="color: var(--text-muted); font-size: 0.9rem;">Bot Status</h4>
+            <div style="font-size: 1.5rem; color: var(--c2); font-weight: bold; margin-top: 10px;">◈ Online</div>
+          </div>
+          <div class="stat-box">
+            <h4 style="color: var(--text-muted); font-size: 0.9rem;">Active Modules</h4>
+            <div style="font-size: 1.5rem; color: var(--c1); font-weight: bold; margin-top: 10px;" id="stat-modules">8 / 11</div>
+          </div>
+          <div class="stat-box">
+            <h4 style="color: var(--text-muted); font-size: 0.9rem;">Total Commands Run</h4>
+            <div style="font-size: 1.5rem; color: #a855f7; font-weight: bold; margin-top: 10px;" id="stat-cmds">1,204</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Commands -->
+      <div id="commands" class="tab-content">
+        <h2>Commands Configuration</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Enable, disable, and configure permissions for all bot commands.</p>
+        
+        <div class="commands-tabs" id="cmd-tabs">
+          <button class="cmd-tab active" data-sub="moderation">Moderation</button>
+          <button class="cmd-tab" data-sub="utility">Utility</button>
+          <button class="cmd-tab" data-sub="fun">Fun</button>
+          <button class="cmd-tab" data-sub="economy">Economy</button>
+          <button class="cmd-tab" data-sub="leveling">Leveling</button>
+          <button class="cmd-tab" data-sub="music">Music</button>
+          <button class="cmd-tab" data-sub="tickets">Tickets</button>
+          <button class="cmd-tab" data-sub="welcome">Welcome</button>
+          <button class="cmd-tab" data-sub="logging">Logging</button>
+          <button class="cmd-tab" data-sub="automod">Automod</button>
+          <button class="cmd-tab" data-sub="giveaways">Giveaways</button>
+          <button class="cmd-tab" data-sub="custom">Custom</button>
+          <button class="cmd-tab" data-sub="server-builder">Server Builder</button>
+          <button class="cmd-tab" data-sub="live-stats">Live Stats</button>
+          <button class="cmd-tab" data-sub="temp-vc">Temp VC</button>
+        </div>
+
+        <div id="command-list-container" class="command-list">
+          <div style="text-align: center; padding: 40px; color: var(--text-muted);">
+            Select a category to load commands...
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. Moderation Settings -->
+      <div id="moderation" class="tab-content">
+        <h2>Moderation Settings</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Configure Automod rules, mute roles, and warn thresholds.</p>
+        <div class="glass-panel">
+          <form id="form-moderation" onsubmit="saveSettings(event, 'moderation')">
+            <div class="form-group">
+              <label class="form-label">Mute Role ID</label>
+              <input type="text" class="form-control" id="mod_mute_role" placeholder="e.g. 123456789012345678">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Moderation Log Channel ID</label>
+              <input type="text" class="form-control" id="mod_log_channel" placeholder="Channel to send kick/ban logs">
+            </div>
+            
+            <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+            <h4>🛡️ K4 Defence System</h4>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px;">
+              Automatically detects cross-channel spammers and rapid-fire bots. Offenders are permanently muted and logged.
+            </p>
+            <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+              <label class="switch">
+                <input type="checkbox" id="k4_defence_enabled">
+                <span class="slider round"></span>
+              </label>
+              <label class="form-label" style="margin: 0;">Enable K4 Defence</label>
+            </div>
+            <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+
+            <h4>Warn Thresholds</h4>
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+              <input type="number" class="form-control" id="warn_count_1" placeholder="Warns (e.g. 3)" value="3">
+              <select class="form-select" id="warn_action_1">
+                <option value="mute">Mute</option>
+                <option value="kick">Kick</option>
+                <option value="ban">Ban</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Moderation Settings</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- 4. Welcome & Goodbye -->
+      <div id="welcome" class="tab-content">
+        <h2>Welcome & Goodbye</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Set up welcome messages, channels, and goodbye alerts.</p>
+        <div class="glass-panel">
+          <form id="form-welcome" onsubmit="saveSettings(event, 'welcome')">
+            <div style="display: flex; gap: 20px;">
+              <div style="flex: 1;">
+                <label class="switch" style="margin-bottom: 15px;">
+                  <input type="checkbox" id="welcome_enabled">
+                  <span class="slider"></span>
+                  <span style="margin-left: 50px; color: white;">Enable Welcome Messages</span>
+                </label>
+                <div class="form-group">
+                  <label class="form-label">Welcome Channel ID</label>
+                  <input type="text" class="form-control" id="welcome_channel">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Welcome Message (use {user}, {server})</label>
+                  <textarea class="form-control" id="welcome_message" rows="3">Welcome {user} to {server}!</textarea>
+                </div>
+              </div>
+              <div style="flex: 1;">
+                <label class="switch" style="margin-bottom: 15px;">
+                  <input type="checkbox" id="goodbye_enabled">
+                  <span class="slider"></span>
+                  <span style="margin-left: 50px; color: white;">Enable Goodbye Messages</span>
+                </label>
+                <div class="form-group">
+                  <label class="form-label">Goodbye Channel ID</label>
+                  <input type="text" class="form-control" id="goodbye_channel">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Goodbye Message</label>
+                  <textarea class="form-control" id="goodbye_message" rows="3">{user} left the server.</textarea>
+                </div>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Welcome Settings</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- 5. Leveling -->
+      <div id="leveling" class="tab-content">
+        <h2>Leveling System</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Configure XP multipliers, role rewards, and level-up announcements.</p>
+        <div class="glass-panel">
+          <form id="form-leveling" onsubmit="saveSettings(event, 'leveling')">
+            <label class="switch" style="margin-bottom: 20px;">
+              <input type="checkbox" id="leveling_enabled">
+              <span class="slider"></span>
+              <span style="margin-left: 50px; color: white;">Enable Leveling System</span>
+            </label>
+            <div class="form-group">
+              <label class="form-label">XP Rate Multiplier (e.g. 1.0, 1.5, 2.0)</label>
+              <input type="number" step="0.1" class="form-control" id="xp_rate" value="1.0">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Level-Up Announcement Channel ID (Leave blank to DM)</label>
+              <input type="text" class="form-control" id="level_up_channel">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Level-Up Message (use {user}, {level})</label>
+              <input type="text" class="form-control" id="level_up_message" value="GG {user}, you leveled up to {level}!">
+            </div>
+            <button type="submit" class="btn btn-primary">Save Leveling Settings</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- 6. Logging -->
+      <div id="logging" class="tab-content">
+        <h2>Security Logging</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Enable auditing for message deletes, member joins, and role changes.</p>
+        <div class="glass-panel">
+          <form id="form-logging" onsubmit="saveSettings(event, 'logging')">
+            <label class="switch" style="margin-bottom: 20px;">
+              <input type="checkbox" id="logging_enabled">
+              <span class="slider"></span>
+              <span style="margin-left: 50px; color: white;">Enable Server Logging</span>
+            </label>
+            <div class="form-group">
+              <label class="form-label">Master Log Channel ID</label>
+              <input type="text" class="form-control" id="log_channel">
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+              <label><input type="checkbox" id="log_msg_del" checked> Message Deletes</label>
+              <label><input type="checkbox" id="log_msg_edit" checked> Message Edits</label>
+              <label><input type="checkbox" id="log_mem_join" checked> Member Joins/Leaves</label>
+              <label><input type="checkbox" id="log_role_upd" checked> Role Updates</label>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Logging Settings</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- 7. Tickets -->
+      <div id="tickets" class="tab-content">
+        <h2>Ticket System</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Set up support categories, support roles, and ticket panel messages.</p>
+        <div class="glass-panel">
+          <form id="form-tickets" onsubmit="saveSettings(event, 'tickets')">
+            <label class="switch" style="margin-bottom: 20px;">
+              <input type="checkbox" id="ticket_enabled">
+              <span class="slider"></span>
+              <span style="margin-left: 50px; color: white;">Enable Ticket System</span>
+            </label>
+            <div class="form-group">
+              <label class="form-label">Ticket Category ID</label>
+              <input type="text" class="form-control" id="ticket_category">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Support Role ID</label>
+              <input type="text" class="form-control" id="ticket_support_role">
+            </div>
+            <button type="submit" class="btn btn-primary">Save Ticket Settings</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- 8. Reaction Roles -->
+      <div id="reaction" class="tab-content">
+        <h2>Reaction Roles</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Create and manage self-assignable roles via reactions.</p>
+        <div class="glass-panel">
+          <form id="form-reaction" onsubmit="saveSettings(event, 'reaction_roles')">
+            <div class="form-group">
+              <label class="form-label">Message ID</label>
+              <input type="text" class="form-control" id="rr_message_id" placeholder="ID of the message to react to">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Channel ID</label>
+              <input type="text" class="form-control" id="rr_channel_id" placeholder="ID of the channel">
+            </div>
+            <div style="display: flex; gap: 20px;">
+              <div class="form-group" style="flex: 1;">
+                <label class="form-label">Emoji</label>
+                <input type="text" class="form-control" id="rr_emoji" placeholder="Unicode emoji or custom emoji ID">
+              </div>
+              <div class="form-group" style="flex: 1;">
+                <label class="form-label">Role ID</label>
+                <input type="text" class="form-control" id="rr_role_id" placeholder="Role to assign">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Reaction Role</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- 9. Custom Commands -->
+      <div id="customcmd" class="tab-content">
+        <h2>Custom Commands</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Add specific text-based commands unique to this server.</p>
+        <div class="glass-panel">
+          <form id="form-custom-cmd" onsubmit="saveSettings(event, 'custom_commands')">
+            <div class="form-group">
+              <label class="form-label">Trigger Word</label>
+              <input type="text" class="form-control" id="cc_trigger" placeholder="e.g. rules">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Response Text</label>
+              <textarea class="form-control" id="cc_response" rows="3" placeholder="What the bot should say..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Permission Level</label>
+              <select class="form-select" id="cc_permission">
+                <option value="Everyone">Everyone</option>
+                <option value="Mod">Moderator</option>
+                <option value="Admin">Admin</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Custom Command</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- 10. Giveaways -->
+      <div id="giveaways" class="tab-content">
+        <h2>Giveaways</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Manage active giveaways, reroll winners, or create new ones.</p>
+        <div class="glass-panel">
+          <form id="form-giveaways" onsubmit="saveSettings(event, 'giveaways')">
+            <div class="form-group">
+              <label class="form-label">Giveaway Channel ID</label>
+              <input type="text" class="form-control" id="gw_channel_id" placeholder="Where should the giveaway run?">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Prize</label>
+              <input type="text" class="form-control" id="gw_prize" placeholder="e.g. Nitro Classic">
+            </div>
+            <div style="display: flex; gap: 20px;">
+              <div class="form-group" style="flex: 1;">
+                <label class="form-label">Winners Count</label>
+                <input type="number" class="form-control" id="gw_winners" value="1" min="1">
+              </div>
+              <div class="form-group" style="flex: 1;">
+                <label class="form-label">Duration (hours)</label>
+                <input type="number" class="form-control" id="gw_duration" value="24" min="1">
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Giveaway</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- 11. Bot Settings -->
+      <div id="settings" class="tab-content">
+        <h2>Bot Settings</h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Change bot prefix, language, embed colors, and configure admin roles.</p>
+        <div class="glass-panel">
+          <form id="form-bot-settings" onsubmit="saveSettings(event, 'bot_settings')">
+            <div class="form-group">
+              <label class="form-label">Command Prefix</label>
+              <input type="text" class="form-control" id="bot_prefix" value="k!">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Language / Locale</label>
+              <select class="form-select" id="bot_language">
+                <option value="en">English (US)</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Default Embed Color (Hex)</label>
+              <input type="text" class="form-control" id="bot_embed_color" value="#0affe4">
+            </div>
+            <button type="submit" class="btn btn-primary">Save Bot Settings</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- AUTOMOD SETTINGS -->
+      <div id="automod-settings" class="tab-content">
+        <h2>AutoMod Settings</h2>
+        <p style="color:var(--text-muted); margin-bottom:20px;">Configure automatic moderation rules for this server.</p>
+        <div class="glass-panel" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:10px;">Anti-Link</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Automatically delete Discord invite links and external URLs.</p>
+          <form onsubmit="saveSettings(event,'automod_antilink')">
+            <label class="switch" style="margin-bottom:15px;"><input type="checkbox" id="antilink_enabled"><span class="slider"></span><span style="margin-left:55px;color:white;">Enable Anti-Link</span></label>
+            <div class="form-group"><label class="form-label">Whitelisted Domains (comma-separated)</label><input type="text" class="form-control" id="antilink_whitelist" placeholder="e.g. youtube.com, twitch.tv"></div>
+            <div class="form-group"><label class="form-label">Exempt Roles (Role IDs, comma-separated)</label><input type="text" class="form-control" id="antilink_exempt_roles" placeholder="e.g. 123456, 789012"></div>
+            <button type="submit" class="btn btn-primary">Save Anti-Link</button>
+          </form>
+        </div>
+        <div class="glass-panel" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:10px;">Anti-Spam</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Auto-mute users who send messages too quickly.</p>
+          <form onsubmit="saveSettings(event,'automod_antispam')">
+            <label class="switch" style="margin-bottom:15px;"><input type="checkbox" id="antispam_enabled"><span class="slider"></span><span style="margin-left:55px;color:white;">Enable Anti-Spam</span></label>
+            <div class="form-group"><label class="form-label">Messages per second threshold</label><input type="number" class="form-control" id="antispam_threshold" value="5" min="1" max="50"></div>
+            <div class="form-group"><label class="form-label">Action</label><select class="form-select" id="antispam_action"><option value="warn">Warn</option><option value="mute">Mute</option><option value="kick">Kick</option><option value="ban">Ban</option></select></div>
+            <button type="submit" class="btn btn-primary">Save Anti-Spam</button>
+          </form>
+        </div>
+        <div class="glass-panel" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:10px;">Bad Words Filter</h3>
+          <form onsubmit="saveSettings(event,'automod_badwords')">
+            <label class="switch" style="margin-bottom:15px;"><input type="checkbox" id="badwords_enabled"><span class="slider"></span><span style="margin-left:55px;color:white;">Enable Bad Words Filter</span></label>
+            <div class="form-group"><label class="form-label">Filtered Words (comma-separated)</label><textarea class="form-control" id="badwords_list" rows="3" placeholder="word1, word2, word3..."></textarea></div>
+            <button type="submit" class="btn btn-primary">Save Bad Words</button>
+          </form>
+        </div>
+        <div class="glass-panel">
+          <h3 style="margin-bottom:10px;">Anti-Caps</h3>
+          <form onsubmit="saveSettings(event,'automod_caps')">
+            <label class="switch" style="margin-bottom:15px;"><input type="checkbox" id="caps_enabled"><span class="slider"></span><span style="margin-left:55px;color:white;">Enable Anti-Caps</span></label>
+            <div class="form-group"><label class="form-label">Max Caps Percentage (%)</label><input type="number" class="form-control" id="caps_percent" value="70" min="1" max="100"></div>
+            <button type="submit" class="btn btn-primary">Save Anti-Caps</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- MUSIC SETTINGS -->
+      <div id="music-settings" class="tab-content">
+        <h2>Music Settings</h2>
+        <p style="color:var(--text-muted); margin-bottom:20px;">Configure music playback, DJ role, filters, and queue limits.</p>
+        <div class="glass-panel" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:10px;">General</h3>
+          <form onsubmit="saveSettings(event,'music_general')">
+            <div class="form-group"><label class="form-label">DJ Role ID</label><input type="text" class="form-control" id="music_dj_role" placeholder="Role ID required for DJ commands"></div>
+            <div class="form-group"><label class="form-label">Music Channel ID (lock commands to channel)</label><input type="text" class="form-control" id="music_channel" placeholder="Leave blank for any channel"></div>
+            <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+              <label class="switch" style="margin:0;"><input type="checkbox" id="music_djmode"><span class="slider"></span></label>
+              <span style="color:white;">DJ Mode (require DJ role for ALL music commands)</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+              <label class="switch" style="margin:0;"><input type="checkbox" id="music_autoplay"><span class="slider"></span></label>
+              <span style="color:white;">Autoplay (queue related songs when queue is empty)</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+              <label class="switch" style="margin:0;"><input type="checkbox" id="music_announce" checked><span class="slider"></span></label>
+              <span style="color:white;">Now Playing Announcements</span>
+            </div>
+            <div class="form-group"><label class="form-label">Default Volume: <span id="vol_display">100</span>%</label><input type="range" style="width:100%;" id="music_default_volume" min="0" max="150" value="100" oninput="document.getElementById('vol_display').textContent=this.value"></div>
+            <button type="submit" class="btn btn-primary">Save General</button>
+          </form>
+        </div>
+        <div class="glass-panel" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:15px;">Audio Filters</h3>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin-bottom:20px;">
+            <label class="switch"><input type="checkbox" id="filter_8d"><span class="slider"></span><span style="margin-left:55px;color:white;">8D Surround</span></label>
+            <label class="switch"><input type="checkbox" id="filter_bassboost" checked><span class="slider"></span><span style="margin-left:55px;color:white;">Bass Boost</span></label>
+            <label class="switch"><input type="checkbox" id="filter_nightcore"><span class="slider"></span><span style="margin-left:55px;color:white;">Nightcore</span></label>
+            <label class="switch"><input type="checkbox" id="filter_vaporwave"><span class="slider"></span><span style="margin-left:55px;color:white;">Vaporwave</span></label>
+            <label class="switch"><input type="checkbox" id="filter_karaoke"><span class="slider"></span><span style="margin-left:55px;color:white;">Karaoke</span></label>
+            <label class="switch"><input type="checkbox" id="filter_tremolo"><span class="slider"></span><span style="margin-left:55px;color:white;">Tremolo</span></label>
+            <label class="switch"><input type="checkbox" id="filter_vibrato"><span class="slider"></span><span style="margin-left:55px;color:white;">Vibrato</span></label>
+            <label class="switch"><input type="checkbox" id="filter_slowed"><span class="slider"></span><span style="margin-left:55px;color:white;">Slowed + Reverb</span></label>
+            <label class="switch"><input type="checkbox" id="filter_chipmunk"><span class="slider"></span><span style="margin-left:55px;color:white;">Chipmunk</span></label>
+            <label class="switch"><input type="checkbox" id="filter_echo"><span class="slider"></span><span style="margin-left:55px;color:white;">Echo / Reverb</span></label>
+          </div>
+          <div class="form-group"><label class="form-label">Bass Boost Level</label><select class="form-select" id="music_bassboost_level"><option value="off">Off</option><option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="extreme">Extreme</option></select></div>
+          <button class="btn btn-primary" onclick="saveSettings(event,'music_filters')">Save Filters</button>
+        </div>
+        <div class="glass-panel" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:10px;">Queue & Limits</h3>
+          <form onsubmit="saveSettings(event,'music_limits')">
+            <div class="form-group"><label class="form-label">Max Queue Tracks Per User</label><input type="number" class="form-control" id="music_max_queue" value="10" min="1"></div>
+            <div class="form-group"><label class="form-label">Max Track Duration (minutes, 0 = unlimited)</label><input type="number" class="form-control" id="music_max_duration" value="0" min="0"></div>
+            <button type="submit" class="btn btn-primary">Save Limits</button>
+          </form>
+        </div>
+        <div class="glass-panel">
+          <h3 style="margin-bottom:10px;">Vote Skip</h3>
+          <form onsubmit="saveSettings(event,'music_voteskip')">
+            <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+              <label class="switch" style="margin:0;"><input type="checkbox" id="music_voteskip_enabled"><span class="slider"></span></label>
+              <span style="color:white;">Enable Vote Skip</span>
+            </div>
+            <div class="form-group"><label class="form-label">Required Vote Percentage (%)</label><input type="number" class="form-control" id="music_voteskip_percent" value="50" min="1" max="100"></div>
+            <button type="submit" class="btn btn-primary">Save Vote Skip</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- ECONOMY SETTINGS -->
+      <div id="economy-settings" class="tab-content">
+        <h2>Economy Settings</h2>
+        <p style="color:var(--text-muted); margin-bottom:20px;">Configure the server economy: currency, rewards, and shop.</p>
+        <div class="glass-panel" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:10px;">General Economy</h3>
+          <form onsubmit="saveSettings(event,'economy_general')">
+            <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+              <label class="switch" style="margin:0;"><input type="checkbox" id="economy_enabled" checked><span class="slider"></span></label>
+              <span style="color:white;">Enable Economy System</span>
+            </div>
+            <div class="form-group"><label class="form-label">Currency Name</label><input type="text" class="form-control" id="economy_currency_name" value="Coins" placeholder="e.g. Coins, Gold, Credits"></div>
+            <div class="form-group"><label class="form-label">Currency Emoji</label><input type="text" class="form-control" id="economy_currency_emoji" value="🪙"></div>
+            <div class="form-group"><label class="form-label">Daily Reward Amount</label><input type="number" class="form-control" id="economy_daily" value="100" min="0"></div>
+            <div class="form-group"><label class="form-label">Work Reward Range (min – max coins)</label><div style="display:flex; gap:10px;"><input type="number" class="form-control" id="economy_work_min" value="50" min="0"><input type="number" class="form-control" id="economy_work_max" value="200" min="0"></div></div>
+            <button type="submit" class="btn btn-primary">Save Economy</button>
+          </form>
+        </div>
+        <div class="glass-panel">
+          <h3 style="margin-bottom:10px;">Shop Manager</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Add purchasable items. Use <code>/admineco additem</code> or the form below.</p>
+          <form onsubmit="saveSettings(event,'economy_shop_add')">
+            <div class="form-group"><label class="form-label">Item Name</label><input type="text" class="form-control" id="shop_item_name" placeholder="e.g. VIP Role"></div>
+            <div style="display:flex; gap:10px;">
+              <div class="form-group" style="flex:1;"><label class="form-label">Price</label><input type="number" class="form-control" id="shop_item_price" value="100" min="1"></div>
+              <div class="form-group" style="flex:1;"><label class="form-label">Type</label><select class="form-select" id="shop_item_type"><option value="role">Role</option><option value="item">Item</option><option value="badge">Badge</option></select></div>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Shop Item</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- LIVE STATS SETTINGS -->
+      <div id="stats-settings" class="tab-content">
+        <h2>Live Stats Voice Channels</h2>
+        <p style="color:var(--text-muted); margin-bottom:20px;">Manage auto-updating voice channels that display live server statistics.</p>
+        <div class="glass-panel" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:10px;">Refresh Interval</h3>
+          <form onsubmit="saveSettings(event,'stats_interval')">
+            <div class="form-group"><label class="form-label">Auto-refresh every (minutes, 0 = disabled)</label><input type="number" class="form-control" id="stats_interval_val" value="10" min="0" max="60"></div>
+            <button type="submit" class="btn btn-primary">Save Interval</button>
+          </form>
+        </div>
+        <div class="glass-panel" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:10px;">Active Stat Channels</h3>
+          <div id="stats-channels-list" style="margin-bottom:15px; color:var(--text-muted);">No stat channels configured yet.</div>
+          <button class="btn" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:white;" onclick="saveSettings(event,'stats_refresh')">Force Refresh All Now</button>
+        </div>
+        <div class="glass-panel">
+          <h3 style="margin-bottom:10px;">Add Stat Channel</h3>
+          <form onsubmit="saveSettings(event,'stats_add')">
+            <div class="form-group"><label class="form-label">Stat Type</label><select class="form-select" id="stat_type"><option value="members">Total Members</option><option value="online">Online Members</option><option value="bots">Total Bots</option><option value="channels">Total Channels</option><option value="roles">Total Roles</option><option value="boosts">Server Boosts</option></select></div>
+            <div class="form-group"><label class="form-label">Display Format (use {value})</label><input type="text" class="form-control" id="stat_format" value="Members: {value}"></div>
+            <div class="form-group"><label class="form-label">Category ID (optional)</label><input type="text" class="form-control" id="stat_category" placeholder="Leave blank for default"></div>
+            <button type="submit" class="btn btn-primary">Create Stat Channel</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- TEMP VC SETTINGS -->
+      <div id="tempvc-settings" class="tab-content">
+        <h2>Temporary VC System</h2>
+        <p style="color:var(--text-muted); margin-bottom:20px;">Configure the Join-to-Create temporary voice channel system.</p>
+        <div class="glass-panel" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:10px;">Setup</h3>
+          <form onsubmit="saveSettings(event,'tempvc_setup')">
+            <label class="switch" style="margin-bottom:15px;"><input type="checkbox" id="tempvc_enabled" checked><span class="slider"></span><span style="margin-left:55px;color:white;">Enable Temp VC System</span></label>
+            <div class="form-group"><label class="form-label">Join-to-Create Channel ID</label><input type="text" class="form-control" id="tempvc_join_channel" placeholder="Users join this VC to create their own"></div>
+            <div class="form-group"><label class="form-label">Creation Category ID</label><input type="text" class="form-control" id="tempvc_category" placeholder="Where new temp VCs appear"></div>
+            <div class="form-group"><label class="form-label">Default Name Template (use {user}, {count})</label><input type="text" class="form-control" id="tempvc_name_template" value="{user}'s Channel"></div>
+            <div class="form-group"><label class="form-label">Default User Limit (0 = unlimited)</label><input type="number" class="form-control" id="tempvc_default_limit" value="0" min="0" max="99"></div>
+            <button type="submit" class="btn btn-primary">Save Temp VC</button>
+          </form>
+        </div>
+        <div class="glass-panel">
+          <h3 style="margin-bottom:10px;">Active Temp VCs</h3>
+          <div id="active-tempvcs" style="color:var(--text-muted);">No active temp VCs at the moment.</div>
+        </div>
+      </div>
+
+      <!-- SERVER BUILDER SETTINGS -->
+      <div id="serverbuilder-settings" class="tab-content">
+        <h2>Server Builder &amp; Decoration</h2>
+        <p style="color:var(--text-muted); margin-bottom:20px;">Audit permissions, bulk-set overrides, clone channels, and manage server templates.</p>
+        <div class="glass-panel" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:10px;">Server Audit</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Scan all channels for missing or broken permission overrides and get fix suggestions.</p>
+          <button class="btn btn-primary" onclick="runServerAction('server_audit')">Run Audit</button>
+          <div id="audit-results" style="margin-top:15px; color:var(--text-muted);">Results will appear here after the audit runs.</div>
+        </div>
+        <div class="glass-panel" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:10px;">Bulk Permissions</h3>
+          <form onsubmit="saveSettings(event,'server_bulkpermissions')">
+            <div class="form-group"><label class="form-label">Role ID</label><input type="text" class="form-control" id="bulk_role_id" placeholder="Role to apply preset to"></div>
+            <div class="form-group"><label class="form-label">Permission Preset</label><select class="form-select" id="bulk_preset"><option value="read_only">Read Only</option><option value="member">Member (default)</option><option value="mod">Moderator</option><option value="locked">Locked (deny all)</option></select></div>
+            <button type="submit" class="btn btn-primary">Apply to All Channels</button>
+          </form>
+        </div>
+        <div class="glass-panel" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:10px;">Server Templates</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Instantly build your server with pre-configured layouts. This will magically add new categories and channels without deleting your existing ones.</p>
+          <div id="templates-list" style="margin-bottom:15px;">
+            <div style="display:flex; gap:15px; flex-wrap:wrap; margin-bottom:20px;">
+              <div style="display:flex; flex-direction:column; gap:8px; width:160px;">
+                  <button class="btn" style="background:#8b5cf6; color:white; border:none; width:100%;" onclick="runServerTemplate('gaming')">Gaming Server</button>
+                  <span style="font-size:0.75rem; color:var(--text-muted); text-align:center;">Adds LFG, Voice Lounges, and Gaming categories.</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px; width:160px;">
+                  <button class="btn" style="background:#3b82f6; color:white; border:none; width:100%;" onclick="runServerTemplate('community')">Community Server</button>
+                  <span style="font-size:0.75rem; color:var(--text-muted); text-align:center;">Adds Welcome, Rules, Events, and Hobby text channels.</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px; width:160px;">
+                  <button class="btn" style="background:#ef4444; color:white; border:none; width:100%;" onclick="runServerTemplate('creator')">Creator Server</button>
+                  <span style="font-size:0.75rem; color:var(--text-muted); text-align:center;">Adds YouTube/Twitch announcements and Sub-only zones.</span>
+              </div>
+              <div style="display:flex; flex-direction:column; gap:8px; width:160px;">
+                  <button class="btn" style="background:#10b981; color:white; border:none; width:100%;" onclick="runServerTemplate('tech')">Tech/Dev Server</button>
+                  <span style="font-size:0.75rem; color:var(--text-muted); text-align:center;">Adds Github feeds, Support tickets, and Coding help.</span>
+              </div>
+            </div>
+            <div id="template-results" style="color:var(--c1); font-weight:bold; margin-bottom:15px;"></div>
+          </div>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="runServerAction('server_export')">Export Current Layout</button>
+            <button class="btn" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1); color:white;">Import Template (JSON)</button>
+          </div>
+        </div>
+        <div class="glass-panel" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:10px;">Channel Decorator (Fonts & Emoticons)</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Stylize your server! Apply cool Unicode fonts and emoticons to the whole server, or rename one specific channel.</p>
+          
+          <div style="display:flex; gap:15px; margin-bottom:15px; flex-wrap:wrap;">
+            <div class="form-group" style="flex:1; min-width:250px;">
+              <label class="form-label">Select Font / Emoticon Preset</label>
+              <select class="form-select" id="font_selector" onchange="previewFont()">
+                <option value="FN-01">FN-01 Cursive Script (𝓪𝓫𝓬...)</option>
+                <option value="FN-02">FN-02 Gothic (𝔞𝔟𝔠...)</option>
+                <option value="FN-03">FN-03 Bold Gothic (𝕒𝕓𝕔...)</option>
+                <option value="FN-04">FN-04 Math Bold (𝐚𝐛𝐜...)</option>
+                <option value="FN-05">FN-05 Math Italic (𝑎𝑏𝑐...)</option>
+                <option value="FN-06">FN-06 Bold Italic (𝒂𝒃𝒄...)</option>
+                <option value="FN-07">FN-07 Monospace (𝚊𝚋𝚌...)</option>
+                <option value="FN-08">FN-08 Sans Bold (𝗮𝗯𝗰...)</option>
+                <option value="FN-11">FN-11 Fullwidth (ａｂｃ...)</option>
+                <option value="FN-12">FN-12 Small Caps (ᴀʙᴄ...)</option>
+                <option value="FN-15">FN-15 Squared (🄰🄱🄲...)</option>
+                <option value="FN-16">FN-16 Filled Squares (🅰🅱🅲...)</option>
+                <option value="FN-17">FN-17 Upside Down (ɐqɔ...)</option>
+                <option value="FN-21">FN-21 Cursive + Dots (· 𝓬𝓱𝓪𝓽)</option>
+                <option value="FN-22">FN-22 Gothic + Lines (━ 𝔠𝔥𝔞𝔱 ━)</option>
+                <option value="FN-25">FN-25 Small Caps + Sparkle (✦ ᴄʜᴀᴛ ✦)</option>
+                <option value="FN-30">FN-30 Cursive + Heart (𝓬𝓱𝓪𝓽 ♡)</option>
+                <option value="FN-31">FN-31 Gothic + Star (✧ 𝔠𝔥𝔞𝔱 ✧)</option>
+                <option value="FN-38">FN-38 Strikethrough Ghost (c̶h̶a̶t̶ ⌇)</option>
+                <option value="FN-40">FN-40 Cursive Gothic Mix (𝓬𝔥𝓪𝔱<3)</option>
+              </select>
+            </div>
+            
+            <div class="form-group" style="flex:1; min-width:200px;">
+              <label class="form-label">Type Custom Channel Name (for Preview)</label>
+              <input type="text" class="form-control" id="font_preview_input" value="general chat" onkeyup="previewFont()">
+            </div>
+          </div>
+          
+          <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:6px; margin-bottom:15px; border-left:3px solid var(--c1);">
+              <span style="color:var(--text-muted); font-size:0.8rem; text-transform:uppercase; letter-spacing:1px;">Live Preview</span>
+              <div id="font_live_preview" style="font-size:1.4rem; margin-top:5px; font-weight:bold; color:white; letter-spacing:1px;">...</div>
+          </div>
+          
+          <div style="border-top:1px solid rgba(255,255,255,0.1); margin:15px 0;"></div>
+          
+          <div style="background:rgba(239, 68, 68, 0.1); border-left:4px solid #ef4444; padding:15px; border-radius:4px; margin-bottom:15px;">
+              <strong style="color:#ef4444; display:block; margin-bottom:5px;">⚠️ API Rate Limit Warning</strong>
+              <span style="color:var(--text-muted); font-size:0.9rem;">Discord strictly limits how quickly bots can edit channels (approx. 2 edits per channel per 10 minutes). Applying a layout or font style to a massive server may take up to 2 minutes to process safely in the background. Please be patient!</span>
+          </div>
+
+          <h4 style="margin-bottom:10px; font-size:1rem;">Target Selection</h4>
+          <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:10px;">Choose whether to apply this font style to your entire server or just rename a single specific channel to your custom text.</p>
+          <div style="display:flex; gap:15px; flex-wrap:wrap; align-items:flex-end;">
+              <div class="form-group" style="flex:1; min-width:250px;">
+                <label class="form-label">Target Channel</label>
+                <select class="form-select" id="font_target_channel">
+                  <option value="all">-- RENAME ALL CHANNELS IN SERVER --</option>
+                  <!-- Populated by JS -->
+                </select>
+              </div>
+              <button class="btn btn-primary" style="margin-bottom:15px;" onclick="runServerFont()">Apply Decorator Now</button>
+          </div>
+          <div id="font-results" style="margin-top:5px; font-weight:bold;"></div>
+        </div>
+
+        <div class="glass-panel" style="margin-bottom:20px;">
+          <h3 style="margin-bottom:10px;">Interactive Layout Editor</h3>
+          <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Configure privacy and roles for every channel individually.</p>
+          <button class="btn btn-primary" onclick="fetchServerLayout()">Load Server Layout</button>
+          <div id="layout-editor-container" style="margin-top:20px; display:none; background:rgba(0,0,0,0.2); padding:15px; border-radius:8px;">
+            <!-- Rendered by JS -->
+          </div>
+          <button id="save-layout-btn" class="btn btn-primary" style="margin-top:15px; display:none;" onclick="saveServerLayout()">Save & Apply Permissions</button>
+          <div id="layout-results" style="margin-top:10px; font-weight:bold;"></div>
+        </div>
+        
+        <!-- UNIVERSAL PROGRESS BAR (Hidden by Default) -->
+        <div id="task-progress-container" class="glass-panel" style="display:none; margin-bottom:20px; border-left:4px solid #3b82f6;">
+            <h4 style="margin-bottom:10px; font-size:1rem; color:var(--c1);">Background Task Running...</h4>
+            <div id="task-progress-message" style="color:var(--text-muted); font-size:0.9rem; margin-bottom:10px;">Initializing task...</div>
+            <div style="width:100%; background:rgba(255,255,255,0.1); border-radius:10px; height:20px; overflow:hidden; position:relative;">
+                <div id="task-progress-bar" style="width:0%; height:100%; background:linear-gradient(90deg, #8b5cf6, #3b82f6); transition:width 0.3s ease;"></div>
+                <div id="task-progress-percent" style="position:absolute; top:0; left:0; right:0; bottom:0; display:flex; align-items:center; justify-content:center; font-size:0.75rem; font-weight:bold; color:white; text-shadow:1px 1px 2px rgba(0,0,0,0.8);">0%</div>
+            </div>
+        </div>
+        
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    const guildId = "{{ guild_id }}";
+    
+    // Sidebar Navigation
+    const navCategories = document.querySelectorAll('.nav-category');
+    const tabContents = document.querySelectorAll('.content-area .tab-content');
+    
+    navCategories.forEach(nav => {
+      nav.addEventListener('click', () => {
+        navCategories.forEach(n => n.classList.remove('active'));
+        tabContents.forEach(t => t.classList.remove('active'));
+        
+        nav.classList.add('active');
+        const target = nav.getAttribute('data-target');
+        document.getElementById(target).classList.add('active');
+      });
+    });
+
+    // Command Sub-Tabs Navigation
+    const cmdTabs = document.querySelectorAll('.cmd-tab');
+    cmdTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        cmdTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const category = tab.getAttribute('data-sub');
+        loadCommandsForCategory(category);
+      });
+    });
+
+    // ── Full Command Catalog ──────────────────────────────────────────────────
+    const COMMAND_CATALOG = {
+      moderation: [
+        { name:'ban',           desc:'Permanently ban a member from the server' },
+        { name:'unban',         desc:'Unban a previously banned member' },
+        { name:'kick',          desc:'Kick a member from the server' },
+        { name:'timeout',       desc:'Discord-timeout a member for a duration' },
+        { name:'untimeout',     desc:'Remove a timeout from a member' },
+        { name:'purge',         desc:'Bulk-delete messages in a channel' },
+        { name:'slowmode',      desc:'Set slowmode delay on a channel' },
+        { name:'lock',          desc:'Lock a channel so members cannot send messages' },
+        { name:'unlock',        desc:'Unlock a previously locked channel' },
+      ],
+      automod: [
+        { name:'automod rule_add',      desc:'Add a new automod rule' },
+        { name:'automod rule_remove',   desc:'Remove an automod rule' },
+        { name:'automod rule_list',     desc:'List automod rules' },
+        { name:'automod threshold_set', desc:'Set warn thresholds' },
+        { name:'automod modlog_set',    desc:'Set the mod log channel' },
+        { name:'automod info',          desc:'View automod configuration' },
+        { name:'k4defence enable',      desc:'Enable K4 Defence spam protection' },
+        { name:'k4defence disable',     desc:'Disable K4 Defence' },
+        { name:'k4defence status',      desc:'Check K4 Defence status' },
+      ],
+      music: [
+        { name:'music play',       desc:'Play a song from YouTube' },
+        { name:'music download',   desc:'Search and download an MP3 directly' },
+        { name:'music skip',       desc:'Skip the current song' },
+        { name:'music stop',       desc:'Stop music and clear the queue' },
+        { name:'music pause',      desc:'Pause the music' },
+        { name:'music resume',     desc:'Resume paused music' },
+        { name:'music queue',      desc:'Show the music queue' },
+        { name:'music nowplaying', desc:'Show currently playing song' },
+        { name:'music volume',     desc:'Change the playback volume' },
+        { name:'music loop',       desc:'Toggle queue or song loop' },
+        { name:'music shuffle',    desc:'Shuffle the music queue' },
+        { name:'music filter',     desc:'Apply audio filters (bassboost, nightcore, etc.)' },
+        { name:'music lyrics',     desc:'Get lyrics for the current song' },
+      ],
+      utility: [
+        { name:'util ping',        desc:'Check bot latency' },
+        { name:'util calc',        desc:'Evaluate a math expression safely' },
+        { name:'util color',       desc:'Preview a hex color' },
+        { name:'util charinfo',    desc:'Show unicode character info' },
+        { name:'util snipe',       desc:'Show the last deleted message' },
+        { name:'util editsnipe',   desc:'Show the last edited message' },
+        { name:'util weather',     desc:'Get current weather for a location' },
+        { name:'util translate',   desc:'Translate text to another language' },
+        { name:'util qr',          desc:'Generate a QR code' },
+        { name:'util paste',       desc:'Create a pastebin' },
+        { name:'util reminder',    desc:'Set a personal reminder' },
+        { name:'util reminders',   desc:'List your active reminders' },
+        { name:'util announce',    desc:'Send an announcement embed' },
+        { name:'util say',         desc:'Make the bot say something' },
+        { name:'embed',            desc:'Interactive embed builder' },
+        { name:'info bot',         desc:'Detailed bot statistics' },
+        { name:'info server',      desc:'View detailed server information' },
+        { name:'info user',        desc:'View detailed information about a user' },
+        { name:'info channel',     desc:'View info about a channel' },
+        { name:'info role',        desc:'View info about a role' },
+        { name:'info emoji',       desc:'View info about a custom emoji' },
+        { name:'tools avatar',     desc:"Get a user's full-size avatar" },
+        { name:'tools banner',     desc:"Get a user's Discord profile banner" },
+        { name:'tools servericon', desc:"Get the server's icon" },
+        { name:'tools serverbanner', desc:"Get the server's banner" },
+        { name:'tools firstmsg',   desc:"Get a link to the first message in the channel" },
+        { name:'tools timestamp',  desc:'Convert a date/time to a Discord timestamp' },
+        { name:'tools time',       desc:'Show the current time in UTC' },
+        { name:'tools afk',        desc:'Set your AFK status' },
+        { name:'tools steal',      desc:'Steal an emoji from another server' },
+        { name:'tools poll',       desc:'Create a reaction poll' },
+        { name:'tools countdown',  desc:'Create a countdown timer' },
+      ],
+      fun: [
+        { name:'fun 8ball',    desc:'Ask the magic 8-ball a yes/no question' },
+        { name:'fun ascii',    desc:'Convert text to ASCII art' },
+        { name:'fun compliment',desc:'Send a sweet compliment' },
+        { name:'fun dare',     desc:'Get a random dare' },
+        { name:'fun truth',    desc:'Get a random truth question' },
+        { name:'fun fact',     desc:'Get a random interesting fact' },
+        { name:'fun flip',     desc:'Flip a coin' },
+        { name:'fun joke',     desc:'Get a random joke' },
+        { name:'fun meme',     desc:'Fetch a random meme from Reddit' },
+        { name:'fun quote',    desc:'Get an inspirational quote' },
+        { name:'fun rate',     desc:'Rate something out of 10' },
+        { name:'fun roast',    desc:'Roast a mentioned user' },
+        { name:'fun roll',     desc:'Roll a dice' },
+        { name:'fun slap',     desc:'Slap someone' },
+        { name:'fun hug',      desc:'Hug someone' },
+        { name:'fun kiss',     desc:'Kiss someone' },
+        { name:'fun pat',      desc:'Pat someone' },
+        { name:'fun cuddle',   desc:'Cuddle someone' },
+        { name:'fun wwe',      desc:'Wrestling move GIF' },
+        { name:'fun kill',     desc:'Fake kill someone' },
+        { name:'games rps',    desc:'Play rock paper scissors' },
+        { name:'games tictactoe', desc:'Play Tic-Tac-Toe' },
+        { name:'games connect4',  desc:'Play Connect 4' },
+        { name:'games hangman',   desc:'Play Hangman' },
+        { name:'games trivia',    desc:'Play Trivia' },
+        { name:'games fasttype',  desc:'Play Fast Type' },
+        { name:'games russianroulette', desc:'Play Russian Roulette' },
+        { name:'games slotmachine', desc:'Play the Slot Machine' },
+        { name:'games minesweeper', desc:'Play Minesweeper' },
+        { name:'games snake',     desc:'Play Snake' },
+        { name:'games higherlower',desc:'Play Higher or Lower' },
+        { name:'games wordle',    desc:'Play Wordle' },
+      ],
+      economy: [
+        { name:'eco balance',           desc:'Check your wallet and bank balance' },
+        { name:'eco deposit',           desc:'Deposit coins into bank' },
+        { name:'eco withdraw',          desc:'Withdraw coins from bank' },
+        { name:'eco transfer',          desc:'Transfer coins to another member' },
+        { name:'eco leaderboard',       desc:'View the economy leaderboard' },
+        { name:'eco daily',             desc:'Claim your daily coin reward' },
+        { name:'eco weekly',            desc:'Claim your weekly reward' },
+        { name:'eco monthly',           desc:'Claim your monthly reward' },
+        { name:'eco work',              desc:'Work to earn some coins' },
+        { name:'eco crime',             desc:'Commit a crime for coins' },
+        { name:'eco rob',               desc:'Attempt to rob a user' },
+        { name:'eco bankrob',           desc:'Attempt a massive bank robbery' },
+        { name:'eco fish',              desc:'Go fishing' },
+        { name:'eco hunt',              desc:'Go hunting' },
+        { name:'eco mine',              desc:'Go mining' },
+        { name:'eco gamble',            desc:'Gamble your coins' },
+        { name:'eco_games coinflip',    desc:'Flip a coin to double your bet' },
+        { name:'eco_games slots',       desc:'Play the slot machine' },
+        { name:'eco_games blackjack',   desc:'Play blackjack against dealer' },
+        { name:'eco_shop shop',         desc:'Browse the server shop' },
+        { name:'eco_shop buy',          desc:'Purchase an item' },
+        { name:'eco_shop sell',         desc:'Sell an item' },
+        { name:'eco_shop inventory',    desc:'View your item inventory' },
+        { name:'eco_shop use',          desc:'Use an item' },
+        { name:'eco_shop gift',         desc:'Gift an item' },
+        { name:'admineco give',         desc:'Admin: give coins' },
+        { name:'admineco remove',       desc:'Admin: remove coins' },
+        { name:'admineco reset',        desc:'Admin: reset user economy' },
+        { name:'admineco additem',      desc:'Admin: add shop item' },
+        { name:'admineco removeitem',   desc:'Admin: remove shop item' },
+      ],
+      leveling: [
+        { name:'rank',              desc:'Check your level and XP' },
+        { name:'leaderboard',       desc:'View leveling leaderboard' },
+        { name:'leveladmin give_xp',desc:'Admin: give XP to a user' },
+        { name:'leveladmin remove_xp',desc:'Admin: remove XP from a user' },
+        { name:'leveladmin set_level',desc:'Admin: set user level' },
+        { name:'leveladmin rewards',desc:'Admin: view role rewards' },
+        { name:'leveladmin add_reward',desc:'Admin: add a role reward' },
+        { name:'leveladmin remove_reward',desc:'Admin: remove a role reward' },
+      ],
+      music: [
+        { name:'music join',     desc:'Make the bot join VC' },
+        { name:'music leave',    desc:'Make the bot leave VC' },
+        { name:'music play',     desc:'Play a song or playlist' },
+        { name:'music pause',    desc:'Pause playback' },
+        { name:'music resume',   desc:'Resume playback' },
+        { name:'music stop',     desc:'Stop playback and clear queue' },
+        { name:'music skip',     desc:'Skip current song' },
+        { name:'music queue',    desc:'View the queue' },
+        { name:'music nowplaying',desc:'Show currently playing song' },
+        { name:'music volume',   desc:'Adjust volume' },
+        { name:'music loop',     desc:'Toggle loop mode' },
+        { name:'music remove',   desc:'Remove song from queue' },
+        { name:'music clear',    desc:'Clear the queue' },
+        { name:'music shuffle',  desc:'Shuffle the queue' },
+        { name:'music filter_8d',desc:'Toggle 8D filter' },
+        { name:'music filter_bassboost',desc:'Toggle Bassboost filter' },
+        { name:'music filter_nightcore',desc:'Toggle Nightcore filter' },
+        { name:'music filter_vaporwave',desc:'Toggle Vaporwave filter' },
+        { name:'music filter_off',desc:'Turn off filters' },
+        { name:'music playlist_save',desc:'Save queue to a playlist' },
+        { name:'music playlist_list',desc:'List saved playlists' },
+        { name:'music playlist_load',desc:'Load a playlist' },
+      ],
+      tickets: [
+        { name:'ticket setup',     desc:'Setup ticket panel' },
+        { name:'ticket add',       desc:'Add user to ticket' },
+        { name:'ticket remove',    desc:'Remove user from ticket' },
+        { name:'ticket close',     desc:'Close the ticket' },
+        { name:'ticket transcript',desc:'Generate transcript' },
+      ],
+      giveaways: [
+        { name:'giveaway start',   desc:'Start a giveaway' },
+        { name:'giveaway end',     desc:'End a giveaway' },
+        { name:'giveaway reroll',  desc:'Reroll a giveaway' },
+        { name:'giveaway list',    desc:'List active giveaways' },
+      ],
+      custom: [
+        { name:'cc add',       desc:'Add a custom command' },
+        { name:'cc remove',    desc:'Remove a custom command' },
+        { name:'cc list',      desc:'List custom commands' },
+        { name:'rr create',    desc:'Create a reaction role' },
+        { name:'rr remove',    desc:'Remove a reaction role' },
+      ],
+      'server-builder': [
+        { name:'server backup_create', desc:'Create a server backup' },
+        { name:'server backup_load',   desc:'Load a server backup' },
+        { name:'server backup_info',   desc:'Info about a backup' },
+        { name:'server backup_list',   desc:'List backups' },
+        { name:'server backup_delete', desc:'Delete a backup' },
+        { name:'server wipe_channels', desc:'Wipe all channels' },
+        { name:'server wipe_roles',    desc:'Wipe all roles' },
+        { name:'server template_export',desc:'Export template string' },
+        { name:'server template_import',desc:'Import template string' },
+        { name:'server audit',         desc:'Run security audit' },
+        { name:'decor apply_theme',    desc:'Apply visual theme' },
+        { name:'decor restore',        desc:'Restore visuals' },
+        { name:'decor randomize_names',desc:'Randomize channel names' },
+        { name:'decor list_themes',    desc:'List visual themes' },
+      ],
+      'live-stats': [
+        { name:'stats setup',      desc:'Setup live stats' },
+        { name:'stats category',   desc:'Set stats category' },
+        { name:'stats online',     desc:'Set online counter' },
+        { name:'stats all_members',desc:'Set members counter' },
+        { name:'stats bots',       desc:'Set bots counter' },
+        { name:'stats custom',     desc:'Create custom counter' },
+        { name:'stats format',     desc:'Format counters' },
+        { name:'stats reset',      desc:'Reset stats' },
+        { name:'stats refresh',    desc:'Refresh stats immediately' },
+      ],
+      'temp-vc': [
+        { name:'vc setup',    desc:'Setup Temp VC system' },
+        { name:'vc lock',     desc:'Lock Temp VC' },
+        { name:'vc unlock',   desc:'Unlock Temp VC' },
+        { name:'vc name',     desc:'Rename Temp VC' },
+        { name:'vc limit',    desc:'Set Temp VC user limit' },
+        { name:'vc kick',     desc:'Kick user from Temp VC' },
+        { name:'vc hide',     desc:'Hide Temp VC' },
+        { name:'vc unhide',   desc:'Unhide Temp VC' },
+        { name:'vc ban',      desc:'Ban user from Temp VC' },
+        { name:'vc unban',    desc:'Unban user from Temp VC' },
+        { name:'vc invite',   desc:'Invite user to Temp VC' },
+        { name:'vc claim',    desc:'Claim Temp VC ownership' },
+        { name:'tempvc list', desc:'List Temp VCs' },
+        { name:'tempvc delete',desc:'Delete a Temp VC' },
+        { name:'tempvc clear',desc:'Clear all Temp VCs' },
+      ]
+    };
+
+    // ── Load Commands ─────────────────────────────────────────────────────────
+    async function loadCommandsForCategory(category) {
+      const container = document.getElementById('command-list-container');
+      container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">Loading <strong>${category}</strong> commands…</div>`;
+
+      let configs = [];
+      try {
+        const res = await fetch(`/api/guild/${guildId}/commands`);
+        if (res.ok) configs = await res.json();
+      } catch (_) {}
+
+      const cmdsToRender = COMMAND_CATALOG[category] || [];
+      if (cmdsToRender.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">No commands found for this category.</div>`;
+        return;
+      }
+
+      container.innerHTML = cmdsToRender.map(cmd => {
+        const cfg = configs.find(c => c.command_name === cmd.name) || { enabled: true, permission_level: 'Everyone', cooldown: 0 };
+        return `
+          <div class="command-card">
+            <div class="command-header">
+              <div style="flex:1;">
+                <div class="command-name">/${cmd.name}</div>
+                <div class="command-desc">${cmd.desc}</div>
+                <div style="margin-top:4px; font-size:0.75rem; color:rgba(255,255,255,0.3);">Slash: <code>/${cmd.name}</code> &nbsp;·&nbsp; Prefix: <code>!${cmd.name}</code></div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" ${cfg.enabled ? 'checked' : ''} onchange="saveCmdConfig('${cmd.name}', 'enabled', this.checked)">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="command-controls">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label" style="font-size:0.8rem;">Permission Level</label>
+                <select class="form-select" onchange="saveCmdConfig('${cmd.name}', 'permission_level', this.value)">
+                  <option ${cfg.permission_level==='Everyone'?'selected':''}>Everyone</option>
+                  <option ${cfg.permission_level==='Mod'?'selected':''}>Mod</option>
+                  <option ${cfg.permission_level==='Admin'?'selected':''}>Admin</option>
+                  <option ${cfg.permission_level==='DJ'?'selected':''}>DJ</option>
+                  <option ${cfg.permission_level==='Owner'?'selected':''}>Owner</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label" style="font-size:0.8rem;">Cooldown (seconds)</label>
+                <input type="number" class="form-control" value="${cfg.cooldown}" min="0" onchange="saveCmdConfig('${cmd.name}', 'cooldown', parseInt(this.value))">
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    async function saveCmdConfig(cmdName, key, value) {
+      try {
+        const payload = {};
+        payload[key] = value;
+        await fetch(`/api/guild/${guildId}/command/${encodeURIComponent(cmdName)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (e) { console.error('Failed to save command config', e); }
+    }
+
+    async function runServerAction(action) {
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (action === 'server_audit') {
+          document.getElementById('audit-results').innerHTML = data.results || 'Audit complete – no issues found.';
+        }
+      } catch (e) { console.error('Server action failed', e); }
+    }
+
+    async function runServerTemplate(templateId) {
+      const resContainer = document.getElementById('template-results');
+      resContainer.innerHTML = 'Applying template... Please wait.';
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'server_template_apply', template_id: templateId })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (data.success) {
+          resContainer.innerHTML = data.results || 'Template applied successfully!';
+        } else {
+          resContainer.innerHTML = 'Error: ' + (data.error || 'Failed to apply template.');
+          resContainer.style.color = '#ef4444';
+        }
+      } catch (e) {
+        resContainer.innerHTML = 'Network error occurred.';
+        resContainer.style.color = '#ef4444';
+      }
+    }
+
+    // --- BACKGROUND TASK POLLING ---
+    let pollInterval = null;
+    function pollTaskProgress(taskId, resultContainerId) {
+        const progressContainer = document.getElementById('task-progress-container');
+        const progressBar = document.getElementById('task-progress-bar');
+        const progressPercent = document.getElementById('task-progress-percent');
+        const progressMessage = document.getElementById('task-progress-message');
+        const resContainer = document.getElementById(resultContainerId);
+        
+        progressContainer.style.display = 'block';
+        resContainer.innerHTML = 'Task is processing in the background...';
+        
+        if (pollInterval) clearInterval(pollInterval);
+        
+        pollInterval = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/guild/${guildId}/task-progress/${taskId}`);
+                const data = await res.json().catch(() => ({}));
+                if (data.success && data.task) {
+                    const task = data.task;
+                    let pct = 0;
+                    if (task.total > 0) {
+                        pct = Math.round((task.progress / task.total) * 100);
+                    }
+                    
+                    progressBar.style.width = pct + '%';
+                    progressPercent.innerText = pct + '%';
+                    progressMessage.innerText = task.message || 'Processing...';
+                    
+                    if (task.status === 'completed') {
+                        clearInterval(pollInterval);
+                        progressBar.style.background = 'linear-gradient(90deg, #10b981, #34d399)';
+                        resContainer.innerHTML = `<span style="color:#10b981;">✅ ${task.message}</span>`;
+                        setTimeout(() => { progressContainer.style.display = 'none'; progressBar.style.background = 'linear-gradient(90deg, #8b5cf6, #3b82f6)'; }, 5000);
+                    } else if (task.status === 'error') {
+                        clearInterval(pollInterval);
+                        progressBar.style.background = '#ef4444';
+                        resContainer.innerHTML = `<span style="color:#ef4444;">❌ Error: ${task.message}</span>`;
+                        setTimeout(() => { progressContainer.style.display = 'none'; progressBar.style.background = 'linear-gradient(90deg, #8b5cf6, #3b82f6)'; }, 5000);
+                    }
+                }
+            } catch (e) {
+                console.error("Polling error", e);
+            }
+        }, 1000);
+    }
+
+    async function runServerFont() {
+      const resContainer = document.getElementById('font-results');
+      const fontId = document.getElementById('font_selector').value;
+      const targetChannel = document.getElementById('font_target_channel').value;
+      const customName = document.getElementById('font_preview_input').value;
+      
+      resContainer.innerHTML = 'Starting background task...';
+      
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'server_font_apply', font_id: fontId, channel_id: targetChannel, custom_name: customName })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (data.success && data.task_id) {
+          pollTaskProgress(data.task_id, 'font-results');
+        } else {
+          resContainer.innerHTML = 'Error: ' + (data.error || 'Failed to apply fonts.');
+        }
+      } catch (e) {
+        resContainer.innerHTML = 'Network error occurred.';
+      }
+    }
+
+    let previewDebounce;
+    async function previewFont() {
+      clearTimeout(previewDebounce);
+      previewDebounce = setTimeout(async () => {
+        const text = document.getElementById('font_preview_input').value;
+        const fontId = document.getElementById('font_selector').value;
+        if (!text) {
+          document.getElementById('font_live_preview').innerText = '...';
+          return;
+        }
+        
+        try {
+          const res = await fetch(`/api/font-preview`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text, font_id: fontId })
+          });
+          const data = await res.json().catch(() => ({}));
+          if (data.success) {
+            document.getElementById('font_live_preview').innerText = data.preview;
+          }
+        } catch (e) { }
+      }, 300);
+    }
+
+    let activeLayoutData = null;
+
+    async function fetchServerLayout() {
+      const resContainer = document.getElementById('layout-results');
+      const editorContainer = document.getElementById('layout-editor-container');
+      const saveBtn = document.getElementById('save-layout-btn');
+      
+      resContainer.innerHTML = 'Fetching server layout...';
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'server_export' })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (data.success && data.export_data) {
+          activeLayoutData = data.export_data;
+          resContainer.innerHTML = 'Layout loaded.';
+          editorContainer.style.display = 'block';
+          saveBtn.style.display = 'block';
+          
+          let html = '';
+          const roles = activeLayoutData.roles || [];
+          
+          // Also populate the Target Channel dropdown for the Decorator
+          const targetSelect = document.getElementById('font_target_channel');
+          targetSelect.innerHTML = '<option value="all">-- RENAME ALL CHANNELS IN SERVER --</option>';
+          
+          activeLayoutData.categories.forEach(cat => {
+            html += `<div style="margin-bottom:15px;">
+              <h4 style="color:var(--c2); margin-bottom:10px; font-weight:bold;">${cat.name}</h4>
+              <div style="margin-left:15px;">`;
+            
+            cat.channels.forEach(chan => {
+              const icon = chan.type === 'voice' ? '🔊' : '#';
+              
+              // Add to Target Channel Select
+              const opt = document.createElement('option');
+              opt.value = chan.id;
+              opt.innerText = `[${cat.name}] ${chan.name}`;
+              targetSelect.appendChild(opt);
+              html += `<div style="display:flex; flex-direction:column; background:rgba(255,255,255,0.05); padding:10px; border-radius:6px; margin-bottom:8px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:bold;">${icon} ${chan.name}</span>
+                    <label class="switch"><input type="checkbox" id="pub_${chan.id}" onchange="toggleRoles('${chan.id}')" checked><span class="slider"></span><span style="margin-left:55px;">Public</span></label>
+                  </div>
+                  <div id="roles_${chan.id}" style="display:none; flex-wrap:wrap; gap:8px;">
+                    <div style="width:100%; font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">Select roles allowed to view:</div>`;
+              roles.forEach(role => {
+                 html += `<label style="background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:4px; font-size:0.85rem; cursor:pointer;"><input type="checkbox" class="role-cb-${chan.id}" value="${role.id}"> ${role.name}</label>`;
+              });
+              html += `</div></div>`;
+            });
+            html += `</div></div>`;
+          });
+          editorContainer.innerHTML = html;
+        } else {
+          resContainer.innerHTML = 'Failed to fetch layout.';
+        }
+      } catch (e) {
+        resContainer.innerHTML = 'Network error.';
+      }
+    }
+
+    function toggleRoles(chanId) {
+      const isPublic = document.getElementById('pub_' + chanId).checked;
+      document.getElementById('roles_' + chanId).style.display = isPublic ? 'none' : 'flex';
+    }
+
+    async function saveServerLayout() {
+      const resContainer = document.getElementById('layout-results');
+      resContainer.innerHTML = 'Starting background task...';
+      
+      const payload = { channels: {} };
+      if (!activeLayoutData) return;
+      
+      activeLayoutData.categories.forEach(cat => {
+        cat.channels.forEach(chan => {
+            const isPublic = document.getElementById('pub_' + chan.id).checked;
+            const roles = [];
+            if (!isPublic) {
+                document.querySelectorAll('.role-cb-' + chan.id).forEach(cb => {
+                    if (cb.checked) roles.push(cb.value);
+                });
+            }
+            payload.channels[chan.id] = { public: isPublic, roles: roles };
+        });
+      });
+      
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'server_apply_layout', layout: payload })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (data.success && data.task_id) {
+          pollTaskProgress(data.task_id, 'layout-results');
+        } else {
+          resContainer.innerHTML = 'Error: ' + (data.error || 'Failed to save.');
+        }
+      } catch (e) {
+        resContainer.innerHTML = 'Network error.';
+      }
+    }
+
+    async function loadActiveTempVCs() {
+      const container = document.getElementById('active-tempvcs');
+      try {
+        const res = await fetch(`/api/guild/${guildId}/tempvcs`);
+        const data = await res.json().catch(() => ({}));
+        if (data.success && data.data && data.data.length > 0) {
+          let html = '<div style="display:grid; gap:10px;">';
+          data.data.forEach(vc => {
+            html += `<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+                       <span>Channel ID: <strong>${vc.channel_id}</strong></span>
+                       <span style="color:var(--text-muted); font-size:0.9rem;">Owner: <discord-mention type="user">${vc.owner_id}</discord-mention></span>
+                     </div>`;
+          });
+          html += '</div>';
+          container.innerHTML = html;
+        } else {
+          container.innerHTML = 'No active temp VCs at the moment.';
+        }
+      } catch (e) {
+        container.innerHTML = 'Failed to load active temp VCs.';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { 
+      loadCommandsForCategory('moderation'); 
+      loadActiveTempVCs();
+      fetchServerLayout(); // Pre-fetch layout so the channel dropdown populates
+      previewFont(); // Initialize preview
+    });
+  </script>
+  <script src="/static/js/dashboard.js?v=2"></script>
+</body>
+</html>
