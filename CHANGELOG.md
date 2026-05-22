@@ -517,3 +517,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-22] style(developer): polish eval command
 - [2026-05-22] style(stats): polish active voice count
 - [2026-05-22] fix(security): align K4 defense system
+- [2026-05-22] feat(web): harden API authentication
