@@ -514,3 +514,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-22] refactor(automod): refactor bad word filter
 - [2026-05-22] refactor(web): streamline API authentication
 - [2026-05-22] docs(docs): update README setup instructions
+- [2026-05-22] style(developer): polish eval command
