@@ -1,0 +1,81 @@
+import discord
+from discord.ext import commands
+from discord import app_commands
+from src.db import client as db_client
+from src import config
+
+class AutomodCog(commands.Cog, name="Automod"):
+    """Security and Anti-Nuke commands."""
+
+    def __init__(self, bot: commands.Bot):
+        self.bot = bot
+
+    @commands.hybrid_command(name="automod_status", description="Checks the bot protection status for the server.")
+    @commands.has_permissions(manage_guild=True)
+    async def automod_status(self, ctx: commands.Context):
+        settings = db_client.get_guild_settings(ctx.guild.id, ctx.guild.name)
+        status_emoji = "Active" if settings.get("is_active") else "Disabled"
+        
+        embed = discord.Embed(title="Kaizer K5 Security Engine Status", color=discord.Color.blue())
+        embed.add_field(name="Protection Status", value=status_emoji, inline=False)
+        embed.add_field(name="Anti-Ban Threshold", value=f"{settings.get('anti_ban_limit')} bans / {settings.get('anti_ban_time_frame')}s", inline=True)
+        embed.add_field(name="Anti-Kick Threshold", value=f"{settings.get('anti_kick_limit')} kicks / {settings.get('anti_kick_time_frame')}s", inline=True)
+        embed.add_field(name="Anti-Channel Deletions", value=f"{settings.get('anti_channel_delete_limit')} channels / {settings.get('anti_channel_delete_time_frame')}s", inline=True)
+        embed.add_field(name="Anti-Role Deletions", value=f"{settings.get('anti_role_delete_limit')} roles / {settings.get('anti_role_delete_time_frame')}s", inline=True)
+        embed.add_field(name="Anti-Bot Invitation", value="Enabled" if settings.get("anti_bot_add") else "Disabled", inline=True)
+        
+        embed.set_footer(text="Project Kaizer K5 • Protected by Supabase")
+        await ctx.send(embed=embed)
+
+    @commands.hybrid_command(name="automod_whitelist", description="Whitelists a user, making them immune to anti-nuke actions.")
+    @app_commands.describe(member="The user to whitelist", reason="Reason for whitelist")
+    @commands.has_permissions(manage_guild=True)
+    async def automod_whitelist(self, ctx: commands.Context, member: discord.Member, *, reason: str = "No reason provided"):
+        if member.bot:
+            return await ctx.send("Bots cannot be whitelisted.")
+            
+        success = db_client.add_to_whitelist(
+            guild_id=ctx.guild.id, 
+            user_id=member.id, 
+            reason=reason,
+            executor_tag=str(ctx.author)
+        )
+        if success:
+            await ctx.send(embed=discord.Embed(description=f"✅ Successfully whitelisted **{member.name}**. Reason: {reason}", color=discord.Color.green()))
+        else:
+            await ctx.send("Failed to whitelist user in the database.")
+
+    @commands.hybrid_command(name="automod_unwhitelist", description="Removes a user from the whitelist.")
+    @app_commands.describe(member="The user to unwhitelist")
+    @commands.has_permissions(manage_guild=True)
+    async def automod_unwhitelist(self, ctx: commands.Context, member: discord.Member):
+        success = db_client.remove_from_whitelist(guild_id=ctx.guild.id, user_id=member.id)
+        if success:
+            await ctx.send(embed=discord.Embed(description=f"✅ Successfully removed **{member.name}** from the whitelist.", color=discord.Color.green()))
+        else:
+            await ctx.send("Failed to remove user from the whitelist.")
+
+    @commands.hybrid_command(name="automod_logs", description="Gets the recent anti-nuke actions for this server.")
+    @commands.has_permissions(manage_guild=True)
+    async def automod_logs(self, ctx: commands.Context):
+        logs = db_client.get_protection_logs(ctx.guild.id, limit=5)
+        if not logs:
+            return await ctx.send("No protection events logged for this server yet.")
+            
+        embed = discord.Embed(title="Recent Security Incidents", color=discord.Color.orange())
+        for log in logs:
+            time_str = log.get("created_at", "Unknown").split(".")[0].replace("T", " ")
+            details = (
+                f"**Event**: {log.get('event_type')}\n"
+                f"**Executor**: {log.get('executor_tag')} ({log.get('executor_id')})\n"
+                f"**Action Taken**: {log.get('action_taken')}\n"
+                f"**Details**: {log.get('details')}\n"
+                f"**Time (UTC)**: {time_str}"
+            )
+            embed.add_field(name=f"Incident ID: {log.get('id')[:8]}...", value=details, inline=False)
+            
+        embed.set_footer(text="Project Kaizer K5 • Real-time Logs")
+        await ctx.send(embed=embed)
+
+async def setup(bot: commands.Bot):
+    await bot.add_cog(AutomodCog(bot))
