@@ -511,3 +511,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-21] fix(welcome): align auto role assignment
 - [2026-05-21] feat(db): add guild config cache
 - [2026-05-22] perf(developer): optimize cog hot reloader
+- [2026-05-22] refactor(automod): refactor bad word filter
