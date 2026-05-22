@@ -519,3 +519,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-22] fix(security): align K4 defense system
 - [2026-05-22] feat(web): harden API authentication
 - [2026-05-22] feat(zero-emoji): enhance clean logging output
+- [2026-05-22] feat(stats): enhance active voice count
