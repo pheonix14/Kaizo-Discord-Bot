@@ -469,6 +469,104 @@ function initDashboard() {
             }
         });
 
+        if (category === 'welcome') {
+            // Build Unified Welcome Config Object
+            const welcomeConfig = {
+                message_type: payload['welcome_embed_enabled'] ? 'embed' : 'text',
+                text: payload['welcome_message'] || '',
+                embed: {
+                    title: payload['welcome_embed_title'] || '',
+                    description: payload['welcome_embed_desc'] || '',
+                    color: payload['welcome_embed_color_hex'] || '#0affe4',
+                    thumbnail: payload['welcome_embed_thumbnail'] || '',
+                    image: payload['welcome_embed_image'] || '',
+                    footer: payload['welcome_embed_footer'] || '',
+                    footer_icon: payload['welcome_embed_footer_icon'] || ''
+                },
+                image_enabled: !!payload['welcome_image_enabled'],
+                image_style: payload['welcome_image_style'] || 'plain_gradient',
+                image_color: payload['welcome_image_color'] || 'cyan_neon',
+                custom_bg_url: payload['welcome_custom_bg_url'] || '',
+                image_elements: {
+                    avatar: !!payload['welcome_image_show_avatar'],
+                    username: !!payload['welcome_image_show_username'],
+                    server_name: !!payload['welcome_image_show_server'],
+                    member_count: !!payload['welcome_image_show_count'],
+                    custom_text: payload['welcome_image_custom_text'] || ''
+                },
+                dm_enabled: !!payload['welcome_dm_enabled'],
+                dm_type: payload['welcome_dm_embed_enabled'] ? 'embed' : 'text',
+                dm_text: payload['welcome_dm_text'] || '',
+                dm_embed: {
+                    title: payload['welcome_dm_embed_title'] || '',
+                    description: payload['welcome_dm_embed_desc'] || '',
+                    color: payload['welcome_dm_embed_color_hex'] || '#0affe4',
+                    thumbnail: payload['welcome_dm_embed_thumbnail'] || '',
+                    image: payload['welcome_dm_embed_image'] || '',
+                    footer: payload['welcome_dm_embed_footer'] || '',
+                    footer_icon: payload['welcome_dm_embed_footer_icon'] || ''
+                }
+            };
+            payload['welcome_message'] = JSON.stringify(welcomeConfig);
+
+            // Build Unified Goodbye Config Object
+            const goodbyeConfig = {
+                message_type: payload['goodbye_embed_enabled'] ? 'embed' : 'text',
+                text: payload['goodbye_message'] || '',
+                embed: {
+                    title: payload['goodbye_embed_title'] || '',
+                    description: payload['goodbye_embed_desc'] || '',
+                    color: payload['goodbye_embed_color_hex'] || '#ef4444',
+                    thumbnail: payload['goodbye_embed_thumbnail'] || '',
+                    image: payload['goodbye_embed_image'] || '',
+                    footer: payload['goodbye_embed_footer'] || '',
+                    footer_icon: payload['goodbye_embed_footer_icon'] || ''
+                },
+                image_enabled: !!payload['goodbye_image_enabled'],
+                image_style: payload['goodbye_image_style'] || 'plain_gradient',
+                image_color: payload['goodbye_image_color'] || 'cyan_neon',
+                custom_bg_url: payload['goodbye_custom_bg_url'] || '',
+                image_elements: {
+                    avatar: !!payload['goodbye_image_show_avatar'],
+                    username: !!payload['goodbye_image_show_username'],
+                    server_name: !!payload['goodbye_image_show_server'],
+                    member_count: !!payload['goodbye_image_show_count'],
+                    custom_text: payload['goodbye_image_custom_text'] || ''
+                },
+                dm_enabled: !!payload['goodbye_dm_enabled'],
+                dm_type: payload['goodbye_dm_embed_enabled'] ? 'embed' : 'text',
+                dm_text: payload['goodbye_dm_text'] || '',
+                dm_embed: {
+                    title: payload['goodbye_dm_embed_title'] || '',
+                    description: payload['goodbye_dm_embed_desc'] || '',
+                    color: payload['goodbye_dm_embed_color_hex'] || '#ef4444',
+                    thumbnail: payload['goodbye_dm_embed_thumbnail'] || '',
+                    image: payload['goodbye_dm_embed_image'] || '',
+                    footer: payload['goodbye_dm_embed_footer'] || '',
+                    footer_icon: payload['goodbye_dm_embed_footer_icon'] || ''
+                }
+            };
+            payload['goodbye_message'] = JSON.stringify(goodbyeConfig);
+
+            // Clean up all frontend helper keys from the payload to avoid database errors
+            const keysToRemove = [
+                'welcome_embed_enabled', 'welcome_embed_title', 'welcome_embed_color', 'welcome_embed_color_hex',
+                'welcome_embed_desc', 'welcome_embed_thumbnail', 'welcome_embed_image', 'welcome_embed_footer', 'welcome_embed_footer_icon',
+                'welcome_image_enabled', 'welcome_image_style', 'welcome_image_color', 'welcome_custom_bg_url',
+                'welcome_image_show_avatar', 'welcome_image_show_username', 'welcome_image_show_server', 'welcome_image_show_count', 'welcome_image_custom_text',
+                'welcome_dm_enabled', 'welcome_dm_embed_enabled', 'welcome_dm_text', 'welcome_dm_embed_title', 'welcome_dm_embed_color', 'welcome_dm_embed_color_hex',
+                'welcome_dm_embed_desc', 'welcome_dm_embed_thumbnail', 'welcome_dm_embed_image', 'welcome_dm_embed_footer', 'welcome_dm_embed_footer_icon',
+                
+                'goodbye_embed_enabled', 'goodbye_embed_title', 'goodbye_embed_color', 'goodbye_embed_color_hex',
+                'goodbye_embed_desc', 'goodbye_embed_thumbnail', 'goodbye_embed_image', 'goodbye_embed_footer', 'goodbye_embed_footer_icon',
+                'goodbye_image_enabled', 'goodbye_image_style', 'goodbye_image_color', 'goodbye_custom_bg_url',
+                'goodbye_image_show_avatar', 'goodbye_image_show_username', 'goodbye_image_show_server', 'goodbye_image_show_count', 'goodbye_image_custom_text',
+                'goodbye_dm_enabled', 'goodbye_dm_embed_enabled', 'goodbye_dm_text', 'goodbye_dm_embed_title', 'goodbye_dm_embed_color', 'goodbye_dm_embed_color_hex',
+                'goodbye_dm_embed_desc', 'goodbye_dm_embed_thumbnail', 'goodbye_dm_embed_image', 'goodbye_dm_embed_footer', 'goodbye_dm_embed_footer_icon'
+            ];
+            keysToRemove.forEach(k => delete payload[k]);
+        }
+
         // Use the global guildId variable defined in server.html
         if (typeof guildId === 'undefined') {
             showToast("Guild ID not found.", "error");

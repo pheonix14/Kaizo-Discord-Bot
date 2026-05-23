@@ -25,10 +25,12 @@ for all
 using (auth.role() = 'service_role');
 
 
--- 2. Guild Settings Table (Anti-Nuke limits)
+-- 2. Guild Settings Table (Anti-Nuke limits & Feature configurations)
 create table if not exists public.guild_settings (
     guild_id text primary key, -- Discord Guild ID (snowflake)
     guild_name text,
+    
+    -- Anti-Nuke configurations
     anti_ban_limit integer default 3,
     anti_ban_time_frame integer default 60, -- in seconds
     anti_kick_limit integer default 3,
@@ -39,6 +41,70 @@ create table if not exists public.guild_settings (
     anti_role_delete_time_frame integer default 60,
     anti_bot_add boolean default true,
     quarantine_role_id text,
+    
+    -- Welcome & Goodbye configurations
+    welcome_enabled boolean default false,
+    welcome_channel text,
+    welcome_message text,
+    goodbye_enabled boolean default false,
+    goodbye_channel text,
+    goodbye_message text,
+    
+    -- Logging configurations
+    logging_enabled boolean default false,
+    log_channel text,
+    log_events text[] default '{}'::text[],
+    mod_log_channel text,
+    
+    -- Roles & Moderation configurations
+    admin_roles text[] default '{}'::text[],
+    mod_roles text[] default '{}'::text[],
+    mute_role text,
+    dj_role text,
+    language text default 'en',
+    embed_color text default '#0affe4',
+    warn_thresholds jsonb default '{}'::jsonb,
+    
+    -- Leveling configurations
+    leveling_enabled boolean default false,
+    level_up_channel text,
+    level_up_message text default 'GG {user}, you level up to **{level}**!',
+    level_up_message_enabled boolean default true,
+    xp_blacklist_channels text[] default '{}'::text[],
+    xp_rate integer default 1,
+    
+    -- AutoMod rules configuration
+    automod_rules jsonb default '{}'::jsonb,
+    
+    -- Live User Counter configurations
+    counter_category_id text,
+    counter_total_chan_id text,
+    counter_online_chan_id text,
+    counter_offline_chan_id text,
+    counter_invc_chan_id text,
+    counter_style text default 'minimal', -- 'minimal', 'detailed', 'custom'
+    counter_refresh_interval text default '7d', -- '1h', '6h', '7d'
+    counter_total_fmt text default 'members: {count}',
+    counter_online_fmt text default 'online: {online}',
+    counter_offline_fmt text default 'offline: {offline}',
+    counter_invc_fmt text default 'in vc: {invc}',
+    counter_tracked_vc_id text,
+    
+    -- Temp VC configurations
+    temp_vc_category text,
+    temp_vc_lobby text,
+    temp_vc_limit integer default 0,
+    temp_vc_locked boolean default false,
+    temp_vc_name_format text default '{user}''s VC',
+    
+    -- Ticket configurations
+    ticket_enabled boolean default false,
+    ticket_category text,
+    ticket_limit integer default 1,
+    ticket_log_channel text,
+    ticket_panel_message text,
+    ticket_support_role text,
+
     is_active boolean default true,
     updated_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
