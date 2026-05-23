@@ -3,6 +3,7 @@
         (function () {
             const words = ['KAIZER', '×', 'DESIGN', '×', 'MOTION', '×', 'PURPOSE', '×', 'KAIZER', '×', 'DESIGN', '×', 'MOTION', '×', 'PURPOSE', '×'];
             const t = document.getElementById('tickerTrack');
+            if (!t) return;
             const frag = words.map(w => { const s = document.createElement('span'); s.className = 'ticker-item'; s.textContent = w; return s });
             const frag2 = frag.map(el => el.cloneNode(true));
             frag.forEach(el => t.appendChild(el));
@@ -12,6 +13,7 @@
         // ── CHARACTER SPLIT HERO ──
         (function () {
             const el = document.getElementById('heroName');
+            if (!el) return;
             const text = el.textContent;
             el.textContent = '';
             text.split('').forEach((ch, i) => {
@@ -23,8 +25,10 @@
             });
             // trigger after short delay
             el.querySelectorAll('.char').forEach(c => c.classList.add('in'));
-                document.getElementById('heroSub').classList.add('in');
-                document.getElementById('heroTag').classList.add('in');
+            const sub = document.getElementById('heroSub');
+            if (sub) sub.classList.add('in');
+            const tag = document.getElementById('heroTag');
+            if (tag) tag.classList.add('in');
         })();
 
         // ── WIPE TRANSITION ──
@@ -33,7 +37,7 @@
         let lastSection = -1, wiping = false;
 
         function doWipe(color, cb) {
-            if (wiping) return;
+            if (!wipe || wiping) return;
             wiping = true;
             wipe.style.background = color;
             wipe.style.transition = 'transform 0.22s cubic-bezier(0.77,0,0.175,1)';
@@ -57,7 +61,7 @@
             document.getElementById('s03'),
             document.getElementById('s04'),
             document.getElementById('s05'),
-        ];
+        ].filter(Boolean);
 
         // per-section reveal targets
         const revealMaps = {
@@ -107,37 +111,40 @@
             });
         }
 
-        const obsOpts = { threshold: 0.35 };
-        const obs = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (!entry.isIntersecting) return;
-                const id = entry.target.id;
-                const idx = sections.findIndex(s => s === entry.target);
-                if (idx > 0 && idx !== lastSection) {
-                    
+        if (sections.length > 0) {
+            const obsOpts = { threshold: 0.35 };
+            const obs = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (!entry.isIntersecting) return;
+                    const id = entry.target.id;
+                    const idx = sections.findIndex(s => s === entry.target);
+                    if (idx > 0 && idx !== lastSection) {
                         triggerSection(id);
-                    
-                }
-                lastSection = idx;
-            });
-        }, obsOpts);
+                    }
+                    lastSection = idx;
+                });
+            }, obsOpts);
 
-        sections.forEach(s => obs.observe(s));
+            sections.forEach(s => obs.observe(s));
+        }
 
         // ── ZOOM on SCROLL ──
-        const zoomObsOpts = { threshold: [0, 0.2, 0.5, 0.8, 1] };
-        const zoomObs = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                const r = entry.intersectionRatio;
-                const sc = 1 + (1 - Math.min(r, 1)) * 0.15;
-                entry.target.style.transform = `scale(${sc.toFixed(3)})`;
-            });
-        }, zoomObsOpts);
-        zoomEls.forEach(el => zoomObs.observe(el));
+        if (zoomEls.length > 0) {
+            const zoomObsOpts = { threshold: [0, 0.2, 0.5, 0.8, 1] };
+            const zoomObs = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    const r = entry.intersectionRatio;
+                    const sc = 1 + (1 - Math.min(r, 1)) * 0.15;
+                    entry.target.style.transform = `scale(${sc.toFixed(3)})`;
+                });
+            }, zoomObsOpts);
+            zoomEls.forEach(el => zoomObs.observe(el));
+        }
 
         // ── MORPH DRAG ──
         (function () {
             const shape = document.getElementById('morphShape');
+            if (!shape) return;
             let ox = 0, oy = 0, active = false;
             shape.addEventListener('touchstart', e => {
                 active = true;
@@ -164,8 +171,11 @@
         })();
 
         // ── SUBMIT EMAIL ──
-        document.getElementById('subArrow').addEventListener('click', () => {
-            const val = document.getElementById('emailInp').value.trim();
-            if (val) { alert('KAIZER — Message received.'); }
-        });
-    
+        const subArrowEl = document.getElementById('subArrow');
+        if (subArrowEl) {
+            subArrowEl.addEventListener('click', () => {
+                const inp = document.getElementById('emailInp');
+                const val = inp ? inp.value.trim() : '';
+                if (val) { alert('KAIZER — Message received.'); }
+            });
+        }

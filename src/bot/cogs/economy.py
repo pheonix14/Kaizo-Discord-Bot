@@ -182,7 +182,7 @@ class EconomyCog(commands.Cog, name="Economy"):
         db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), amount_to_withdraw, -amount_to_withdraw)
         await ctx.send(f"✅ Withdrew **{amount_to_withdraw:,}** coins from your bank.")
 
-    @commands.hybrid_command(name="transfer", aliases=["pay", "give"], description="Send coins to another user.")
+    @commands.hybrid_command(name="transfer", aliases=["pay"], description="Send coins to another user.")
     @app_commands.describe(user="User to send coins to", amount="Amount to send")
     async def transfer(self, ctx: commands.Context, user: discord.Member, amount: int):
         if amount <= 0:

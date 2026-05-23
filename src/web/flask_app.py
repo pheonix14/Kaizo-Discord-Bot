@@ -65,7 +65,7 @@ def inject_globals():
 # Supabase client
 # ---------------------------------------------------------------------------
 
-supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_ANON_KEY)
+supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY)
 
 # ---------------------------------------------------------------------------
 # Helper Functions
@@ -340,6 +340,18 @@ def api_me():
         return jsonify(user)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+@app.route("/api/guild/<guild_id>/logs")
+def api_guild_logs_by_id(guild_id):
+    if not verify_session():
+        return jsonify({"error": "unauthorized"}), 401
+    try:
+        resp = supabase.from_("protection_logs").select("*").eq("guild_id", guild_id).order("created_at", desc=True).limit(50).execute()
+        return jsonify(resp.data or [])
+    except Exception as e:
+        logger.error(f"Failed to fetch protection logs for guild {guild_id}: {e}")
+        return jsonify({"error": str(e)}), 500
+
 
 @app.route("/api/me/guilds")
 def api_me_guilds():

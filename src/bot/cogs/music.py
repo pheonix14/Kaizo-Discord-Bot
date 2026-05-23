@@ -6,6 +6,15 @@ import asyncio
 import math
 import os
 import uuid
+import re
+
+def clean_error_message(error):
+    # Remove ANSI escape sequences
+    ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+    cleaned = ansi_escape.sub('', str(error))
+    # Strip standard yt-dlp error prefixes
+    cleaned = re.sub(r'^(?i)(?:youtube:\s*|ytdl:\s*|error:\s*|[a-z0-9_-]+:\s*)+', '', cleaned)
+    return cleaned.strip()
 
 # --- YTDL Config ---
 ytdl_format_options = {
@@ -19,7 +28,14 @@ ytdl_format_options = {
     'quiet': True,
     'no_warnings': True,
     'default_search': 'auto',
-    'source_address': '0.0.0.0'
+    'source_address': '0.0.0.0',
+    'noprogress': True,
+    'referer': 'https://www.youtube.com/',
+    'http_headers': {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.9',
+    }
 }
 
 ffmpeg_options = {
@@ -62,7 +78,7 @@ class MusicDownloadView(discord.ui.View):
         self.ctx = ctx
         self.entries = entries
         for i, entry in enumerate(entries):
-            btn = discord.ui.Button(label=f"{i+1}️⃣", style=discord.ButtonStyle.primary, custom_id=f"dl_{i}")
+            btn = discord.ui.Button(label=f"Track {i+1}", style=discord.ButtonStyle.primary, custom_id=f"dl_{i}")
             btn.callback = self.make_callback(entry)
             self.add_item(btn)
 
@@ -71,7 +87,7 @@ class MusicDownloadView(discord.ui.View):
             if interaction.user.id != self.ctx.author.id:
                 return await interaction.response.send_message("Only the requester can select a track.", ephemeral=True)
             
-            await interaction.response.edit_message(content=f"⬇️ Downloading **{entry.get('title')}**... Please wait.", embed=None, view=None)
+            await interaction.response.edit_message(content=f"Downloading **{entry.get('title')}**... Please wait.", embed=None, view=None)
             
             filename = f"{uuid.uuid4().hex}"
             
@@ -98,14 +114,14 @@ class MusicDownloadView(discord.ui.View):
                 if os.path.exists(final_file):
                     file_size = os.path.getsize(final_file)
                     if file_size > 25 * 1024 * 1024: # 25MB limit
-                        await interaction.message.edit(content="❌ The audio file exceeds Discord's 25MB limit.")
+                        await interaction.message.edit(content="The audio file exceeds Discord's 25MB limit.")
                     else:
-                        await interaction.message.edit(content=f"✅ Downloaded **{entry.get('title')}**", attachments=[discord.File(final_file)])
+                        await interaction.message.edit(content=f"Downloaded **{entry.get('title')}**", attachments=[discord.File(final_file)])
                     os.remove(final_file)
                 else:
-                    await interaction.message.edit(content="❌ Failed to generate mp3 file.")
+                    await interaction.message.edit(content="Failed to generate mp3 file.")
             except Exception as e:
-                await interaction.message.edit(content=f"❌ Error during download: {e}")
+                await interaction.message.edit(content=f"Error during download: {clean_error_message(e)}")
         return callback
 
 class ServerMusicPlayer:
@@ -169,9 +185,9 @@ class MusicCog(commands.Cog, name="Music"):
             source.volume = player.volume
             
             ctx.voice_client.play(source, after=lambda e: self.bot.loop.create_task(self.play_next(ctx)))
-            await ctx.send(embed=discord.Embed(description=f"🎶 Now Playing: **{source.title}**\nRequested by: {source.requester.mention}", color=0x3498DB))
+            await ctx.send(embed=discord.Embed(description=f"Now Playing: **{source.title}**\nRequested by: {source.requester.mention}", color=0x3498DB))
         except Exception as e:
-            await ctx.send(f"Error playing track: {e}")
+            await ctx.send(f"Error playing track: {clean_error_message(e)}")
             await self.play_next(ctx)
 
     # ── Group ────────────────────────────────────────────────────────────────
@@ -193,7 +209,7 @@ class MusicCog(commands.Cog, name="Music"):
             return await ctx.voice_client.move_to(channel)
         
         await channel.connect()
-        await ctx.send(embed=discord.Embed(description=f"✅ Joined {channel.mention}", color=discord.Color.green()))
+        await ctx.send(embed=discord.Embed(description=f"Joined {channel.mention}", color=discord.Color.green()))
 
     @music.command(name="leave", description="Leave the voice channel.")
     async def leave(self, ctx: commands.Context):
@@ -202,7 +218,7 @@ class MusicCog(commands.Cog, name="Music"):
             player = self.get_player(ctx.guild.id)
             player.queue.clear()
             player.current = None
-            await ctx.send(embed=discord.Embed(description="👋 Disconnected.", color=discord.Color.green()))
+            await ctx.send(embed=discord.Embed(description="Disconnected.", color=discord.Color.green()))
         else:
             await ctx.send("I am not in a voice channel.")
 
@@ -215,12 +231,17 @@ class MusicCog(commands.Cog, name="Music"):
             else:
                 return await ctx.send("You need to be in a voice channel to play music.")
                 
-        msg = await ctx.send(embed=discord.Embed(description=f"🔍 Searching for `{query}`...", color=0x3498DB))
+        msg = await ctx.send(embed=discord.Embed(description=f"Searching for `{query}`...", color=0x3498DB))
         
         try:
+            is_url = query.startswith("http://") or query.startswith("https://")
+            search_query = query if is_url else f"ytsearch:{query}"
+            
             loop = self.bot.loop or asyncio.get_event_loop()
-            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(f"ytsearch:{query}", download=False))
+            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(search_query, download=False))
             if 'entries' in data:
+                if not data['entries']:
+                    return await msg.edit(content="No results found.", embed=None)
                 data = data['entries'][0]
                 
             song = {
@@ -233,13 +254,13 @@ class MusicCog(commands.Cog, name="Music"):
             player = self.get_player(ctx.guild.id)
             player.queue.append(song)
             
-            await msg.edit(embed=discord.Embed(description=f"🎶 Added **{song['title']}** to the queue!", color=discord.Color.green()))
+            await msg.edit(embed=discord.Embed(description=f"Added **{song['title']}** to the queue!", color=discord.Color.green()))
             
             if not ctx.voice_client.is_playing():
                 await self.play_next(ctx)
                 
         except Exception as e:
-            await msg.edit(content=f"Error finding track: {e}")
+            await msg.edit(content=f"Error finding track: {clean_error_message(e)}", embed=None)
 
     @music.command(name="skip", description="Skip the currently playing song.")
     async def skip(self, ctx: commands.Context):
@@ -247,7 +268,7 @@ class MusicCog(commands.Cog, name="Music"):
             return await ctx.send("Nothing is playing right now.")
         
         ctx.voice_client.stop()
-        await ctx.send(embed=discord.Embed(description="⏭️ Skipped.", color=discord.Color.green()))
+        await ctx.send(embed=discord.Embed(description="Skipped.", color=discord.Color.green()))
 
     @music.command(name="stop", description="Stop music and clear the queue.")
     async def stop(self, ctx: commands.Context):
@@ -255,19 +276,19 @@ class MusicCog(commands.Cog, name="Music"):
             player = self.get_player(ctx.guild.id)
             player.queue.clear()
             ctx.voice_client.stop()
-            await ctx.send(embed=discord.Embed(description="🛑 Stopped the music and cleared the queue.", color=discord.Color.red()))
+            await ctx.send(embed=discord.Embed(description="Stopped the music and cleared the queue.", color=discord.Color.red()))
 
     @music.command(name="pause", description="Pause the current song.")
     async def pause(self, ctx: commands.Context):
         if ctx.voice_client and ctx.voice_client.is_playing():
             ctx.voice_client.pause()
-            await ctx.send(embed=discord.Embed(description="⏸️ Paused the music.", color=discord.Color.orange()))
+            await ctx.send(embed=discord.Embed(description="Paused the music.", color=discord.Color.orange()))
 
     @music.command(name="resume", description="Resume the paused song.")
     async def resume(self, ctx: commands.Context):
         if ctx.voice_client and ctx.voice_client.is_paused():
             ctx.voice_client.resume()
-            await ctx.send(embed=discord.Embed(description="▶️ Resumed the music.", color=discord.Color.green()))
+            await ctx.send(embed=discord.Embed(description="Resumed the music.", color=discord.Color.green()))
 
     @music.command(name="queue", description="Show the current music queue.")
     async def queue(self, ctx: commands.Context):
@@ -295,7 +316,7 @@ class MusicCog(commands.Cog, name="Music"):
         if not player.current:
             return await ctx.send("Nothing is playing right now.")
             
-        embed = discord.Embed(title="Now Playing", description=f"🎶 **{player.current['title']}**", color=0x3498DB)
+        embed = discord.Embed(title="Now Playing", description=f"**{player.current['title']}**", color=0x3498DB)
         embed.set_footer(text=f"Requested by {player.current['requester'].display_name}")
         await ctx.send(embed=embed)
 
@@ -310,7 +331,7 @@ class MusicCog(commands.Cog, name="Music"):
         if ctx.voice_client and ctx.voice_client.source:
             ctx.voice_client.source.volume = player.volume
             
-        await ctx.send(embed=discord.Embed(description=f"🔊 Volume set to **{level}%**.", color=discord.Color.blue()))
+        await ctx.send(embed=discord.Embed(description=f"Volume set to **{level}%**.", color=discord.Color.blue()))
 
     @music.command(name="loop", description="Toggle loop for current song or queue.")
     @app_commands.choices(mode=[
@@ -321,14 +342,14 @@ class MusicCog(commands.Cog, name="Music"):
     async def loop(self, ctx: commands.Context, mode: str):
         player = self.get_player(ctx.guild.id)
         player.loop_mode = mode
-        await ctx.send(embed=discord.Embed(description=f"🔁 Loop mode set to: **{mode}**", color=0x3498DB))
+        await ctx.send(embed=discord.Embed(description=f"Loop mode set to: **{mode}**", color=0x3498DB))
 
     # ── Filters ──────────────────────────────────────────────────────────────
     
     async def apply_filter(self, ctx, filter_name: str, value=True):
         player = self.get_player(ctx.guild.id)
         player.filters[filter_name] = value
-        await ctx.send(embed=discord.Embed(description=f"🎛️ Filter `{filter_name}` set. (Will apply to the next track).", color=0x9B59B6))
+        await ctx.send(embed=discord.Embed(description=f"Filter `{filter_name}` set. (Will apply to the next track).", color=0x9B59B6))
 
     @music.command(name="8d", description="Toggle 8D audio filter.")
     async def filter_8d(self, ctx: commands.Context, state: bool):
@@ -350,7 +371,7 @@ class MusicCog(commands.Cog, name="Music"):
     async def filter_off(self, ctx: commands.Context):
         player = self.get_player(ctx.guild.id)
         player.filters.clear()
-        await ctx.send(embed=discord.Embed(description="🎛️ All filters cleared. (Will apply to the next track).", color=discord.Color.green()))
+        await ctx.send(embed=discord.Embed(description="All filters cleared. (Will apply to the next track).", color=discord.Color.green()))
 
     # ── Playlists ────────────────────────────────────────────────────────────
 
@@ -367,7 +388,7 @@ class MusicCog(commands.Cog, name="Music"):
         from src.db import client as db_client
         success = db_client.save_playlist(str(ctx.guild.id), str(ctx.author.id), name, tracks)
         if success:
-            await ctx.send(embed=discord.Embed(description=f"✅ Saved playlist **{name}** with {len(tracks)} tracks.", color=discord.Color.green()))
+            await ctx.send(embed=discord.Embed(description=f"Saved playlist **{name}** with {len(tracks)} tracks.", color=discord.Color.green()))
         else:
             await ctx.send("Failed to save playlist.")
 
@@ -411,7 +432,7 @@ class MusicCog(commands.Cog, name="Music"):
             }
             player.queue.append(song)
             
-        await ctx.send(embed=discord.Embed(description=f"✅ Loaded **{len(tracks)}** tracks from **{name}** into the queue.", color=discord.Color.green()))
+        await ctx.send(embed=discord.Embed(description=f"Loaded **{len(tracks)}** tracks from **{name}** into the queue.", color=discord.Color.green()))
         
         if not ctx.voice_client.is_playing():
             await self.play_next(ctx)
@@ -421,7 +442,7 @@ class MusicCog(commands.Cog, name="Music"):
     @music.command(name="download", description="Search and download a track directly to Discord as an MP3.")
     @app_commands.describe(query="Search query for the song")
     async def download(self, ctx: commands.Context, *, query: str):
-        msg = await ctx.send(embed=discord.Embed(description=f"🔍 Searching for top 5 results for `{query}`...", color=0x3498DB))
+        msg = await ctx.send(embed=discord.Embed(description=f"Searching for top 5 results for `{query}`...", color=0x3498DB))
         
         try:
             loop = self.bot.loop or asyncio.get_event_loop()
@@ -429,13 +450,13 @@ class MusicCog(commands.Cog, name="Music"):
             
             entries = data.get('entries', [])
             if not entries:
-                return await msg.edit(embed=discord.Embed(description="❌ No results found.", color=discord.Color.red()))
+                return await msg.edit(embed=discord.Embed(description="No results found.", color=discord.Color.red()))
                 
             desc = ""
             for i, entry in enumerate(entries):
                 duration = entry.get('duration', 0)
                 mins, secs = divmod(duration, 60)
-                desc += f"**{i+1}️⃣** {entry.get('title')} (`{mins}:{secs:02d}`)\n\n"
+                desc += f"**Track {i+1}:** {entry.get('title')} (`{mins}:{secs:02d}`)\n\n"
                 
             embed = discord.Embed(title="Select a track to download", description=desc, color=0x3498DB)
             embed.set_footer(text="Click the corresponding button below. Max duration ~15 mins (25MB limit).")
@@ -444,7 +465,7 @@ class MusicCog(commands.Cog, name="Music"):
             await msg.edit(embed=embed, view=view)
             
         except Exception as e:
-            await msg.edit(content=f"Error finding track: {e}", embed=None)
+            await msg.edit(content=f"Error finding track: {clean_error_message(e)}", embed=None)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(MusicCog(bot))
