@@ -2,10 +2,196 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kaizer K5 - Help Center</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KAIZER K5 - Help Center</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;700&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
-    <style>body { background: #0f172a; color: white; font-family: 'Inter', sans-serif; margin: 0; padding: 20px; }</style>
+    <style>
+        body {
+            background: var(--dark);
+            color: #fff;
+            font-family: 'Space Grotesk', sans-serif;
+            overflow-y: auto;
+            padding-top: 100px;
+            padding-bottom: 80px;
+            min-height: 100vh;
+        }
+
+        /* Smoke background overrides for help page */
+        .smoke {
+            position: fixed !important;
+            z-index: 1;
+        }
+
+        .help-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 24px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .header-section {
+            margin-bottom: 50px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+            padding-bottom: 30px;
+            text-align: center;
+        }
+
+        .header-title {
+            font-size: clamp(48px, 10vw, 84px);
+            color: #fff;
+            line-height: 0.9;
+            margin-bottom: 15px;
+            letter-spacing: -0.02em;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            max-width: 600px;
+            margin: 15px auto 0 auto;
+            line-height: 1.6;
+        }
+
+        .tabs-container {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 35px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            scrollbar-width: none; /* Firefox */
+        }
+
+        .tabs-container::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.6);
+            padding: 12px 24px;
+            border-radius: 100px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .tab-btn:hover {
+            color: #fff;
+            border-color: rgba(78, 205, 196, 0.3);
+            background: rgba(78, 205, 196, 0.04);
+            transform: translateY(-1px);
+        }
+
+        .tab-btn.active {
+            color: var(--navy);
+            background: var(--teal);
+            border-color: var(--teal);
+            box-shadow: 0 0 20px rgba(78, 205, 196, 0.3);
+        }
+
+        .manual-card {
+            background: rgba(255, 255, 255, 0.015);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            padding: clamp(24px, 5vw, 40px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            box-shadow: 0 25px 55px rgba(0, 0, 0, 0.55);
+            display: none;
+            animation: tabFadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .manual-card.active {
+            display: block;
+        }
+
+        @keyframes tabFadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 32px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--teal);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 400;
+        }
+
+        .card-description {
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
+            padding-bottom: 20px;
+        }
+
+        .command-item {
+            background: rgba(255, 255, 255, 0.01);
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .command-item:hover {
+            border-color: rgba(78, 205, 196, 0.2);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .command-syntax {
+            font-family: monospace;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--teal);
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(78, 205, 196, 0.15);
+            padding: 6px 12px;
+            border-radius: 6px;
+            white-space: nowrap;
+            letter-spacing: 0.02em;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .command-details {
+            flex: 1;
+        }
+
+        .command-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--teal);
+            margin-bottom: 4px;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .command-desc {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            line-height: 1.5;
+        }
+    </style>
 </head>
 <body>
     <script>
@@ -16,17 +202,174 @@
         };
     </script>
     <script src="/static/js/navigationbar.js"></script>
-    <div style="margin-top: 80px; text-align: center;">
-        <h1>Help & Commands Manual</h1>
-        <p>This is the official Kaizer K5 bot manual. Here you can find all commands and configuration instructions.</p>
-        <div style="max-width: 800px; margin: 40px auto; text-align: left; background: #1e293b; padding: 20px; border-radius: 8px;">
-            <h3>K4 Defence (Automod)</h3>
-            <p>Automatically detects spam, massive mentions, and text duplication. Mutes spammers with a flagged role.</p>
-            <h3>Economy & Shop</h3>
-            <p>Users can earn currency, use `!buy` commands, and interact with the synced Supabase database.</p>
-            <h3>Music Downloader</h3>
-            <p>Special downloader and uploader commands via slash and prefix methods.</p>
+
+    <!-- Smoke Background Drifts -->
+    <div class="smoke sm1"></div>
+    <div class="smoke sm2"></div>
+    <div class="smoke sm3"></div>
+
+    <div class="help-container">
+        <div class="header-section">
+            <h1 class="header-title display">COMMANDS<br><span style="color: var(--teal)">MANUAL</span></h1>
+            <p class="header-subtitle">This is the official Kaizer K5 bot manual. Here you can find all configuration instructions, command lists, and details about modular systems.</p>
+        </div>
+
+        <div class="tabs-container">
+            <button class="tab-btn active" onclick="switchTab('defence')">🛡️ K4 Defence & Automod</button>
+            <button class="tab-btn" onclick="switchTab('economy')">🪙 Economy & Shop</button>
+            <button class="tab-btn" onclick="switchTab('music')">🎵 Music Player</button>
+            <button class="tab-btn" onclick="switchTab('utility')">⚙️ Core Utilities</button>
+        </div>
+
+        <!-- 1. K4 Defence & Automod -->
+        <div class="manual-card active" id="tab-defence">
+            <div class="card-title">K4 Defence / Automod System</div>
+            <p class="card-description">The K4 Defence module automatically protects your server from active raids, spam attacks, excessive mentions, and duplicated content. It enforces limits dynamically and sends detailed reports to security logs.</p>
+            
+            <div class="command-item">
+                <div class="command-details">
+                    <div class="command-name">Enable Protection</div>
+                    <div class="command-desc">Toggle the central spam/nuke defence filter for the server.</div>
+                </div>
+                <div class="command-syntax">k!k4defence enable</div>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-details">
+                    <div class="command-name">Check System Status</div>
+                    <div class="command-desc">Check configuration details and active security parameters.</div>
+                </div>
+                <div class="command-syntax">k!k4defence status</div>
+            </div>
+
+            <div class="command-item">
+                <div class="command-details">
+                    <div class="command-name">Configure Logging</div>
+                    <div class="command-desc">Set the target security log channel for anti-nuke audit logs.</div>
+                </div>
+                <div class="command-syntax">k!automod modlog_set [channel]</div>
+            </div>
+        </div>
+
+        <!-- 2. Economy & Shop -->
+        <div class="manual-card" id="tab-economy">
+            <div class="card-title">Economy & Store System</div>
+            <p class="card-description">Users can earn virtual coins, deposit funds into their bank accounts, work, and purchase custom server rewards (like roles, badges, and collectable items) directly from the dashboard or through prefixes.</p>
+            
+            <div class="command-item">
+                <div class="command-details">
+                    <div class="command-name">Check Balance</div>
+                    <div class="command-desc">View the current amount of coins in your wallet and bank.</div>
+                </div>
+                <div class="command-syntax">k!eco balance</div>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-details">
+                    <div class="command-name">Work Command</div>
+                    <div class="command-desc">Work to earn standard currency. Subject to server cooldown.</div>
+                </div>
+                <div class="command-syntax">k!eco work</div>
+            </div>
+
+            <div class="command-item">
+                <div class="command-details">
+                    <div class="command-name">Buy from Shop</div>
+                    <div class="command-desc">Purchase a reward item or role using your wallet coins.</div>
+                </div>
+                <div class="command-syntax">k!eco_shop buy [item_name]</div>
+            </div>
+        </div>
+
+        <!-- 3. Music Player -->
+        <div class="manual-card" id="tab-music">
+            <div class="card-title">Music & Downloader Console</div>
+            <p class="card-description">High-fidelity voice channel streaming system. Supports YouTube URLs, search queries, active audio queue management, sound loop adjustments, and direct audio file downloads.</p>
+            
+            <div class="command-item">
+                <div class="command-details">
+                    <div class="command-name">Play Audio</div>
+                    <div class="command-desc">Join voice channel and start streaming audio from keyword or URL.</div>
+                </div>
+                <div class="command-syntax">k!music play [query]</div>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-details">
+                    <div class="command-name">Download MP3</div>
+                    <div class="command-desc">Directly fetch and download an MP3 audio track from YouTube.</div>
+                </div>
+                <div class="command-syntax">k!music download [query]</div>
+            </div>
+
+            <div class="command-item">
+                <div class="command-details">
+                    <div class="command-name">Audio Filters</div>
+                    <div class="command-desc">Apply customized sound DSP effects (like bassboost or nightcore).</div>
+                </div>
+                <div class="command-syntax">k!music filter [filter_name]</div>
+            </div>
+        </div>
+
+        <!-- 4. Core Utilities -->
+        <div class="manual-card" id="tab-utility">
+            <div class="card-title">Core Utilities & Tools</div>
+            <p class="card-description">Basic utility, info gathering, polling, translation, and user helper commands built to make server administration easier.</p>
+            
+            <div class="command-item">
+                <div class="command-details">
+                    <div class="command-name">Server Info</div>
+                    <div class="command-desc">Display detailed analytics, role metrics, and creation date of the server.</div>
+                </div>
+                <div class="command-syntax">k!info server</div>
+            </div>
+            
+            <div class="command-item">
+                <div class="command-details">
+                    <div class="command-name">AFK Status</div>
+                    <div class="command-desc">Set an AFK note. The bot will automatically notify anyone who pings you.</div>
+                </div>
+                <div class="command-syntax">k!tools afk [reason]</div>
+            </div>
+
+            <div class="command-item">
+                <div class="command-details">
+                    <div class="command-name">Generate Embed</div>
+                    <div class="command-desc">Launch the interactive builder to send customized embed messages.</div>
+                </div>
+                <div class="command-syntax">k!embed</div>
+            </div>
         </div>
     </div>
+
+    <script>
+        function switchTab(tabId) {
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Remove active class from all cards
+            document.querySelectorAll('.manual-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            
+            // Find clicked button based on tabId and activate
+            const eventTarget = window.event ? window.event.target : null;
+            if (eventTarget) {
+                eventTarget.classList.add('active');
+            } else {
+                // fallback
+                document.querySelectorAll('.tab-btn').forEach(btn => {
+                    if (btn.getAttribute('onclick').includes(tabId)) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+            
+            // Activate corresponding card
+            document.getElementById('tab-' + tabId).classList.add('active');
+        }
+    </script>
 </body>
 </html>

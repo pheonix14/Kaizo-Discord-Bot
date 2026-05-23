@@ -8,6 +8,60 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500&family=Playfair+Display:ital@1&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
+    <style>
+        /* Force single viewport layout on desktop */
+        #s01 {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: clamp(20px, 5vw, 40px);
+            box-sizing: border-box;
+        }
+        .hero-inner {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            flex: 1;
+            padding-bottom: 60px;
+        }
+        .hero-branding {
+            flex: 1;
+            min-width: 300px;
+            display: flex;
+            align-items: center;
+            gap: clamp(16px, 5vw, 32px);
+        }
+        .hero-portal {
+            flex: 1;
+            min-width: 300px;
+            max-width: 580px;
+            display: flex;
+            justify-content: center;
+            z-index: 10;
+        }
+        @media (max-width: 768px) {
+            .hero-inner {
+                flex-direction: column;
+                justify-content: center;
+                gap: 30px;
+                padding-top: 40px;
+            }
+            .hero-branding {
+                justify-content: center;
+                text-align: center;
+            }
+            #s01 {
+                min-height: auto;
+                height: auto;
+            }
+        }
+    </style>
 </head>
 <body>
     <script>
@@ -18,98 +72,103 @@
         };
     </script>
     <script src="/static/js/navigationbar.js"></script>
-    
-    
 
-    <!-- WIPE OVERLAY -->
-    
-
-    <!-- ══ 01 HERO ══ -->
+    <!-- ══ 01 HERO & PORTAL CONSOLE ══ -->
     <section id="s01">
         <div class="smoke sm1"></div>
         <div class="smoke sm2"></div>
         <div class="smoke sm3"></div>
+        
         <div class="hero-inner">
-            <div class="showreel-btn" id="showreel">
-                <div class="play-circle">&#9654;</div>
-                <span class="showreel-label">[ SHOWREEL ]</span>
+            <!-- Left Side Branding -->
+            <div class="hero-branding">
+                <div class="showreel-btn" id="showreel">
+                    <div class="play-circle" style="display: flex; align-items: center; justify-content: center;">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="margin-left: 2px;">
+                            <polygon points="6 3 20 12 6 21 6 3"></polygon>
+                        </svg>
+                    </div>
+                    <span class="showreel-label">[ SHOWREEL ]</span>
+                </div>
+                <div class="slash-divider">/</div>
+                <div class="hero-text">
+                    <span class="hero-name display" id="heroName">KAIZER</span>
+                    <span class="hero-sub display" id="heroSub">WE MOVE</span>
+                    <span class="hero-tagline italic-accent" id="heroTag">&amp; the world watches</span>
+                </div>
             </div>
-            <div class="slash-divider">/</div>
-            <div class="hero-text">
-                <span class="hero-name display" id="heroName">KAIZER</span>
-                <span class="hero-sub display" id="heroSub">WE MOVE</span>
-                <span class="hero-tagline italic-accent" id="heroTag">&amp; the world watches</span>
+
+            <!-- Right Side Connection Portal -->
+            <div class="hero-portal">
+                <div class="portal-container" style="margin-top: 0; padding: 0; width: 100%;">
+                    {% if user %}
+                        <div class="portal-card">
+                            <div class="portal-avatar-wrapper">
+                                {% if user.avatar %}
+                                    <img src="https://cdn.discordapp.com/avatars/{{ user.id }}/{{ user.avatar }}.png" class="portal-avatar" alt="Avatar">
+                                {% else %}
+                                    <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100' fill='%234ECDC4'><circle cx='50' cy='50' r='40'/></svg>" class="portal-avatar" alt="Avatar">
+                                {% endif %}
+                                <div class="portal-status-badge"></div>
+                            </div>
+                            
+                            <div class="portal-user-info">
+                                <div class="portal-user-name">{{ user.global_name if user.global_name else user.username }}</div>
+                                <div class="portal-user-tag">@{{ user.username }}</div>
+                            </div>
+                            
+                            <div class="portal-details-grid">
+                                <div class="portal-detail-item">
+                                    <span class="portal-detail-label">User ID</span>
+                                    <span class="portal-detail-value">{{ user.id }}</span>
+                                </div>
+                                <div class="portal-detail-item">
+                                    <span class="portal-detail-label">MFA Status</span>
+                                    <span class="portal-detail-value">{{ "Enabled" if user.mfa_enabled else "Disabled" }}</span>
+                                </div>
+                                <div class="portal-detail-item">
+                                    <span class="portal-detail-label">Locale</span>
+                                    <span class="portal-detail-value">{{ user.locale | upper if user.locale else "N/A" }}</span>
+                                </div>
+                                <div class="portal-detail-item">
+                                    <span class="portal-detail-label">Premium Type</span>
+                                    <span class="portal-detail-value">
+                                        {% if user.premium_type == 1 %}Nitro Classic
+                                        {% elif user.premium_type == 2 %}Nitro
+                                        {% elif user.premium_type == 3 %}Nitro Basic
+                                        {% else %}None
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="portal-actions">
+                                <a href="/dashboard" class="portal-btn portal-btn-primary">Manage Servers</a>
+                                <a href="{{ get_invite_url() | safe }}" target="_blank" class="portal-btn portal-btn-secondary">Invite Bot</a>
+                                <a href="/logout" class="portal-btn portal-btn-tertiary">Disconnect Account</a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="portal-card" style="text-align: center;">
+                            <div style="font-size: 14px; color: rgba(255, 255, 255, 0.6); line-height: 1.6; margin-bottom: 20px; max-width: 400px; margin-left: auto; margin-right: auto;">
+                                Connect your Discord account to view your profile, manage authorized servers, and configure bot settings.
+                            </div>
+                            <div class="portal-actions">
+                                <a href="/login" class="portal-btn portal-btn-primary">Connect Discord</a>
+                                <a href="/dashboard" class="portal-btn portal-btn-secondary">Manage Servers</a>
+                                <a href="{{ get_invite_url() | safe }}" target="_blank" class="portal-btn portal-btn-secondary">Invite Bot</a>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
-        <div class="ticker-wrap">
+
+        <div class="ticker-wrap" style="position: absolute; bottom: 0; left: 0; right: 0;">
             <div class="ticker-track" id="tickerTrack"></div>
         </div>
     </section>
 
-    <!-- ══ 02 IDENTITY ══ -->
-    <section id="s02">
-        <div class="micro-block" id="micro">
-            <div class="micro-label">[ KAIZER STUDIO ]</div>
-            <div class="micro-desc">CRAFTING VISION / THROUGH MOTION</div>
-        </div>
-        <div class="big-make display" id="bigMake">MAKE</div>
-        <div class="big-awesome display" id="bigAwesome">AWESOME</div>
-        <div class="scroll-label" id="scrollLabel">SCROLL</div>
-    </section>
-
-    <!-- ══ 03 POWER ══ -->
-    <section id="s03">
-        <nav class="power-nav">
-            <span>KAIZER</span>
-            <span>[ KAIZER.IMMERSIVE ]</span>
-            <span>[ SOUND ON ] &nbsp; [ 001 ]</span>
-        </nav>
-        <div class="power-center-block">
-            <div class="innovate-text display" id="innov">INNOVATE</div>
-            <div class="morph-shape" id="morphShape"></div>
-            <div class="drag-ring" id="dragRing"></div>
-            <div class="drag-hint" id="dragHint">HOLD AND DRAG</div>
-            <div class="purpose-text display" id="purp">PURPOSE</div>
-        </div>
-        <div class="power-bottom" id="pwrBot">
-            <span>[ SCROLL FOR MORE ]</span>
-            <span>[ AR ]</span>
-        </div>
-    </section>
-
-    <!-- ══ 04 MANIFESTO ══ -->
-    <section id="s04">
-        <div class="manifesto-lines">
-            <span class="m-line display" id="ml0">WE DON'T</span>
-            <span class="m-line display" id="ml1">FOLLOW</span>
-            <span class="gold-diamond" id="gd">◆</span>
-            <span class="m-line display" id="ml2">TRENDS —</span>
-            <span class="m-line display" id="ml3">WE SET THEM</span>
-        </div>
-        <p class="manifesto-body" id="mBody">Every frame is a statement. Every scroll is a declaration. KAIZER builds
-            experiences that don't ask permission.</p>
-        <div class="cta-btn" id="ctaBtn">[ SEE THE WORK &rarr; ]</div>
-    </section>
-
-        <!-- -- 05 CONTACT -- -->
-    <section id="s05">
-        <span class="contact-title-let display" id="cLet">LOGIN</span>
-        <span class="contact-title-create display" id="cCreate">REQUIRED</span>
-        
-        <div style="margin-top: 40px; display: flex; gap: 20px; justify-content: center; position: relative; z-index: 5;">
-            {% if user %}
-                <a href="/dashboard" style="display: inline-block; padding: 16px 40px; background: var(--teal); color: var(--navy); text-decoration: none; font-size: 14px; font-weight: bold; border-radius: 100px; letter-spacing: 0.2em; text-transform: uppercase;">OPEN DASHBOARD</a>
-            {% else %}
-                <a href="/login" style="display: inline-block; padding: 16px 40px; background: var(--teal); color: var(--navy); text-decoration: none; font-size: 14px; font-weight: bold; border-radius: 100px; letter-spacing: 0.2em; text-transform: uppercase;">LOGIN WITH DISCORD</a>
-            {% endif %}
-            <a href="{{ get_invite_url() | safe }}" target="_blank" style="display: inline-block; padding: 16px 40px; background: transparent; color: var(--teal); border: 2px solid var(--teal); text-decoration: none; font-size: 14px; font-weight: bold; border-radius: 100px; letter-spacing: 0.2em; text-transform: uppercase; transition: all 0.3s;">INVITE BOT</a>
-        </div>
-        
-        <div class="footer-tag" id="footerTag">KAIZER &copy; MMXXV</div>
-    </section>
-
-    
-    
     <script src="/static/js/core.js"></script>
 </body>
 </html>
