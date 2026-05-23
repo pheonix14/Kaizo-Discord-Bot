@@ -524,3 +524,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-23] fix(reaction-roles): align persistent button component
 - [2026-05-23] fix(leveling): fix level up notifications
 - [2026-05-23] refactor(ui): refactor giveaway clocks
+- [2026-05-23] feat(automod): harden mention mass limiter
