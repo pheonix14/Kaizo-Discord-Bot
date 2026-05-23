@@ -527,3 +527,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-23] feat(automod): harden mention mass limiter
 - [2026-05-23] feat(db): add Supabase connection pool
 - [2026-05-23] fix(db): fix Supabase connection pool
+- [2026-05-23] fix(zero-emoji): align embed badge formatting
