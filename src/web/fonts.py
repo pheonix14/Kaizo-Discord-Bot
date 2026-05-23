@@ -33,26 +33,91 @@ def get_font_maps():
     decorations = {
         "FN-19": ("{char}\u0336", ""), # Strikethrough
         "FN-20": ("{char}\u0332", ""), # Underline Deco
-        "FN-21": ("· {word}", "·"), # Cursive + Dots
-        "FN-22": ("━ {word} ━", ""), # Gothic + Lines
-        "FN-23": ("[ {word} ]", ""), # Bold + Brackets
-        "FN-24": ("╰ {word} ╯", ""), # Fullwidth + Corners
-        "FN-25": ("✦ {word} ✦", ""), # Small Caps + Sparkle
-        "FN-26": ("▸ {word}", ""), # Circled + Arrow
-        "FN-27": ("〜 {word} 〜", ""), # Italic + Wave
-        "FN-28": ("· {word} ·", ""), # Superscript + Dot
-        "FN-29": ("{word}", ""), # Mixed Cursive Bold
-        "FN-30": ("{word} ♡", ""), # Cursive + Heart
-        "FN-31": ("✧ {word} ✧", ""), # Gothic + Star
-        "FN-32": ("{word} ₊˚", ""), # Bold + Sub Dot
-        "FN-33": ("｡ {word} ｡", ""), # Fullwidth Soft
-        "FN-34": ("━ {word} ━", ""), # Small Caps Bar
-        "FN-35": ("·· {word} ··", ""), # Circled Dots
-        "FN-36": ("「{word}」", ""), # Mono Corner
-        "FN-37": ("꒰ {word} ꒱", ""), # Bold Italic + Curlicue
-        "FN-38": ("{word}\u0336 ⌇", ""), # Strikethrough Ghost
-        "FN-39": ("⟨ {word}\u0332 ⟩", ""), # Underline + Angle
-        "FN-40": ("{word}<3", ""), # Cursive Gothic Mix
+        "FN-21": ("✦ {word} ✦", ""),
+        "FN-22": ("✧ {word} ✧", ""),
+        "FN-23": ("★ {word} ★", ""),
+        "FN-24": ("☆ {word} ☆", ""),
+        "FN-25": ("◈ {word} ◈", ""),
+        "FN-26": ("◇ {word} ◇", ""),
+        "FN-27": ("◆ {word} ◆", ""),
+        "FN-28": ("⬪ {word} ⬪", ""),
+        "FN-29": ("⬡ {word} ⬡", ""),
+        "FN-30": ("▲ {word} ▲", ""),
+        "FN-31": ("▼ {word} ▼", ""),
+        "FN-32": ("» {word} «", ""),
+        "FN-33": ("« {word} »", ""),
+        "FN-34": ("┇ {word} ‧", ""),
+        "FN-35": ("┇ ٫ {word} ‧", ""),
+        "FN-36": ("⬪ ٫ {word} ‧", ""),
+        "FN-37": ("┇ ٫ {word} | ☩", ""),
+        "FN-38": ("✦ ─ {word} ─ ✦", ""),
+        "FN-39": ("⬪ ₊ {word} ₊ ⬪", ""),
+        "FN-40": ("» {word} | ☩", ""),
+        "FN-41": ("» ٫ {word} ‧", ""),
+        "FN-42": ("┇ {word} ┇", ""),
+        "FN-43": ("┊ {word} ┊", ""),
+        "FN-44": ("┋ {word} ┋", ""),
+        "FN-45": ("━ {word} ━", ""),
+        "FN-46": ("─ {word} ─", ""),
+        "FN-47": ("═ {word} ═", ""),
+        "FN-48": ("░ {word} ░", ""),
+        "FN-49": ("▒ {word} ▒", ""),
+        "FN-50": ("▓ {word} ▓", ""),
+        "FN-51": ("✎ {word}", ""),
+        "FN-52": ("✏ {word}", ""),
+        "FN-53": ("🪶 {word}", ""),
+        "FN-54": ("⚡ {word}", ""),
+        "FN-55": ("🪐 {word}", ""),
+        "FN-56": ("⚙ {word}", ""),
+        "FN-57": ("⚖ {word}", ""),
+        "FN-58": ("⚔ {word}", ""),
+        "FN-59": ("♰ {word} ♰", ""),
+        "FN-60": ("♱ {word} ♱", ""),
+        "FN-61": ("☥ {word}", ""),
+        "FN-62": ("☦ {word}", ""),
+        "FN-63": ("☧ {word}", ""),
+        "FN-64": ("☨ {word}", ""),
+        "FN-65": ("☩ {word}", ""),
+        "FN-66": ("☫ {word}", ""),
+        "FN-67": ("☬ {word}", ""),
+        "FN-68": ("☭ {word}", ""),
+        "FN-69": ("☮ {word} ☮", ""),
+        "FN-70": ("☯ {word} ☯", ""),
+        "FN-71": ("☸ {word} ☸", ""),
+        "FN-72": ("☼ {word} ☼", ""),
+        "FN-73": ("☾ {word} ☾", ""),
+        "FN-74": ("☽ {word} ☽", ""),
+        "FN-75": ("☁ {word} ☁", ""),
+        "FN-76": ("☄ {word} ☄", ""),
+        "FN-77": ("☇ {word}", ""),
+        "FN-78": ("☈ {word}", ""),
+        "FN-79": ("☉ {word}", ""),
+        "FN-80": ("☊ {word}", ""),
+        "FN-81": ("☋ {word}", ""),
+        "FN-82": ("☌ {word}", ""),
+        "FN-83": ("☍ {word}", ""),
+        "FN-84": ("⟨ {word} ⟩", ""),
+        "FN-85": ("〔 {word} 〕", ""),
+        "FN-86": ("【 {word} 】", ""),
+        "FN-87": ("〖 {word} 〗", ""),
+        "FN-88": ("𓆩 {word} 𓆪", ""),
+        "FN-89": ("𓏲 {word} 𓏲", ""),
+        "FN-90": ("𓍢 {word} 𓍢", ""),
+        "FN-91": ("𓏴 {word} 𓏴", ""),
+        "FN-92": ("𓈀 {word} 𓈀", ""),
+        "FN-93": ("𓂋 {word} 𓂋", ""),
+        "FN-94": ("𓆩 ٫ {word} ‧ 𓆪", ""),
+        "FN-95": ("𓏲 ٫ {word} ‧ 𓏲", ""),
+        "FN-96": ("𓍢 ٫ {word} ‧ 𓍢", ""),
+        "FN-97": ("𓏴 ٫ {word} ‧ 𓏴", ""),
+        "FN-98": ("𓈀 ٫ {word} ‧ 𓈀", ""),
+        "FN-99": ("𓂋 ٫ {word} ‧ 𓂋", ""),
+        "FN-100": ("» {word} «", ""),
+        "FN-101": ("☠ {word} ☠", ""),
+        "FN-102": ("☢ {word} ☢", ""),
+        "FN-103": ("☣ {word} ☣", ""),
+        "FN-104": ("☮ {word} ☮", ""),
+        "FN-105": ("☯ {word} ☯", ""),
     }
     
     return styles, decorations
@@ -63,29 +128,31 @@ def apply_font_to_string(text, font_id):
     
     # Base font substitution
     base_style_id = font_id
-    # Some FN mapping combine styles and decorations
-    if font_id == "FN-19": base_style_id = "FN-07" # just normal text with strikethrough
-    elif font_id == "FN-20": base_style_id = "FN-07"
-    elif font_id == "FN-21": base_style_id = "FN-01"
-    elif font_id == "FN-22": base_style_id = "FN-02"
-    elif font_id == "FN-23": base_style_id = "FN-04"
-    elif font_id == "FN-24": base_style_id = "FN-11"
-    elif font_id == "FN-25": base_style_id = "FN-12"
-    elif font_id == "FN-26": base_style_id = "FN-14"
-    elif font_id == "FN-27": base_style_id = "FN-05"
-    elif font_id == "FN-28": base_style_id = "FN-13"
-    elif font_id == "FN-29": base_style_id = "FN-06"
-    elif font_id == "FN-30": base_style_id = "FN-01"
-    elif font_id == "FN-31": base_style_id = "FN-02"
-    elif font_id == "FN-32": base_style_id = "FN-04"
-    elif font_id == "FN-33": base_style_id = "FN-11"
-    elif font_id == "FN-34": base_style_id = "FN-12"
-    elif font_id == "FN-35": base_style_id = "FN-14"
-    elif font_id == "FN-36": base_style_id = "FN-07"
-    elif font_id == "FN-37": base_style_id = "FN-06"
-    elif font_id == "FN-38": base_style_id = "FN-07"
-    elif font_id == "FN-39": base_style_id = "FN-07"
-    elif font_id == "FN-40": base_style_id = "FN-02"
+    try:
+        f_num = int(font_id.split("-")[1])
+    except (ValueError, IndexError):
+        f_num = 1
+        
+    if font_id in ["FN-19", "FN-20"]:
+        base_style_id = "FN-07"
+    elif 21 <= f_num <= 30:
+        base_style_id = "FN-01"
+    elif 31 <= f_num <= 40:
+        base_style_id = "FN-02"
+    elif 41 <= f_num <= 50:
+        base_style_id = "FN-03"
+    elif 51 <= f_num <= 60:
+        base_style_id = "FN-04"
+    elif 61 <= f_num <= 70:
+        base_style_id = "FN-05"
+    elif 71 <= f_num <= 80:
+        base_style_id = "FN-06"
+    elif 81 <= f_num <= 90:
+        base_style_id = "FN-07"
+    elif 91 <= f_num <= 100:
+        base_style_id = "FN-12"
+    elif 101 <= f_num <= 105:
+        base_style_id = "FN-11"
 
     mapped_chars = []
     style_str = styles.get(base_style_id)
@@ -115,3 +182,25 @@ def apply_font_to_string(text, font_id):
             return deco_pattern.format(word=base_word)
             
     return base_word
+
+def clean_styled_string(text):
+    styles, _ = get_font_maps()
+    reverse_map = {}
+    for style_str in styles.values():
+        for idx, char in enumerate(style_str):
+            if idx < len(ALPHABET):
+                reverse_map[char] = ALPHABET[idx]
+                
+    keep_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -_"
+    
+    cleaned_chars = []
+    for char in text:
+        if char in reverse_map:
+            cleaned_chars.append(reverse_map[char])
+        elif char in keep_chars:
+            cleaned_chars.append(char)
+            
+    cleaned_str = "".join(cleaned_chars)
+    cleaned_str = cleaned_str.strip(" -_")
+    return " ".join(cleaned_str.split())
+

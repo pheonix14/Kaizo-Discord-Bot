@@ -58,14 +58,51 @@ class AdminCog(commands.Cog, name="Admin"):
         db_client.update_guild_settings(ctx.guild.id, {"currency_name": name, "currency_emoji": emoji})
         await ctx.send(embed=discord.Embed(description=f"✅ Currency updated to {emoji} **{name}**", color=discord.Color.green()))
 
-    @config_group.command(name="prefix", description="Set a custom prefix for the server.")
-    @app_commands.describe(new_prefix="The new prefix to use")
+    @config_group.command(name="prefix", description="Set one or more custom prefixes for the server (comma-separated).")
+    @app_commands.describe(new_prefix="New prefix(es) separated by commas")
     async def config_prefix(self, ctx: commands.Context, new_prefix: str):
-        if len(new_prefix) > 5:
-            return await ctx.send("Prefix must be 5 characters or less.")
-        db_client.update_guild_settings(ctx.guild.id, {"prefix": new_prefix})
-        # Note: The engine.py dynamically loads the prefix from settings
-        await ctx.send(embed=discord.Embed(description=f"✅ Server prefix updated to `{new_prefix}`", color=discord.Color.green()))
+        prefixes = [p.strip() for p in new_prefix.split(",") if p.strip()]
+        if not prefixes:
+            return await ctx.send("Please provide at least one valid prefix.")
+        for p in prefixes:
+            if len(p) > 10:
+                return await ctx.send("Each prefix must be 10 characters or less.")
+        combined = ", ".join(prefixes)
+        db_client.update_guild_settings(ctx.guild.id, {"prefix": combined})
+        await ctx.send(embed=discord.Embed(
+            description=f"✅ Server prefix(es) updated to: " + ", ".join(f"`{p}`" for p in prefixes),
+            color=discord.Color.green()
+        ))
+
+    @commands.hybrid_command(name="prefix", description="Change or view custom prefixes for this server. Supports multiple prefixes separated by commas.")
+    @commands.has_permissions(manage_guild=True)
+    @app_commands.describe(new_prefixes="New prefixes separated by commas, or leave empty to view current prefixes")
+    async def prefix_command(self, ctx: commands.Context, *, new_prefixes: str = None):
+        if new_prefixes is None:
+            settings = db_client.get_guild_settings(ctx.guild.id)
+            current = settings.get("prefix", "k!")
+            return await ctx.send(embed=discord.Embed(
+                description=f"ℹ️ Current prefix(es) for this server: `{current}`\n"
+                            f"You can change them by running `{ctx.prefix}prefix <prefix1, prefix2, ...>`",
+                color=discord.Color.blue()
+            ))
+            
+        # Parse new prefixes
+        prefixes = [p.strip() for p in new_prefixes.split(",") if p.strip()]
+        if not prefixes:
+            return await ctx.send("Please provide at least one valid prefix.")
+            
+        for p in prefixes:
+            if len(p) > 10:
+                return await ctx.send("Each prefix must be 10 characters or less.")
+                
+        combined = ", ".join(prefixes)
+        db_client.update_guild_settings(ctx.guild.id, {"prefix": combined})
+        
+        await ctx.send(embed=discord.Embed(
+            description=f"✅ Server prefix(es) updated to: " + ", ".join(f"`{p}`" for p in prefixes),
+            color=discord.Color.green()
+        ))
 
     @config_group.command(name="logs", description="Set the channel for logging server events.")
     @app_commands.describe(channel="The channel for logs")

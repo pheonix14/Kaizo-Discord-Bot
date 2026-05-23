@@ -352,13 +352,18 @@ class FunCog(commands.Cog, name="Fun"):
     async def quote(self, ctx: commands.Context):
         try:
             async with aiohttp.ClientSession() as session:
-                async with session.get("https://api.quotable.io/random") as r:
+                async with session.get("https://zenquotes.io/api/random") as r:
                     if r.status != 200:
                         return await ctx.send("Could not fetch quote.")
                     data = await r.json()
-                    embed = discord.Embed(description=f'"{data["content"]}"', color=0x3498DB)
-                    embed.set_footer(text=f"— {data['author']}")
-                    await ctx.send(embed=embed)
+                    if isinstance(data, list) and len(data) > 0:
+                        quote_text = data[0].get("q")
+                        author = data[0].get("a", "Unknown")
+                        embed = discord.Embed(description=f'"{quote_text}"', color=0x3498DB)
+                        embed.set_footer(text=f"— {author}")
+                        await ctx.send(embed=embed)
+                    else:
+                        await ctx.send("Could not parse quote data.")
         except Exception:
             await ctx.send("Error fetching quote.")
 

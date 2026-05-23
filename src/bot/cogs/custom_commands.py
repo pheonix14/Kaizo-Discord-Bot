@@ -27,6 +27,7 @@ class CustomCommandsCog(commands.Cog, name="Custom Commands"):
             }
             res = db_client.supabase.table("custom_commands").upsert(data, on_conflict="guild_id,trigger_word").execute()
             if res.data:
+                db_client.clear_guild_cache(str(ctx.guild.id))
                 await ctx.send(embed=discord.Embed(description=f"✅ Added custom command: `{trigger}`", color=discord.Color.green()))
             else:
                 await ctx.send("Failed to add custom command.")
@@ -40,6 +41,7 @@ class CustomCommandsCog(commands.Cog, name="Custom Commands"):
         try:
             res = db_client.supabase.table("custom_commands").delete().eq("guild_id", str(ctx.guild.id)).eq("trigger_word", trigger).execute()
             if res.data:
+                db_client.clear_guild_cache(str(ctx.guild.id))
                 await ctx.send(embed=discord.Embed(description=f"✅ Removed custom command: `{trigger}`", color=discord.Color.green()))
             else:
                 await ctx.send("Custom command not found.")
@@ -64,14 +66,11 @@ class CustomCommandsCog(commands.Cog, name="Custom Commands"):
         if message.author.bot or not message.guild:
             return
             
-        # Optional: check if the message matches a custom command
-        # This could be expensive if done on every message hitting the DB,
-        # so caching would be better in a production environment.
         trigger = message.content.lower().split(" ")[0]
         try:
-            res = db_client.supabase.table("custom_commands").select("response_text").eq("guild_id", str(message.guild.id)).eq("trigger_word", trigger).execute()
-            if res.data:
-                await message.channel.send(res.data[0]["response_text"])
+            custom_cmds = db_client.get_custom_commands(str(message.guild.id))
+            if trigger in custom_cmds:
+                await message.channel.send(custom_cmds[trigger])
         except Exception:
             pass
 

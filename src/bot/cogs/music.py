@@ -73,9 +73,10 @@ class YTDLSource(discord.PCMVolumeTransformer):
         return cls(source, data=data)
 
 class MusicDownloadView(discord.ui.View):
-    def __init__(self, ctx, entries):
+    def __init__(self, ctx, cog, entries):
         super().__init__(timeout=60)
         self.ctx = ctx
+        self.cog = cog
         self.entries = entries
         for i, entry in enumerate(entries):
             btn = discord.ui.Button(label=f"Track {i+1}", style=discord.ButtonStyle.primary, custom_id=f"dl_{i}")
@@ -91,13 +92,16 @@ class MusicDownloadView(discord.ui.View):
             
             filename = f"{uuid.uuid4().hex}"
             
+            player = self.cog.get_player(self.ctx.guild.id)
+            preferred_quality = getattr(player, "quality", "192")
+            
             dl_opts = {
                 'format': 'bestaudio/best',
                 'outtmpl': f"{filename}.%(ext)s",
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
-                    'preferredquality': '192',
+                    'preferredquality': preferred_quality,
                 }],
                 'quiet': True,
                 'no_warnings': True
@@ -133,6 +137,7 @@ class ServerMusicPlayer:
         self.volume = 1.0
         self.filters = {}
         self.loop_mode = "off"
+        self.quality = "192"
         self.is_playing = asyncio.Event()
 
     def get_filter_string(self):
@@ -461,11 +466,91 @@ class MusicCog(commands.Cog, name="Music"):
             embed = discord.Embed(title="Select a track to download", description=desc, color=0x3498DB)
             embed.set_footer(text="Click the corresponding button below. Max duration ~15 mins (25MB limit).")
             
-            view = MusicDownloadView(ctx, entries)
+            view = MusicDownloadView(ctx, self, entries)
             await msg.edit(embed=embed, view=view)
             
         except Exception as e:
             await msg.edit(content=f"Error finding track: {clean_error_message(e)}", embed=None)
+
+    @music.command(name="quality", description="Set the default audio download quality for this session.")
+    @app_commands.describe(kbps="Quality in kbps (e.g. 96, 128, 192, 256, 320)")
+    @app_commands.choices(kbps=[
+        app_commands.Choice(name="64 Kbps", value="64"),
+        app_commands.Choice(name="96 Kbps", value="96"),
+        app_commands.Choice(name="128 Kbps", value="128"),
+        app_commands.Choice(name="192 Kbps (Default)", value="192"),
+        app_commands.Choice(name="256 Kbps", value="256"),
+        app_commands.Choice(name="320 Kbps (HQ)", value="320"),
+    ])
+    async def quality(self, ctx: commands.Context, kbps: str):
+        player = self.get_player(ctx.guild.id)
+        player.quality = kbps
+        await ctx.send(embed=discord.Embed(description=f"🔊 Session audio download quality set to **{kbps} Kbps**.", color=0x3498DB))
+
+    @music.command(name="search", description="Search YouTube and select a track to play.")
+    @app_commands.describe(query="Search keywords")
+    async def search(self, ctx: commands.Context, *, query: str):
+        if not ctx.voice_client:
+            if ctx.author.voice:
+                await ctx.author.voice.channel.connect()
+            else:
+                return await ctx.send("You need to be in a voice channel to play music.")
+                
+        msg = await ctx.send(embed=discord.Embed(description=f"Searching for top 5 results for `{query}`...", color=0x3498DB))
+        
+        try:
+            loop = self.bot.loop or asyncio.get_event_loop()
+            data = await loop.run_in_executor(None, lambda: ytdl.extract_info(f"ytsearch5:{query}", download=False))
+            
+            entries = data.get('entries', [])
+            if not entries:
+                return await msg.edit(embed=discord.Embed(description="No results found.", color=discord.Color.red()))
+                
+            desc = ""
+            for i, entry in enumerate(entries):
+                duration = entry.get('duration', 0)
+                mins, secs = divmod(duration, 60)
+                desc += f"**{i+1}.** {entry.get('title')} (`{mins}:{secs:02d}`)\n\n"
+                
+            embed = discord.Embed(title="Select a track to play", description=desc, color=0x3498DB)
+            
+            class MusicPlaySearchView(discord.ui.View):
+                def __init__(self, cog, entries):
+                    super().__init__(timeout=60)
+                    self.cog = cog
+                    self.entries = entries
+                    
+                    for idx, entry in enumerate(entries):
+                        btn = discord.ui.Button(label=f"Play {idx+1}", style=discord.ButtonStyle.primary, custom_id=f"playsearch_{idx}")
+                        btn.callback = self.make_callback(entry)
+                        self.add_item(btn)
+                        
+                def make_callback(self, entry):
+                    async def callback(interaction: discord.Interaction):
+                        if interaction.user != ctx.author:
+                            return await interaction.response.send_message("Only the requester can select a track.", ephemeral=True)
+                            
+                        await interaction.response.edit_message(content=f"Selected **{entry.get('title')}**! Adding to queue...", embed=None, view=None)
+                        
+                        song = {
+                            'url': entry['webpage_url'],
+                            'title': entry['title'],
+                            'requester': ctx.author,
+                            'data': entry
+                        }
+                        player = self.cog.get_player(ctx.guild.id)
+                        player.queue.append(song)
+                        
+                        if not ctx.voice_client.is_playing():
+                            await self.cog.play_next(ctx)
+                            
+                    return callback
+                    
+            view = MusicPlaySearchView(self, entries)
+            await msg.edit(embed=embed, view=view)
+            
+        except Exception as e:
+            await msg.edit(content=f"Error finding tracks: {clean_error_message(e)}", embed=None)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(MusicCog(bot))

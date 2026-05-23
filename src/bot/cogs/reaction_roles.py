@@ -86,5 +86,69 @@ class ReactionRolesCog(commands.Cog, name="Reaction Roles"):
                     except discord.Forbidden:
                         pass
 
+    @commands.Cog.listener()
+    async def on_interaction(self, interaction: discord.Interaction):
+        if interaction.type != discord.InteractionType.component:
+            return
+            
+        custom_id = interaction.data.get("custom_id", "")
+        if not custom_id.startswith("selfrole:"):
+            return
+            
+        parts = custom_id.split(":")
+        if len(parts) != 3:
+            return
+            
+        mode, role_id_str = parts[1], parts[2]
+        
+        await interaction.response.defer(ephemeral=True)
+        
+        guild = interaction.guild
+        if not guild:
+            return
+            
+        try:
+            role_id = int(role_id_str)
+        except ValueError:
+            return await interaction.followup.send("❌ Invalid role configuration.", ephemeral=True)
+            
+        role = guild.get_role(role_id)
+        if not role:
+            return await interaction.followup.send("❌ Role not found on this server.", ephemeral=True)
+            
+        if role >= guild.me.top_role:
+            return await interaction.followup.send(f"❌ I cannot manage the role **{role.name}** because it is positioned higher than or equal to my bot role in the server hierarchy.", ephemeral=True)
+            
+        member = interaction.user
+        if not isinstance(member, discord.Member):
+            return
+            
+        has_role = any(r.id == role.id for r in member.roles)
+        
+        try:
+            if mode == "toggle":
+                if has_role:
+                    await member.remove_roles(role, reason="Self role removal via button click")
+                    await interaction.followup.send(f"◈ Removed role **{role.name}**.", ephemeral=True)
+                else:
+                    await member.add_roles(role, reason="Self role addition via button click")
+                    await interaction.followup.send(f"◈ Added role **{role.name}**.", ephemeral=True)
+            elif mode == "add":
+                if has_role:
+                    await interaction.followup.send(f"◈ You already have the **{role.name}** role.", ephemeral=True)
+                else:
+                    await member.add_roles(role, reason="Self role addition via button click")
+                    await interaction.followup.send(f"◈ Added role **{role.name}**.", ephemeral=True)
+            elif mode == "remove":
+                if not has_role:
+                    await interaction.followup.send(f"◈ You do not have the **{role.name}** role.", ephemeral=True)
+                else:
+                    await member.remove_roles(role, reason="Self role removal via button click")
+                    await interaction.followup.send(f"◈ Removed role **{role.name}**.", ephemeral=True)
+        except discord.Forbidden:
+            await interaction.followup.send("❌ I lack permissions to manage roles. Please verify my permissions.", ephemeral=True)
+        except Exception as e:
+            await interaction.followup.send(f"❌ Error occurred: {str(e)}", ephemeral=True)
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(ReactionRolesCog(bot))

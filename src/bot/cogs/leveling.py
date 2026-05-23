@@ -2,6 +2,7 @@ import discord
 from discord.ext import commands
 from discord import app_commands
 import random
+import asyncio
 from src.db import client as db_client
 
 class LevelingCog(commands.Cog, name="Leveling"):
@@ -27,7 +28,7 @@ class LevelingCog(commands.Cog, name="Leveling"):
         xp_gain = random.randint(5, 15)
         
         # This adds XP and returns new stats and old level directly from DB
-        result = db_client.add_xp(str(message.guild.id), str(message.author.id), xp_gain)
+        result = await asyncio.to_thread(db_client.add_xp, str(message.guild.id), str(message.author.id), xp_gain)
         
         new_level = result["level"]
         old_level = result["old_level"]
@@ -35,7 +36,7 @@ class LevelingCog(commands.Cog, name="Leveling"):
         if new_level > old_level:
             # ECONOMY LINK: Give level * 500 coins as a reward
             reward = new_level * 500
-            db_client.add_economy_balance(str(message.guild.id), str(message.author.id), wallet_delta=reward)
+            await asyncio.to_thread(db_client.add_economy_balance, str(message.guild.id), str(message.author.id), wallet_delta=reward)
             
             try:
                 embed = discord.Embed(
@@ -51,7 +52,7 @@ class LevelingCog(commands.Cog, name="Leveling"):
     @app_commands.describe(member="The member to check")
     async def rank(self, ctx: commands.Context, member: discord.Member = None):
         member = member or ctx.author
-        data = db_client.get_xp(str(ctx.guild.id), str(member.id))
+        data = await asyncio.to_thread(db_client.get_xp, str(ctx.guild.id), str(member.id))
         xp = data.get("xp", 0)
         level = data.get("level", 0)
         next_xp = self.xp_for_next_level(level)
@@ -77,16 +78,16 @@ class LevelingCog(commands.Cog, name="Leveling"):
 
     @leveladmin.command(name="givexp", description="Give XP to a member.")
     async def givexp(self, ctx: commands.Context, member: discord.Member, amount: int):
-        result = db_client.add_xp(str(ctx.guild.id), str(member.id), amount)
+        result = await asyncio.to_thread(db_client.add_xp, str(ctx.guild.id), str(member.id), amount)
         new_xp = result["xp"]
         await ctx.send(embed=discord.Embed(description=f"✅ Gave **{amount}** XP to {member.mention}. They now have {new_xp} XP.", color=discord.Color.green()))
 
     @leveladmin.command(name="removexp", description="Remove XP from a member.")
     async def removexp(self, ctx: commands.Context, member: discord.Member, amount: int):
-        current = db_client.get_xp(str(ctx.guild.id), str(member.id))
+        current = await asyncio.to_thread(db_client.get_xp, str(ctx.guild.id), str(member.id))
         new_xp = max(0, current.get("xp", 0) - amount)
         new_level = self.calculate_level(new_xp)
-        db_client.set_xp(str(ctx.guild.id), str(member.id), new_xp, new_level)
+        await asyncio.to_thread(db_client.set_xp, str(ctx.guild.id), str(member.id), new_xp, new_level)
         await ctx.send(embed=discord.Embed(description=f"✅ Removed **{amount}** XP from {member.mention}. They now have {new_xp} XP.", color=discord.Color.green()))
 
 async def setup(bot: commands.Bot):

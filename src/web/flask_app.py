@@ -65,7 +65,123 @@ def inject_globals():
 # Supabase client
 # ---------------------------------------------------------------------------
 
-supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY)
+supabase:Client = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY)
+
+import datetime
+
+# ---------------------------------------------------------------------------
+# Telemetry Heartbeat / Uptime Globals & Helpers
+# ---------------------------------------------------------------------------
+START_TIME = time.time()
+TELEMETRY_FILE = str(PROJECT_ROOT / "awake_telemetry.json")
+
+def load_telemetry():
+    """Load telemetry data from local JSON file. Fallback to empty dict."""
+    if os.path.exists(TELEMETRY_FILE):
+        try:
+            with open(TELEMETRY_FILE, "r") as f:
+                return json.load(f)
+        except Exception as e:
+            logger.error(f"Failed to read local telemetry file: {e}")
+    
+    # Try fetching from Supabase
+    try:
+        resp = supabase.from_("awake_telemetry").select("*").execute()
+        if resp.data:
+            data = {}
+            for row in resp.data:
+                data[row["node_url"]] = {
+                    "node_url": row["node_url"],
+                    "label": row.get("label") or "",
+                    "last_seen": row.get("last_seen"),
+                    "ping_count": row.get("ping_count", 0),
+                    "peers": row.get("peers") or [],
+                    "is_active": row.get("is_active", True)
+                }
+            # Cache locally
+            with open(TELEMETRY_FILE, "w") as f:
+                json.dump(data, f, indent=2)
+            return data
+    except Exception as e:
+        logger.warning(f"Could not load telemetry from Supabase: {e}")
+    
+    return {}
+
+def save_telemetry(data):
+    """Write telemetry data to local JSON file and attempt sync to Supabase."""
+    try:
+        with open(TELEMETRY_FILE, "w") as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        logger.error(f"Failed to write local telemetry file: {e}")
+        
+    try:
+        for node_url, info in data.items():
+            db_payload = {
+                "node_url": node_url,
+                "label": info.get("label", ""),
+                "last_seen": info.get("last_seen"),
+                "ping_count": info.get("ping_count", 0),
+                "peers": info.get("peers", []),
+                "is_active": info.get("is_active", True)
+            }
+            supabase.from_("awake_telemetry").upsert(db_payload).execute()
+    except Exception as e:
+        logger.warning(f"Failed to sync telemetry to Supabase: {e}")
+
+def register_awake_heartbeat(node_url, peers_raw):
+    """Record an inbound heartbeat and update peer lists."""
+    if not node_url:
+        return
+    
+    node_url = node_url.strip().rstrip("/")
+    if not node_url.startswith("http"):
+        node_url = "https://" + node_url
+        
+    inbound_peers = []
+    if peers_raw:
+        try:
+            for p in peers_raw.split(","):
+                p = p.strip().rstrip("/")
+                if p:
+                    if not p.startswith("http"):
+                        p = "https://" + p
+                    inbound_peers.append(p)
+        except Exception as e:
+            logger.error(f"Error parsing peers header: {e}")
+            
+    registry = load_telemetry()
+    now_iso = datetime.datetime.utcnow().isoformat() + "Z"
+    
+    if node_url in registry:
+        registry[node_url]["last_seen"] = now_iso
+        registry[node_url]["ping_count"] = registry[node_url].get("ping_count", 0) + 1
+        current_peers = set(registry[node_url].get("peers", []))
+        current_peers.update(inbound_peers)
+        registry[node_url]["peers"] = list(current_peers)
+        registry[node_url]["is_active"] = True
+    else:
+        registry[node_url] = {
+            "node_url": node_url,
+            "label": "PEER NODE",
+            "last_seen": now_iso,
+            "ping_count": 1,
+            "peers": inbound_peers,
+            "is_active": True
+        }
+        
+    for peer in inbound_peers:
+        if peer not in registry:
+            registry[peer] = {
+                "node_url": peer,
+                "label": "DISCOVERED PEER",
+                "last_seen": None,
+                "ping_count": 0,
+                "peers": [],
+                "is_active": True
+            }
+            
+    save_telemetry(registry)
 
 # ---------------------------------------------------------------------------
 # Helper Functions
@@ -317,12 +433,92 @@ def help_page():
     is_dev = is_developer(user.get("id"))
     
     guild_id, guild_name = get_session_guild_context()
+    
+    # Dynamically retrieve prefix and commands from Bot
+    from src.bot.engine import bot
+    from discord.ext import commands as discord_commands
+    
+    guild_prefix = "k!"
+    if guild_id:
+        from src.db import client as db_client
+        settings = db_client.get_guild_settings(guild_id)
+        guild_prefix = settings.get("prefix", "k!")
+        if "," in guild_prefix:
+            guild_prefix = guild_prefix.split(",")[0].strip()
+
+    prefix_commands = []
+    slash_commands = []
+    
+    if bot:
+        # 1. Prefix Commands
+        cog_commands = {}
+        for cmd in bot.commands:
+            if cmd.hidden:
+                continue
+            cog_name = cmd.cog.qualified_name if cmd.cog else "General"
+            if cog_name.lower() in ["developer", "jishaku"]:
+                continue
+                
+            syntax = f"{cmd.name} {cmd.signature}".strip()
+            subcommands = []
+            if isinstance(cmd, discord_commands.Group):
+                for sub in cmd.walk_commands():
+                    subcommands.append({
+                        "name": sub.qualified_name,
+                        "syntax": f"{sub.qualified_name} {sub.signature}".strip(),
+                        "desc": sub.help or sub.description or "No description provided."
+                    })
+            
+            cmd_data = {
+                "name": cmd.name,
+                "syntax": syntax,
+                "desc": cmd.help or cmd.description or "No description provided.",
+                "subcommands": subcommands
+            }
+            cog_commands.setdefault(cog_name, []).append(cmd_data)
+            
+        for cog_name, cmds in cog_commands.items():
+            cmds.sort(key=lambda x: x["name"])
+            prefix_commands.append({
+                "category": cog_name,
+                "commands": cmds
+            })
+        prefix_commands.sort(key=lambda x: x["category"])
+        
+        # 2. Slash Commands
+        if bot.tree:
+            for cmd in bot.tree.get_commands():
+                subcommands = []
+                if hasattr(cmd, "commands") and cmd.commands:
+                    for sub in cmd.commands:
+                        if hasattr(sub, "commands") and sub.commands:
+                            for subsub in sub.commands:
+                                subcommands.append({
+                                    "name": f"/{cmd.name} {sub.name} {subsub.name}",
+                                    "desc": subsub.description or "No description provided."
+                                })
+                        else:
+                            subcommands.append({
+                                "name": f"/{cmd.name} {sub.name}",
+                                "desc": sub.description or "No description provided."
+                            })
+                
+                slash_commands.append({
+                    "name": f"/{cmd.name}",
+                    "desc": cmd.description or "No description provided.",
+                    "subcommands": subcommands
+                })
+            slash_commands.sort(key=lambda x: x["name"])
+
     return render_template(
         "help.html",
         user=user,
         guild_id=guild_id,
         guild_name=guild_name,
-        is_developer=is_dev
+        is_developer=is_dev,
+        prefix_commands=prefix_commands,
+        slash_commands=slash_commands,
+        guild_prefix=guild_prefix
     )
 
 
@@ -418,6 +614,8 @@ def api_guild_command_patch(guild_id, command_name):
             payload["command_name"] = command_name
             res = supabase.from_("command_configs").insert(payload).execute()
             print(f"\033[95m[UI SUCCESS] Inserted new config for '{command_name}'\033[0m")
+        from src.db.client import clear_guild_cache
+        clear_guild_cache(guild_id)
         return jsonify(res.data or []), 200
     except Exception as e:
         print(f"\033[91m[UI ERROR] Failed to patch command '{command_name}': {e}\033[0m")
@@ -445,9 +643,105 @@ def api_guild_settings(guild_id):
             else:
                 payload["guild_id"] = guild_id
                 res = supabase.from_("guild_settings").insert(payload).execute()
+            from src.db.client import clear_guild_cache
+            clear_guild_cache(guild_id)
             return jsonify({"success": True, "message": f"{category.capitalize() + ' s' if category else 'S'}ettings saved successfully!"}), 200
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/guild/<guild_id>/welcome/test", methods=["POST"])
+def api_guild_welcome_test(guild_id):
+    if not verify_session():
+        return jsonify({"success": False, "error": "unauthorized"}), 401
+    
+    token = request.cookies.get("discord_token")
+    try:
+        user_info = get_user_info(token)
+        user_id = int(user_info["id"])
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Failed to authenticate user: {e}"}), 400
+
+    import asyncio
+    from src.bot.engine import bot
+    
+    async def do_test_welcome():
+        guild = bot.get_guild(int(guild_id))
+        if not guild:
+            return {"success": False, "error": "Bot is not in this guild."}
+        
+        member = guild.get_member(user_id)
+        if not member:
+            try:
+                member = await guild.fetch_member(user_id)
+            except Exception:
+                member = guild.owner or guild.me
+                
+        cog = bot.get_cog("WelcomeGoodbye")
+        if not cog:
+            return {"success": False, "error": "Welcome/Goodbye system cog is not loaded."}
+            
+        try:
+            await cog.send_welcome_goodbye(member, is_join=True, force=True)
+            return {"success": True}
+        except Exception as err:
+            return {"success": False, "error": str(err)}
+            
+    future = asyncio.run_coroutine_threadsafe(do_test_welcome(), bot.loop)
+    try:
+        res = future.result(timeout=15)
+        if res.get("success"):
+            return jsonify({"success": True, "message": "Test Welcome Alert triggered successfully!"}), 200
+        else:
+            return jsonify({"success": False, "error": res.get("error")}), 500
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/guild/<guild_id>/goodbye/test", methods=["POST"])
+def api_guild_goodbye_test(guild_id):
+    if not verify_session():
+        return jsonify({"success": False, "error": "unauthorized"}), 401
+    
+    token = request.cookies.get("discord_token")
+    try:
+        user_info = get_user_info(token)
+        user_id = int(user_info["id"])
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Failed to authenticate user: {e}"}), 400
+
+    import asyncio
+    from src.bot.engine import bot
+    
+    async def do_test_goodbye():
+        guild = bot.get_guild(int(guild_id))
+        if not guild:
+            return {"success": False, "error": "Bot is not in this guild."}
+        
+        member = guild.get_member(user_id)
+        if not member:
+            try:
+                member = await guild.fetch_member(user_id)
+            except Exception:
+                member = guild.owner or guild.me
+                
+        cog = bot.get_cog("WelcomeGoodbye")
+        if not cog:
+            return {"success": False, "error": "Welcome/Goodbye system cog is not loaded."}
+            
+        try:
+            await cog.send_welcome_goodbye(member, is_join=False, force=True)
+            return {"success": True}
+        except Exception as err:
+            return {"success": False, "error": str(err)}
+            
+    future = asyncio.run_coroutine_threadsafe(do_test_goodbye(), bot.loop)
+    try:
+        res = future.result(timeout=15)
+        if res.get("success"):
+            return jsonify({"success": True, "message": "Test Goodbye Alert triggered successfully!"}), 200
+        else:
+            return jsonify({"success": False, "error": res.get("error")}), 500
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @app.route("/api/guild/<guild_id>/reaction_roles", methods=["PATCH"])
 def api_guild_reaction_roles(guild_id):
@@ -469,6 +763,158 @@ def api_guild_reaction_roles(guild_id):
     try:
         res = supabase.from_("reaction_roles").insert(db_payload).execute()
         return jsonify({"success": True, "message": "Reaction role added successfully!"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/upload-image", methods=["POST"])
+def api_upload_image():
+    if not verify_session():
+        return jsonify({"success": False, "error": "unauthorized"}), 401
+    if "image" not in request.files:
+        return jsonify({"success": False, "error": "No image file provided"}), 400
+    file = request.files["image"]
+    if file.filename == "":
+        return jsonify({"success": False, "error": "Empty filename"}), 400
+    
+    # Ensure upload folder exists
+    upload_dir = os.path.join(PROJECT_ROOT, "static", "uploads")
+    os.makedirs(upload_dir, exist_ok=True)
+    
+    # Generate safe name
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in [".png", ".jpg", ".jpeg", ".gif", ".webp"]:
+        return jsonify({"success": False, "error": "Invalid file extension"}), 400
+        
+    filename = f"{uuid.uuid4()}{ext}"
+    filepath = os.path.join(upload_dir, filename)
+    file.save(filepath)
+    
+    url = f"/static/uploads/{filename}"
+    return jsonify({"success": True, "url": url}), 200
+
+@app.route("/api/guild/<guild_id>/send-embed-roles", methods=["POST"])
+def api_guild_send_embed_roles(guild_id):
+    if not verify_session():
+        return jsonify({"success": False, "error": "unauthorized"}), 401
+        
+    payload = request.get_json()
+    channel_id = payload.get("channel_id")
+    embed_data = payload.get("embed_data", {})
+    buttons = payload.get("buttons", [])
+    
+    if not channel_id:
+        return jsonify({"success": False, "error": "Missing channel ID"}), 400
+        
+    from src.bot.engine import bot
+    import asyncio
+    import discord
+    
+    async def do_send():
+        guild = bot.get_guild(int(guild_id))
+        if not guild:
+            return {"success": False, "error": "Bot is not in this guild or is still connecting."}
+            
+        channel = guild.get_channel(int(channel_id))
+        if not channel or not isinstance(channel, discord.TextChannel):
+            return {"success": False, "error": "Text channel not found."}
+            
+        # Build Embed
+        color_hex = embed_data.get("color", "#0affe4").lstrip("#")
+        try:
+            color_val = int(color_hex, 16)
+        except ValueError:
+            color_val = 0x0affe4
+            
+        embed = discord.Embed(
+            title=embed_data.get("title") or None,
+            description=embed_data.get("description") or None,
+            color=color_val
+        )
+        
+        if embed_data.get("author_name"):
+            embed.set_author(
+                name=embed_data["author_name"],
+                icon_url=embed_data.get("author_icon_url") or None,
+                url=embed_data.get("author_link") or None
+            )
+        if embed_data.get("thumbnail_url"):
+            embed.set_thumbnail(url=embed_data["thumbnail_url"])
+        if embed_data.get("image_url"):
+            img_url = embed_data["image_url"]
+            if img_url.startswith("/"):
+                img_url = request.host_url.rstrip("/") + img_url
+            embed.set_image(url=img_url)
+        if embed_data.get("footer_text"):
+            embed.set_footer(
+                text=embed_data["footer_text"],
+                icon_url=embed_data.get("footer_icon_url") or None
+            )
+            
+        # Build View if buttons exist
+        view = None
+        if buttons:
+            view = discord.ui.View(timeout=None)
+            for btn in buttons:
+                style_str = btn.get("style", "primary").lower()
+                label = btn.get("label", "")
+                emoji_char = btn.get("emoji") or None
+                role_id = btn.get("role_id")
+                mode = btn.get("mode", "toggle")
+                
+                style = discord.ButtonStyle.primary
+                url = None
+                custom_id = None
+                
+                if style_str == "secondary":
+                    style = discord.ButtonStyle.secondary
+                elif style_str == "success":
+                    style = discord.ButtonStyle.success
+                elif style_str == "danger":
+                    style = discord.ButtonStyle.danger
+                elif style_str == "link":
+                    style = discord.ButtonStyle.link
+                    url = btn.get("url") or "https://discord.com"
+                else:
+                    style = discord.ButtonStyle.primary
+                    
+                if style != discord.ButtonStyle.link:
+                    custom_id = f"selfrole:{mode}:{role_id}"
+                    
+                button_comp = discord.ui.Button(
+                    style=style,
+                    label=label or None,
+                    emoji=emoji_char,
+                    custom_id=custom_id,
+                    url=url
+                )
+                view.add_item(button_comp)
+                
+        try:
+            sent_msg = await channel.send(embed=embed, view=view)
+            
+            # Sync to Supabase
+            if buttons:
+                for btn in buttons:
+                    db_payload = {
+                        "guild_id": guild_id,
+                        "channel_id": channel_id,
+                        "message_id": str(sent_msg.id),
+                        "role_id": btn.get("role_id"),
+                        "emoji": f"BUTTON:{json.dumps(btn)}"
+                    }
+                    supabase.from_("reaction_roles").insert(db_payload).execute()
+                    
+            return {"success": True, "message_id": str(sent_msg.id)}
+        except Exception as send_err:
+            return {"success": False, "error": str(send_err)}
+            
+    future = asyncio.run_coroutine_threadsafe(do_send(), bot.loop)
+    try:
+        res = future.result(timeout=15)
+        if res.get("success"):
+            return jsonify({"success": True, "message": "Embed message sent successfully!", "message_id": res["message_id"]}), 200
+        else:
+            return jsonify({"success": False, "error": res.get("error")}), 500
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -519,16 +965,100 @@ def api_guild_server_action(guild_id):
     if action == "server_audit":
         async def do_audit():
             guild = bot.get_guild(int(guild_id))
-            if not guild: return "Guild not found or bot not in guild."
-            issues = 0
+            if not guild: 
+                return {"error": "Guild not found or bot not in guild."}
+            
+            import datetime
+            permission_issues = []
+            duplicate_groups = {}
+            category_groups = {}
+            
             for channel in guild.channels:
+                # 1. Check for permission issues (hidden/locked channels)
                 if isinstance(channel, discord.TextChannel):
                     overrides = channel.overwrites_for(guild.default_role)
                     if overrides.read_messages is False and len(channel.changed_roles) == 0:
-                        issues += 1
-            if issues == 0:
-                return "Server permissions look healthy."
-            return f"Found {issues} channels completely hidden to everyone with no role overrides."
+                        permission_issues.append({
+                            "id": str(channel.id),
+                            "name": channel.name,
+                            "type": "text",
+                            "category": channel.category.name if channel.category else "None",
+                            "reason": "Completely hidden to @everyone with no role overrides."
+                        })
+                elif isinstance(channel, discord.VoiceChannel):
+                    overrides = channel.overwrites_for(guild.default_role)
+                    if overrides.connect is False and len(channel.changed_roles) == 0:
+                        permission_issues.append({
+                            "id": str(channel.id),
+                            "name": channel.name,
+                            "type": "voice",
+                            "category": channel.category.name if channel.category else "None",
+                            "reason": "Completely locked to @everyone with no role overrides."
+                        })
+                
+                # 2. Track duplicate candidates
+                if isinstance(channel, discord.CategoryChannel):
+                    key = channel.name.lower()
+                    category_groups.setdefault(key, []).append(channel)
+                else:
+                    key = (channel.name.lower(), str(channel.type))
+                    duplicate_groups.setdefault(key, []).append(channel)
+            
+            duplicates = []
+            
+            # Add duplicate categories to report
+            for cat_name, cats in category_groups.items():
+                if len(cats) > 1:
+                    cats_sorted = sorted(cats, key=lambda c: c.created_at if c.created_at else datetime.datetime.min)
+                    cats_data = []
+                    for idx, c in enumerate(cats_sorted):
+                        recommendation = "Keep (Oldest)" if idx == 0 else "Duplicate (Newer)"
+                        cats_data.append({
+                            "id": str(c.id),
+                            "name": c.name,
+                            "created_at": c.created_at.isoformat() + "Z" if c.created_at else "Unknown",
+                            "recommendation": recommendation,
+                            "keep": idx == 0
+                        })
+                    duplicates.append({
+                        "name": cats_sorted[0].name,
+                        "type": "category",
+                        "category": "N/A",
+                        "channels": cats_data
+                    })
+            
+            # Add duplicate channels to report
+            for (name, chan_type), chans in duplicate_groups.items():
+                if len(chans) > 1:
+                    chans_sorted = sorted(chans, key=lambda c: c.created_at if c.created_at else datetime.datetime.min)
+                    chans_data = []
+                    for idx, c in enumerate(chans_sorted):
+                        recommendation = "Keep (Oldest)" if idx == 0 else "Duplicate (Newer)"
+                        chans_data.append({
+                            "id": str(c.id),
+                            "name": c.name,
+                            "created_at": c.created_at.isoformat() + "Z" if c.created_at else "Unknown",
+                            "recommendation": recommendation,
+                            "keep": idx == 0
+                        })
+                    
+                    categories_found = []
+                    for c in chans_sorted:
+                        cat_name = c.category.name if c.category else "None"
+                        if cat_name not in categories_found:
+                            categories_found.append(cat_name)
+                            
+                    duplicates.append({
+                        "name": chans_sorted[0].name,
+                        "type": chan_type,
+                        "category": " / ".join(categories_found),
+                        "channels": chans_data
+                    })
+                    
+            return {
+                "permission_issues": permission_issues,
+                "duplicates": duplicates
+            }
             
         future = asyncio.run_coroutine_threadsafe(do_audit(), bot.loop)
         try:
@@ -537,6 +1067,125 @@ def api_guild_server_action(guild_id):
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
             
+    elif action == "delete_channel":
+        channel_id = payload.get("channel_id")
+        if not channel_id:
+            return jsonify({"success": False, "error": "Missing channel_id"}), 400
+            
+        async def do_delete():
+            guild = bot.get_guild(int(guild_id))
+            if not guild: return "Guild not found"
+            channel = guild.get_channel(int(channel_id))
+            if not channel: return "Channel not found"
+            await channel.delete()
+            return f"Successfully deleted channel {channel.name}"
+            
+        future = asyncio.run_coroutine_threadsafe(do_delete(), bot.loop)
+        try:
+            res = future.result(timeout=10)
+            return jsonify({"success": True, "message": res}), 200
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+            
+    elif action == "create_role":
+        role_name = payload.get("role_name")
+        if not role_name:
+            return jsonify({"success": False, "error": "Missing role_name"}), 400
+            
+        async def do_create():
+            guild = bot.get_guild(int(guild_id))
+            if not guild: return None
+            role = await guild.create_role(name=role_name, reason="Created via Dashboard Bulk Permissions")
+            return {"id": str(role.id), "name": role.name, "color": str(role.color)}
+            
+        future = asyncio.run_coroutine_threadsafe(do_create(), bot.loop)
+        try:
+            role_data = future.result(timeout=10)
+            if role_data:
+                return jsonify({"success": True, "role": role_data}), 200
+            else:
+                return jsonify({"success": False, "error": "Guild not found"}), 400
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+            
+    elif action == "server_bulkpermissions":
+        role_id = payload.get("role_id")
+        preset = payload.get("preset")
+        if not role_id or not preset:
+            return jsonify({"success": False, "error": "Missing role_id or preset"}), 400
+            
+        task_id = str(uuid.uuid4())
+        
+        async def apply_bulk_perms(t_id):
+            try:
+                guild = bot.get_guild(int(guild_id))
+                if not guild:
+                    TASK_PROGRESS[t_id] = {"status": "error", "message": "Guild not found"}
+                    return
+                
+                role = guild.get_role(int(role_id))
+                if not role:
+                    TASK_PROGRESS[t_id] = {"status": "error", "message": "Role not found"}
+                    return
+                
+                channels_to_update = [c for c in guild.channels if not isinstance(c, discord.CategoryChannel)]
+                total_chans = len(channels_to_update)
+                
+                TASK_PROGRESS[t_id] = {
+                    "status": "running", 
+                    "progress": 0, 
+                    "total": total_chans, 
+                    "message": f"Applying preset '{preset}' to {total_chans} channels..."
+                }
+                
+                ow = discord.PermissionOverwrite()
+                if preset == "read_only":
+                    ow.read_messages = True
+                    ow.send_messages = False
+                    ow.connect = True
+                    ow.speak = False
+                elif preset == "member":
+                    ow.read_messages = True
+                    ow.send_messages = True
+                    ow.connect = True
+                    ow.speak = True
+                elif preset == "mod":
+                    ow.read_messages = True
+                    ow.send_messages = True
+                    ow.manage_messages = True
+                    ow.connect = True
+                    ow.speak = True
+                    ow.mute_members = True
+                    ow.deafen_members = True
+                    ow.move_members = True
+                elif preset == "locked":
+                    ow.read_messages = False
+                    ow.connect = False
+                
+                processed = 0
+                for chan in channels_to_update:
+                    TASK_PROGRESS[t_id]["message"] = f"Updating permissions for: {chan.name}"
+                    
+                    overwrites = chan.overwrites
+                    overwrites[role] = ow
+                    await chan.edit(overwrites=overwrites)
+                    
+                    processed += 1
+                    TASK_PROGRESS[t_id]["progress"] = processed
+                    await asyncio.sleep(0.5)
+                    
+                TASK_PROGRESS[t_id] = {
+                    "status": "completed", 
+                    "progress": total_chans, 
+                    "total": total_chans, 
+                    "message": f"Successfully applied bulk permissions to all channels!"
+                }
+            except Exception as e:
+                TASK_PROGRESS[t_id] = {"status": "error", "message": str(e)}
+                
+        asyncio.run_coroutine_threadsafe(apply_bulk_perms(task_id), bot.loop)
+        return jsonify({"success": True, "task_id": task_id}), 200
+        
     elif action == "server_export":
         async def do_export():
             guild = bot.get_guild(int(guild_id))
@@ -572,26 +1221,102 @@ def api_guild_server_action(guild_id):
     elif action == "server_template_apply":
         template_id = payload.get("template_id")
         templates = {
-            "gaming": [
-                {"name": "Information", "channels": [{"name": "rules", "type": "text"}, {"name": "announcements", "type": "text"}]},
-                {"name": "Main Hub", "channels": [{"name": "general", "type": "text"}, {"name": "looking-for-group", "type": "text"}]},
-                {"name": "Voice Lobbies", "channels": [{"name": "Lobby", "type": "voice"}, {"name": "Gaming 1", "type": "voice"}, {"name": "Gaming 2", "type": "voice"}]}
-            ],
-            "community": [
-                {"name": "Welcome", "channels": [{"name": "rules", "type": "text"}, {"name": "introductions", "type": "text"}]},
-                {"name": "General", "channels": [{"name": "chat", "type": "text"}, {"name": "media", "type": "text"}, {"name": "memes", "type": "text"}]},
-                {"name": "Voice", "channels": [{"name": "General VC", "type": "voice"}, {"name": "Music VC", "type": "voice"}]}
-            ],
-            "creator": [
-                {"name": "Announcements", "channels": [{"name": "new-videos", "type": "text"}, {"name": "stream-alerts", "type": "text"}]},
-                {"name": "Community", "channels": [{"name": "chat", "type": "text"}, {"name": "fan-art", "type": "text"}]},
-                {"name": "Voice", "channels": [{"name": "Hangout", "type": "voice"}, {"name": "Stage", "type": "voice"}]}
-            ],
-            "tech": [
-                {"name": "Info", "channels": [{"name": "readme", "type": "text"}, {"name": "guidelines", "type": "text"}]},
-                {"name": "Development", "channels": [{"name": "general", "type": "text"}, {"name": "github-feed", "type": "text"}, {"name": "support", "type": "text"}]},
-                {"name": "Meetings", "channels": [{"name": "Standup", "type": "voice"}, {"name": "Discussion", "type": "voice"}]}
-            ]
+            "gaming": {
+                "name": "Gaming Server",
+                "categories": [
+                    {"name": "◈ ─ INFORMATION ─ ◈", "channels": [{"name": "✦-rules", "type": "text"}, {"name": "✦-announcements", "type": "text"}]},
+                    {"name": "⬪ ٫ CHAT HUB ‧", "channels": [{"name": "₊-general-chat", "type": "text"}, {"name": "₊-clips-and-highlights", "type": "text"}]},
+                    {"name": "┇ ٫ VOICE LOBBIES | ☩", "channels": [{"name": "Lobby (No Mic)", "type": "voice"}, {"name": "Squad Room 1", "type": "voice"}, {"name": "Squad Room 2", "type": "voice"}]}
+                ]
+            },
+            "community": {
+                "name": "Community Server",
+                "categories": [
+                    {"name": "✦ ─ WELCOME GATE ─ ✦", "channels": [{"name": "◈-rules-and-info", "type": "text"}, {"name": "◈-events-feed", "type": "text"}]},
+                    {"name": "⬪ ٫ HANGOUT ZONE ‧", "channels": [{"name": "⁕-general-chat", "type": "text"}, {"name": "⁕-memes-and-media", "type": "text"}, {"name": "⁕-hobbies", "type": "text"}]},
+                    {"name": "┇ ٫ CHILL VOICES | ☩", "channels": [{"name": "Acoustic Lounge", "type": "voice"}, {"name": "Coffee Shop VC", "type": "voice"}]}
+                ]
+            },
+            "creator": {
+                "name": "Creator Server",
+                "categories": [
+                    {"name": "◈ ─ BROADCAST ─ ◈", "channels": [{"name": "▲-rules", "type": "text"}, {"name": "▲-stream-alerts", "type": "text"}, {"name": "▲-upload-feed", "type": "text"}]},
+                    {"name": "⬪ ٫ SUBSCRIBER ROOMS ‧", "channels": [{"name": "✦-sub-lounge", "type": "text"}, {"name": "✦-exclusive-media", "type": "text"}]},
+                    {"name": "┇ ٫ RECORDING ZONE | ☩", "channels": [{"name": "Waiting Room", "type": "voice"}, {"name": "Recording Booth", "type": "voice"}]}
+                ]
+            },
+            "tech": {
+                "name": "Tech/Dev Server",
+                "categories": [
+                    {"name": "✦ ─ DOCUMENTATION ─ ✦", "channels": [{"name": "◈-guidelines", "type": "text"}, {"name": "◈-github-updates", "type": "text"}]},
+                    {"name": "⬪ ٫ TERMINAL ‧", "channels": [{"name": "⁕-general-coding", "type": "text"}, {"name": "⁕-resources", "type": "text"}, {"name": "⁕-help-desk", "type": "text"}]},
+                    {"name": "┇ ٫ VOICE DISCUSSIONS | ☩", "channels": [{"name": "Daily Standup", "type": "voice"}, {"name": "Pair Programming", "type": "voice"}]}
+                ]
+            },
+            "anime": {
+                "name": "Anime & Manga",
+                "categories": [
+                    {"name": "✦ ─ ANIME DIRECTORY ─ ✦", "channels": [{"name": "◈-rules-and-news", "type": "text"}, {"name": "◈-weekly-schedule", "type": "text"}]},
+                    {"name": "⬪ ٫ DISCUSSIONS ‧", "channels": [{"name": "₊-general-chat", "type": "text"}, {"name": "₊-anime-media", "type": "text"}, {"name": "₊-cosplay-and-art", "type": "text"}, {"name": "₊-recommendations", "type": "text"}]},
+                    {"name": "┇ ٫ WATCH PARTIES | ☩", "channels": [{"name": "Stream Room 1", "type": "voice"}, {"name": "Stream Room 2", "type": "voice"}]}
+                ]
+            },
+            "study": {
+                "name": "Study & Productivity",
+                "categories": [
+                    {"name": "◈ ─ RECEPTION ─ ◈", "channels": [{"name": "✦-announcements", "type": "text"}, {"name": "✦-focus-resources", "type": "text"}]},
+                    {"name": "⬪ ٫ STUDY HALL ‧", "channels": [{"name": "⁕-general-desk", "type": "text"}, {"name": "⁕-pomodoro-timer", "type": "text"}, {"name": "⁕-weekly-goals", "type": "text"}]},
+                    {"name": "┇ ٫ SILENT LIBRARY | ☩", "channels": [{"name": "Quiet Room (Muted)", "type": "voice"}, {"name": "Study Session A", "type": "voice"}, {"name": "Study Session B", "type": "voice"}]}
+                ]
+            },
+            "music": {
+                "name": "Music & Lounge",
+                "categories": [
+                    {"name": "✦ ─ STATION DETAILS ─ ✦", "channels": [{"name": "⬪-rules", "type": "text"}, {"name": "⬪-music-events", "type": "text"}]},
+                    {"name": "⬪ ٫ MUSIC DECK ‧", "channels": [{"name": "☊-general-lounge", "type": "text"}, {"name": "☊-song-requests", "type": "text"}, {"name": "☊-playlist-sharing", "type": "text"}]},
+                    {"name": "┇ ٫ AUDIO ROOMS | ☩", "channels": [{"name": "Chill Corner", "type": "voice"}, {"name": "Live Stage", "type": "voice"}, {"name": "Stage Backstage", "type": "voice"}]}
+                ]
+            },
+            "crypto": {
+                "name": "Web3 & Crypto",
+                "categories": [
+                    {"name": "◈ ─ HUB TELEMETRY ─ ◈", "channels": [{"name": "▲-rules-and-signals", "type": "text"}, {"name": "▲-market-updates", "type": "text"}]},
+                    {"name": "⬪ ٫ TRADING TERMINAL ‧", "channels": [{"name": "✦-general-discussion", "type": "text"}, {"name": "✦-charts-analysis", "type": "text"}, {"name": "✦-nft-showroom", "type": "text"}]},
+                    {"name": "┇ ٫ ALPHA LOUNGES | ☩", "channels": [{"name": "Alpha Lounge", "type": "voice"}, {"name": "Trading Desk VC", "type": "voice"}]}
+                ]
+            },
+            "artistic": {
+                "name": "Artistic Studio",
+                "categories": [
+                    {"name": "┋ ✧ ─ 𝔠𝔯𝔢𝔞𝔱𝔦𝔳𝔢 𝔷𝔬𝔫𝔢 ─ ✧ ┋", "channels": [{"name": "✦-gallery-showroom", "type": "text"}, {"name": "✦-design-critique", "type": "text"}, {"name": "✦-commissions", "type": "text"}]},
+                    {"name": "┋ ⬪ ٫ 𝔭𝔬𝔯𝔱𝔣𝔬𝔩𝔦𝔬𝔰 ‧ ┋", "channels": [{"name": "⁕-digital-art", "type": "text"}, {"name": "⁕-traditional-art", "type": "text"}, {"name": "⁕-resources", "type": "text"}]},
+                    {"name": "┋ ┇ ٫ 𝔩𝔦𝔳𝔢 𝔡𝔯𝔞𝔴𝔦𝔫𝔤 | ☩ ┋", "channels": [{"name": "Co-Working Space", "type": "voice"}, {"name": "Sketch & Chat", "type": "voice"}]}
+                ]
+            },
+            "roleplay": {
+                "name": "Neon Roleplay",
+                "categories": [
+                    {"name": "┋ ✦ ─ ɴᴇᴏ-ᴛᴏᴋʏᴏ ─ ✦ ┋", "channels": [{"name": "◣-archives-lore", "type": "text"}, {"name": "◣-rules-and-signup", "type": "text"}]},
+                    {"name": "┋ ⬪ ٫ ʀᴘ ᴅɪsᴛʀɪᴄᴛs ‧ ┋", "channels": [{"name": "▲-neon-alley-rp", "type": "text"}, {"name": "▲-underground-bar", "type": "text"}, {"name": "▲-corporate-sector", "type": "text"}]},
+                    {"name": "┋ ┇ ٫ ᴠᴏɪᴄᴇ ʀᴘ | ☩ ┋", "channels": [{"name": "Tavern VC", "type": "voice"}, {"name": "Campfire Stories", "type": "voice"}]}
+                ]
+            },
+            "esports": {
+                "name": "Esports Arena",
+                "categories": [
+                    {"name": "┋ ⚙ ─ ᴛᴏᴜʀɴᴀᴍᴇɴᴛ ʜǫ ─ ⚙ ┋", "channels": [{"name": "▲-news-and-updates", "type": "text"}, {"name": "▲-schedule-brackets", "type": "text"}]},
+                    {"name": "┋ ⬪ ٫ ᴡᴀʀ ʀᴏᴏᴍs ‧ ┋", "channels": [{"name": "✦-scrim-results", "type": "text"}, {"name": "✦-strategy-chat", "type": "text"}, {"name": "✦-vod-reviews", "type": "text"}]},
+                    {"name": "┋ ┇ ٫ ᴄᴏᴍᴘᴇᴛɪᴛɪᴠᴇ ᴠᴄs | ☩ ┋", "channels": [{"name": "Team Alpha VC", "type": "voice"}, {"name": "Team Beta VC", "type": "voice"}, {"name": "Tournament Main", "type": "voice"}]}
+                ]
+            },
+            "chill_cafe": {
+                "name": "Cozy Cafe",
+                "categories": [
+                    {"name": "┋ ✿ ─ 𝓒𝓪𝓯𝓮 𝓡𝓮𝓬𝓮𝓹𝓽𝓲𝓸𝓷 ─ ✿ ┋", "channels": [{"name": "◈-rules-and-menu", "type": "text"}, {"name": "◈-announcements", "type": "text"}]},
+                    {"name": "┋ ⬪ ٫ 𝓒𝓱𝓲𝓵𝓵 𝓣𝓪𝓫𝓵𝓮𝓼 ‧ ┋", "channels": [{"name": "⁕-fireside-chat", "type": "text"}, {"name": "⁕-media-sharing", "type": "text"}, {"name": "⁕-bot-commands", "type": "text"}]},
+                    {"name": "┋ ┇ ٫ 𝓒𝓸𝓯𝓯𝓮𝓮 𝓑𝓻𝓮𝓪𝓴𝓼 | ☩ ┋", "channels": [{"name": "Cozy Fireplace", "type": "voice"}, {"name": "Lofi Bar", "type": "voice"}]}
+                ]
+            }
         }
         
         if template_id not in templates:
@@ -601,7 +1326,7 @@ def api_guild_server_action(guild_id):
             guild = bot.get_guild(int(guild_id))
             if not guild: return "Guild not found"
             
-            tmpl = templates[template_id]
+            tmpl = templates[template_id]["categories"]
             for cat_data in tmpl:
                 cat = await guild.create_category(cat_data["name"])
                 for chan in cat_data["channels"]:
@@ -609,7 +1334,7 @@ def api_guild_server_action(guild_id):
                         await guild.create_text_channel(chan["name"], category=cat)
                     elif chan["type"] == "voice":
                         await guild.create_voice_channel(chan["name"], category=cat)
-            return f"Successfully applied '{template_id}' template!"
+            return f"Successfully applied '{templates[template_id]['name']}' template!"
             
         future = asyncio.run_coroutine_threadsafe(apply_tmpl(), bot.loop)
         try:
@@ -633,6 +1358,9 @@ def api_guild_server_action(guild_id):
                     TASK_PROGRESS[t_id] = {"status": "error", "message": "Guild not found"}
                     return
                 
+                affect_categories = payload.get("affect_categories", False)
+                pattern = payload.get("pattern")
+                
                 # Apply to single channel
                 if target_channel_id and target_channel_id != "all":
                     chan = guild.get_channel(int(target_channel_id))
@@ -640,7 +1368,13 @@ def api_guild_server_action(guild_id):
                         TASK_PROGRESS[t_id] = {"status": "error", "message": "Channel not found"}
                         return
                     base_name = custom_name if custom_name else chan.name.replace("-", " ")
+                    base_name = fonts.clean_styled_string(base_name)
                     new_name = fonts.apply_font_to_string(base_name, font_id)
+                    if pattern:
+                        if "{word}" in pattern:
+                            new_name = pattern.replace("{word}", new_name)
+                        elif "{char}" in pattern:
+                            new_name = "".join([pattern.replace("{char}", c) if c != " " else " " for c in new_name])
                     if isinstance(chan, discord.TextChannel):
                         new_name = new_name.replace(" ", "-")
                     await chan.edit(name=new_name)
@@ -648,27 +1382,40 @@ def api_guild_server_action(guild_id):
                     return
 
                 # Apply to whole server
-                total_cats = len(guild.categories)
+                total_cats = len(guild.categories) if affect_categories else 0
                 total_chans = len([c for c in guild.channels if not isinstance(c, discord.CategoryChannel)])
                 total_items = total_cats + total_chans
                 TASK_PROGRESS[t_id]["total"] = total_items
                 
                 processed = 0
-                for cat in guild.categories:
-                    TASK_PROGRESS[t_id]["message"] = f"Renaming category: {cat.name}"
-                    clean_name = cat.name.replace("-", " ")
-                    new_name = fonts.apply_font_to_string(clean_name, font_id)
-                    if new_name != cat.name:
-                        await cat.edit(name=new_name)
-                        await asyncio.sleep(0.5)
-                    processed += 1
-                    TASK_PROGRESS[t_id]["progress"] = processed
+                if affect_categories:
+                    for cat in guild.categories:
+                        TASK_PROGRESS[t_id]["message"] = f"Renaming category: {cat.name}"
+                        clean_name = cat.name.replace("-", " ")
+                        clean_name = fonts.clean_styled_string(clean_name)
+                        new_name = fonts.apply_font_to_string(clean_name, font_id)
+                        if pattern:
+                            if "{word}" in pattern:
+                                new_name = pattern.replace("{word}", new_name)
+                            elif "{char}" in pattern:
+                                new_name = "".join([pattern.replace("{char}", c) if c != " " else " " for c in new_name])
+                        if new_name != cat.name:
+                            await cat.edit(name=new_name)
+                            await asyncio.sleep(0.5)
+                        processed += 1
+                        TASK_PROGRESS[t_id]["progress"] = processed
 
                 for chan in guild.channels:
                     if not isinstance(chan, discord.CategoryChannel):
                         TASK_PROGRESS[t_id]["message"] = f"Renaming channel: {chan.name}"
-                        clean_name = chan.name
+                        clean_name = chan.name.replace("-", " ")
+                        clean_name = fonts.clean_styled_string(clean_name)
                         new_name = fonts.apply_font_to_string(clean_name, font_id)
+                        if pattern:
+                            if "{word}" in pattern:
+                                new_name = pattern.replace("{word}", new_name)
+                            elif "{char}" in pattern:
+                                new_name = "".join([pattern.replace("{char}", c) if c != " " else " " for c in new_name])
                         if new_name != chan.name:
                             if isinstance(chan, discord.TextChannel):
                                 new_name = new_name.replace(" ", "-")
@@ -857,6 +1604,201 @@ def api_status():
         "guilds": len(bot.guilds) if ready else 0,
         "users": len(bot.users) if ready else 0
     })
+
+def get_telemetry_summary():
+    """Calculate and return telemetry metrics."""
+    uptime_sec = int(time.time() - START_TIME)
+    h, rem = divmod(uptime_sec, 3600)
+    m, s = divmod(rem, 60)
+    formatted_uptime = f"{h:02d}h {m:02d}m {s:02d}s"
+    
+    registry = load_telemetry()
+    total_pings = sum(info.get("ping_count", 0) for info in registry.values())
+    
+    nodes_list = []
+    now = datetime.datetime.utcnow()
+    active_count = 0
+    
+    for url, info in registry.items():
+        last_seen_str = info.get("last_seen")
+        status = "offline"
+        
+        if last_seen_str:
+            try:
+                clean_time = last_seen_str
+                if clean_time.endswith("Z"):
+                    clean_time = clean_time[:-1]
+                dt = datetime.datetime.fromisoformat(clean_time)
+                diff = (now - dt).total_seconds()
+                if diff < 90:
+                    status = "online"
+                    active_count += 1
+            except Exception as e:
+                logger.error(f"Error parsing date {last_seen_str}: {e}")
+                
+        nodes_list.append({
+            "node_url": url,
+            "label": info.get("label", "PEER NODE"),
+            "last_seen": last_seen_str or "Never",
+            "ping_count": info.get("ping_count", 0),
+            "status": status,
+            "peers": info.get("peers", [])
+        })
+        
+    # Sort nodes: online first, then by ping count desc, then url
+    nodes_list.sort(key=lambda x: (x["status"] != "online", -x["ping_count"], x["node_url"]))
+    
+    return {
+        "uptime": formatted_uptime,
+        "total_pings": total_pings,
+        "nodes": nodes_list,
+        "node_count": len(nodes_list),
+        "active_count": active_count
+    }
+
+def ping_single_peer(ping_url, headers, base_url):
+    """Pings a single peer and processes its response."""
+    import urllib.request
+    try:
+        req = urllib.request.Request(ping_url, headers=headers)
+        with urllib.request.urlopen(req, timeout=5) as response:
+            body = response.read().decode('utf-8', errors='ignore')
+            if response.status == 200:
+                registry = load_telemetry()
+                now_iso = datetime.datetime.utcnow().isoformat() + "Z"
+                if base_url in registry:
+                    registry[base_url]["last_seen"] = now_iso
+                    registry[base_url]["is_active"] = True
+                    
+                if body:
+                    try:
+                        data = json.loads(body)
+                        if isinstance(data, dict) and "peers" in data:
+                            for peer in data["peers"]:
+                                peer = peer.strip().rstrip("/")
+                                if peer and peer not in registry:
+                                    registry[peer] = {
+                                        "node_url": peer,
+                                        "label": "GOSSIP DISCOVERED",
+                                        "last_seen": None,
+                                        "ping_count": 0,
+                                        "peers": [],
+                                        "is_active": True
+                                    }
+                    except:
+                        pass
+                save_telemetry(registry)
+    except Exception:
+        pass
+
+def background_ping_loop():
+    """Background thread that pings registered peers to maintain mesh activity."""
+    import threading
+    time.sleep(15)  # Wait for startup
+    while True:
+        try:
+            registry = load_telemetry()
+            if not registry:
+                time.sleep(30)
+                continue
+                
+            self_url = os.getenv("SELF_URL") or os.getenv("AWAKE_URL")
+            active_peers = [url for url, info in registry.items() if info.get("is_active", True)]
+            
+            headers = {
+                "User-Agent": "Kaizer-Telemetry-Node/2.0 (Windows; P2P-Mesh)",
+            }
+            if self_url:
+                headers["X-Awake-URL"] = self_url
+                
+            peers_list = [p for p in active_peers if p != self_url]
+            if peers_list:
+                headers["X-Peers"] = ",".join(peers_list)
+                
+            for url in registry.keys():
+                if self_url and url == self_url:
+                    continue
+                ping_url = url
+                if ping_url.count('/') == 2:
+                    ping_url += "/hook.html"
+                
+                t = threading.Thread(target=ping_single_peer, args=(ping_url, headers, url), daemon=True)
+                t.start()
+        except Exception as e:
+            logger.error(f"Error in background ping loop: {e}")
+        time.sleep(30)
+
+# Start background ping thread
+import threading
+threading.Thread(target=background_ping_loop, daemon=True, name="TelemetryPingLoop").start()
+
+@app.route("/hook.html", methods=["GET", "POST"])
+@app.route("/hook", methods=["GET", "POST"])
+@app.route("/api/hook", methods=["GET", "POST"])
+def awake_hook():
+    # If requests are arriving, we can dynamically detect and set SELF_URL if not set
+    host = request.headers.get("Host")
+    if host and not host.startswith("localhost") and not host.startswith("127.0.0.1"):
+        scheme = request.scheme or "https"
+        detected_url = f"{scheme}://{host}"
+        if not os.getenv("SELF_URL") and not os.getenv("AWAKE_URL"):
+            os.environ["SELF_URL"] = detected_url
+
+    awake_url = request.headers.get("X-Awake-URL") or request.args.get("awake_url")
+    peers_raw = request.headers.get("X-Peers") or request.args.get("peers")
+    
+    is_json = (
+        awake_url is not None or 
+        request.headers.get("Accept") == "application/json" or 
+        request.args.get("format") == "json" or 
+        request.method == "POST"
+    )
+    
+    if awake_url:
+        register_awake_heartbeat(awake_url, peers_raw)
+        
+    cors_headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, X-Awake-URL, X-Peers',
+    }
+    
+    if request.method == 'OPTIONS':
+        resp = make_response('', 204)
+        for k, v in cors_headers.items():
+            resp.headers[k] = v
+        return resp
+        
+    if is_json:
+        registry = load_telemetry()
+        peers_list = [url for url, info in registry.items() if info.get("is_active", True)]
+        self_url = os.getenv("SELF_URL") or os.getenv("AWAKE_URL") or request.host_url.rstrip("/")
+        if self_url not in peers_list:
+            peers_list.append(self_url)
+            
+        resp = jsonify({
+            "status": "pulse received",
+            "node": "KAIZER-PULSE",
+            "peers": peers_list
+        })
+        for k, v in cors_headers.items():
+            resp.headers[k] = v
+        return resp
+        
+    telemetry_data = get_telemetry_summary()
+    return render_template("hook.html", **telemetry_data)
+
+@app.route("/api/awake/status", methods=["GET"])
+def awake_status_api():
+    cors_headers = {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET',
+        'Access-Control-Allow-Headers': 'Content-Type',
+    }
+    resp = jsonify(get_telemetry_summary())
+    for k, v in cors_headers.items():
+        resp.headers[k] = v
+    return resp
 
 @app.route("/health")
 def health_check():

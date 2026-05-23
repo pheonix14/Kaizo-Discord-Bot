@@ -22,9 +22,10 @@ HOST = os.getenv("HOST", "127.0.0.1")
 
 # Web Configurations
 PORT = int(os.getenv("PORT", 8000))
-if HOST == "0.0.0.0":
-    HOST = "127.0.0.1"
-HOST_URL = os.getenv("HOST_URL", f"http://{HOST}:{PORT}")
+display_host = HOST
+if display_host == "0.0.0.0":
+    display_host = "127.0.0.1"
+HOST_URL = os.getenv("HOST_URL", f"http://{display_host}:{PORT}")
 
 # Developer / admin user IDs (comma-separated Discord IDs)
 DEVELOPER_ID = str(os.getenv("DEVELOPER_ID", "")).strip()

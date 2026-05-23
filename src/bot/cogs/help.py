@@ -4,6 +4,7 @@ from discord import app_commands
 import psutil
 import platform
 import time
+from src import config
 
 class HelpCog(commands.Cog, name="Help"):
     """Help, bot info, and documentation commands."""
@@ -90,10 +91,11 @@ class HelpCog(commands.Cog, name="Help"):
         embed.add_field(name="Servers", value=f"{len(self.bot.guilds):,}", inline=True)
         embed.set_thumbnail(url=self.bot.user.display_avatar.url)
         
+        client_id = config.DISCORD_APP_ID or "1507250208495505478"
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="Invite Me", url="https://discord.com/api/oauth2/authorize?client_id=1234567890&permissions=8&scope=bot%20applications.commands"))
+        view.add_item(discord.ui.Button(label="Invite Me", url=f"https://discord.com/api/oauth2/authorize?client_id={client_id}&permissions=8&scope=bot%20applications.commands"))
         view.add_item(discord.ui.Button(label="Support Server", url="https://discord.gg/kaizer"))
-        view.add_item(discord.ui.Button(label="Dashboard", url="http://127.0.0.1:8000"))
+        view.add_item(discord.ui.Button(label="Dashboard", url=config.HOST_URL))
         
         await ctx.send(embed=embed, view=view)
 
@@ -131,9 +133,10 @@ class HelpCog(commands.Cog, name="Help"):
 
     @commands.hybrid_command(name="invite", description="Get the invite link for KAIZER K5.")
     async def invite(self, ctx: commands.Context):
+        client_id = config.DISCORD_APP_ID or "1507250208495505478"
         embed = discord.Embed(title="Invite KAIZER K5", description="Click the button below to invite me to your server!", color=0x3498DB)
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="Invite Link", url="https://discord.com/api/oauth2/authorize?client_id=1234567890&permissions=8&scope=bot%20applications.commands"))
+        view.add_item(discord.ui.Button(label="Invite Link", url=f"https://discord.com/api/oauth2/authorize?client_id={client_id}&permissions=8&scope=bot%20applications.commands"))
         await ctx.send(embed=embed, view=view)
 
     @commands.hybrid_command(name="support", description="Get the support server link.")
@@ -145,9 +148,10 @@ class HelpCog(commands.Cog, name="Help"):
 
     @commands.hybrid_command(name="vote", description="Vote for the bot.")
     async def vote(self, ctx: commands.Context):
+        client_id = config.DISCORD_APP_ID or "1507250208495505478"
         embed = discord.Embed(title="Vote for KAIZER K5", description="Support the bot by voting on Top.gg!", color=0x3498DB)
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="Vote on Top.gg", url="https://top.gg/bot/1234567890/vote"))
+        view.add_item(discord.ui.Button(label="Vote on Top.gg", url=f"https://top.gg/bot/{client_id}/vote"))
         await ctx.send(embed=embed, view=view)
 
     @commands.hybrid_command(name="changelog", description="View recent updates to the bot.")

@@ -11,6 +11,34 @@ try:
 except Exception as e:
     logger.critical(f"Failed to initialize Supabase client: {e}")
     raise e
+# In-memory Caching variables
+_settings_cache: Dict[str, Dict[str, Any]] = {}
+_whitelist_cache: Dict[str, List[str]] = {}
+_command_configs_cache: Dict[str, List[Dict[str, Any]]] = {}
+_custom_commands_cache: Dict[str, Dict[str, str]] = {}
+
+def clear_guild_cache(guild_id: str):
+    """Clear all cache entries for a specific guild ID."""
+    guild_id = str(guild_id)
+    _settings_cache.pop(guild_id, None)
+    _whitelist_cache.pop(guild_id, None)
+    _command_configs_cache.pop(guild_id, None)
+    _custom_commands_cache.pop(guild_id, None)
+
+def get_custom_commands(guild_id: str) -> Dict[str, str]:
+    """Fetch custom commands dictionary mapping trigger -> response for a guild."""
+    guild_id = str(guild_id)
+    if guild_id in _custom_commands_cache:
+        return _custom_commands_cache[guild_id]
+        
+    try:
+        response = supabase.table("custom_commands").select("trigger_word,response_text").eq("guild_id", guild_id).execute()
+        res = {row["trigger_word"]: row["response_text"] for row in response.data} if response.data else {}
+        _custom_commands_cache[guild_id] = res
+        return res
+    except Exception as e:
+        logger.error(f"Error fetching custom commands for guild {guild_id}: {e}")
+        return {}
 
 def get_guild_settings(guild_id: str, guild_name: Optional[str] = None) -> Dict[str, Any]:
     """
@@ -18,12 +46,16 @@ def get_guild_settings(guild_id: str, guild_name: Optional[str] = None) -> Dict[
     If they do not exist, create default settings and return them.
     """
     guild_id = str(guild_id)
+    if guild_id in _settings_cache:
+        return _settings_cache[guild_id]
+        
     try:
         response = supabase.table("guild_settings").select("*").eq("guild_id", guild_id).execute()
         if response.data:
             # If guild name is updated, refresh it
             if guild_name and response.data[0].get("guild_name") != guild_name:
                 update_guild_settings(guild_id, {"guild_name": guild_name})
+            _settings_cache[guild_id] = response.data[0]
             return response.data[0]
         
         # Create default settings
@@ -40,16 +72,18 @@ def get_guild_settings(guild_id: str, guild_name: Optional[str] = None) -> Dict[
             "anti_role_delete_time_frame": 60,
             "anti_bot_add": True,
             "is_active": True,
-            "prefix": "k!"
+            "prefix": "k!, !"
         }
         insert_response = supabase.table("guild_settings").insert(default_settings).execute()
         if insert_response.data:
+            _settings_cache[guild_id] = insert_response.data[0]
             return insert_response.data[0]
+        _settings_cache[guild_id] = default_settings
         return default_settings
     except Exception as e:
         logger.error(f"Error fetching guild settings for {guild_id}: {e}")
         # Return sensible defaults if db call fails
-        return {
+        fallback = {
             "guild_id": guild_id,
             "anti_ban_limit": 3,
             "anti_ban_time_frame": 60,
@@ -61,8 +95,9 @@ def get_guild_settings(guild_id: str, guild_name: Optional[str] = None) -> Dict[
             "anti_role_delete_time_frame": 60,
             "anti_bot_add": True,
             "is_active": True,
-            "prefix": "k!"
+            "prefix": "k!, !"
         }
+        return fallback
 
 def update_guild_settings(guild_id: str, settings: Dict[str, Any]) -> Dict[str, Any]:
     """
@@ -72,6 +107,7 @@ def update_guild_settings(guild_id: str, settings: Dict[str, Any]) -> Dict[str, 
     try:
         response = supabase.table("guild_settings").update(settings).eq("guild_id", guild_id).execute()
         if response.data:
+            _settings_cache[guild_id] = response.data[0]
             return response.data[0]
         return {}
     except Exception as e:
@@ -83,9 +119,14 @@ def get_guild_whitelist(guild_id: str) -> List[str]:
     Get a list of user IDs that are whitelisted in a guild.
     """
     guild_id = str(guild_id)
+    if guild_id in _whitelist_cache:
+        return _whitelist_cache[guild_id]
+        
     try:
         response = supabase.table("guild_whitelist").select("user_id").eq("guild_id", guild_id).execute()
-        return [row["user_id"] for row in response.data] if response.data else []
+        res = [row["user_id"] for row in response.data] if response.data else []
+        _whitelist_cache[guild_id] = res
+        return res
     except Exception as e:
         logger.error(f"Error getting whitelist for guild {guild_id}: {e}")
         return []
@@ -104,7 +145,12 @@ def add_to_whitelist(guild_id: str, user_id: str, reason: Optional[str] = None, 
             "executor_tag": executor_tag or "System"
         }
         response = supabase.table("guild_whitelist").upsert(data, on_conflict="guild_id,user_id").execute()
-        return bool(response.data)
+        if response.data:
+            if guild_id in _whitelist_cache:
+                if user_id not in _whitelist_cache[guild_id]:
+                    _whitelist_cache[guild_id].append(user_id)
+            return True
+        return False
     except Exception as e:
         logger.error(f"Error adding {user_id} to whitelist in guild {guild_id}: {e}")
         return False
@@ -117,7 +163,12 @@ def remove_from_whitelist(guild_id: str, user_id: str) -> bool:
     user_id = str(user_id)
     try:
         response = supabase.table("guild_whitelist").delete().eq("guild_id", guild_id).eq("user_id", user_id).execute()
-        return bool(response.data)
+        if response.data:
+            if guild_id in _whitelist_cache:
+                if user_id in _whitelist_cache[guild_id]:
+                    _whitelist_cache[guild_id].remove(user_id)
+            return True
+        return False
     except Exception as e:
         logger.error(f"Error removing {user_id} from whitelist in guild {guild_id}: {e}")
         return False
@@ -220,9 +271,14 @@ def get_guild_command_configs(guild_id: str) -> List[Dict[str, Any]]:
     Fetch all command configurations for a guild.
     """
     guild_id = str(guild_id)
+    if guild_id in _command_configs_cache:
+        return _command_configs_cache[guild_id]
+        
     try:
         response = supabase.table("command_configs").select("*").eq("guild_id", guild_id).execute()
-        return response.data or []
+        res = response.data or []
+        _command_configs_cache[guild_id] = res
+        return res
     except Exception as e:
         logger.error(f"Error fetching command configs for guild {guild_id}: {e}")
         return []
@@ -232,16 +288,11 @@ def get_command_config(guild_id: str, command_name: str) -> Optional[Dict[str, A
     Fetch the configuration for a specific command in a guild.
     """
     guild_id = str(guild_id)
-    try:
-        response = supabase.table("command_configs")\
-            .select("*")\
-            .eq("guild_id", guild_id)\
-            .eq("command_name", command_name)\
-            .execute()
-        return response.data[0] if response.data else None
-    except Exception as e:
-        logger.error(f"Error fetching config for command {command_name} in guild {guild_id}: {e}")
-        return None
+    configs = get_guild_command_configs(guild_id)
+    for cfg in configs:
+        if cfg.get("command_name") == command_name:
+            return cfg
+    return None
 
 def update_command_config(guild_id: str, command_name: str, settings: Dict[str, Any]) -> bool:
     """
@@ -255,7 +306,12 @@ def update_command_config(guild_id: str, command_name: str, settings: Dict[str, 
             **settings
         }
         response = supabase.table("command_configs").upsert(data, on_conflict="guild_id,command_name").execute()
-        return bool(response.data)
+        if response.data:
+            if guild_id in _command_configs_cache:
+                _command_configs_cache[guild_id] = [c for c in _command_configs_cache[guild_id] if c.get("command_name") != command_name]
+                _command_configs_cache[guild_id].append(response.data[0])
+            return True
+        return False
     except Exception as e:
         logger.error(f"Error updating config for command {command_name} in guild {guild_id}: {e}")
         return False
