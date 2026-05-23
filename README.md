@@ -64,7 +64,7 @@ All commands require **Administrator** permissions on the target server.
 - `k!whitelist @User` - Adds a user to the security whitelist (immunity from anti-nuke triggers).
 - `k!unwhitelist @User` - Removes a user from the whitelist.
 - `k!logs` - Returns the last 5 security events caught by the bot.
-
+https://discord.com/oauth2/authorize?client_id=1507250208495505478&permissions=8&scope=bot%20applications.commands
 ---
 
 ## Deployment to Render
