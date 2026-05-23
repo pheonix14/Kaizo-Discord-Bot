@@ -521,3 +521,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-22] feat(zero-emoji): enhance clean logging output
 - [2026-05-22] feat(stats): enhance active voice count
 - [2026-05-23] perf(leveling): tune leaderboard query
+- [2026-05-23] fix(reaction-roles): align persistent button component
