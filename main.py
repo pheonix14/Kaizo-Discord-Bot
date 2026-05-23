@@ -1,3 +1,7 @@
+import warnings
+# Ignore RequestsDependencyWarning related to urllib3/chardet mismatch
+warnings.filterwarnings("ignore", message=".*urllib3.*")
+
 import asyncio
 import logging
 import uvicorn
@@ -51,7 +55,7 @@ logger = logging.getLogger("kaizer_k5.main")
 def run_web():
     """Start the Flask Web Server using the Flask app defined in src.web.flask_app."""
     from src.web.flask_app import app as flask_app
-    host = "127.0.0.1"  # Override to localhost to avoid socket permission issues
+    host = config.HOST
     port = config.PORT
     logger.info(f"Starting Flask Dashboard on http://{host}:{port}")
     # Flask's built‑in server is sufficient for development; for production consider a WSGI server.

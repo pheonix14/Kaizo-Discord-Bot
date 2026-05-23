@@ -9,4 +9,4 @@ watchdog>=3.0.0
 python-multipart>=0.0.5
 PyNaCl>=1.5.0
 yt-dlp>=2023.03.04
-gunicorn>=21.0.0
+davey

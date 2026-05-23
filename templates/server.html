@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>KAIZER K5 — Server Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;700&family=Playfair+Display:ital,wght@0,900;1,400&family=Orbitron:wght@900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/css/style.css">
   <link rel="icon" type="image/png" href="https://img.icons8.com/nolan/64/security-shield.png">
   <style>
@@ -12,10 +15,11 @@
       --text: #fff;
       --teal: #4ECDC4;
       --navy: #1A1A2E;
-      --dark: #0A0A0A;
+      --dark: #070707;
       --c1: #ff2d55;
       --c2: #0affe4;
       --gold: #C9A84C;
+      --bg-trans: rgba(0, 0, 0, 0.55);
     }
 
     body {
@@ -23,6 +27,77 @@
       color: #fff;
       font-family: 'Space Grotesk', sans-serif;
       overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* ─── BG OVERLAYS ─── */
+    #bg-wrap {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    #bg-img {
+      position: absolute;
+      inset: -10%;
+      width: 120%;
+      height: 120%;
+      object-fit: cover;
+      opacity: 0.12;
+      filter: brightness(0.2) saturate(1.2) blur(30px);
+      transition: opacity 1.2s ease;
+    }
+    .bg-grain {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.05'/%3E%3C/svg%3E");
+      pointer-events: none;
+      opacity: .4;
+    }
+    .bg-color-bleed {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      mix-blend-mode: color;
+      opacity: .2;
+      transition: background 2s ease;
+    }
+    .vignette {
+      position: fixed;
+      inset: 0;
+      z-index: 2;
+      background: radial-gradient(ellipse at center, transparent 30%, rgba(0, 0, 0, .85) 100%);
+      pointer-events: none;
+    }
+    #wm {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 3;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: .025;
+      line-height: 1;
+      letter-spacing: .08em;
+      color: #fff;
+      user-select: none;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 15vw;
+      animation: wmPulse 8s ease-in-out infinite;
+    }
+    @keyframes wmPulse {
+      0%, 100% {
+        opacity: .02;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      50% {
+        opacity: .04;
+        transform: translate(-50%, -50%) scale(1.02);
+      }
     }
 
     h2, h3, h4 {
@@ -32,21 +107,42 @@
       font-weight: 400;
     }
     h2 {
-      font-size: 2.5rem;
+      font-size: clamp(32px, 5vw, 48px);
       color: #fff;
-      margin-bottom: 5px;
-      line-height: 1;
+      margin-bottom: 8px;
+      line-height: 0.95;
+      animation: titleReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    h2 em {
+      font-family: 'Playfair Display', serif;
+      font-style: italic;
+      color: var(--c2);
+      text-transform: lowercase;
+      text-shadow: 0 0 15px rgba(10, 254, 228, 0.25);
     }
     h3 {
-      font-size: 1.8rem;
-      color: var(--teal);
+      font-size: 1.5rem;
+      color: var(--c2);
       margin-bottom: 8px;
     }
     h4 {
-      font-size: 1.3rem;
+      font-size: 1.15rem;
       color: var(--gold);
       margin-bottom: 8px;
       margin-top: 15px;
+    }
+    
+    @keyframes titleReveal {
+      from {
+        opacity: 0;
+        transform: translateY(25px) skewY(2deg);
+        filter: blur(4px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) skewY(0);
+        filter: blur(0);
+      }
     }
 
     .server-dashboard-container {
@@ -59,44 +155,87 @@
     
     .sidebar-nav {
       width: 260px;
-      background: rgba(10, 10, 10, 0.6);
+      background: rgba(0, 0, 0, 0.9) !important;
       backdrop-filter: blur(30px);
       -webkit-backdrop-filter: blur(30px);
       border-right: 1px solid rgba(255, 255, 255, 0.05);
-      padding: 30px 10px;
+      padding: 40px 10px;
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
       flex-shrink: 0;
       position: relative;
       z-index: 25;
     }
     
     .nav-category {
-      padding: 12px 18px;
-      color: rgba(255, 255, 255, 0.55);
+      padding: 14px 20px;
+      color: rgba(255, 255, 255, 0.45);
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 14px;
-      transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 400;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      border-radius: 0px !important;
+      border-left: 2px solid transparent;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-family: 'Space Grotesk', sans-serif;
+      opacity: 0;
+      animation: navSlideIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
+
+    @keyframes navSlideIn {
+      from {
+        opacity: 0;
+        transform: translateX(-15px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    .sidebar-nav .nav-category:nth-child(1) { animation-delay: 0.02s; }
+    .sidebar-nav .nav-category:nth-child(2) { animation-delay: 0.04s; }
+    .sidebar-nav .nav-category:nth-child(3) { animation-delay: 0.06s; }
+    .sidebar-nav .nav-category:nth-child(4) { animation-delay: 0.08s; }
+    .sidebar-nav .nav-category:nth-child(5) { animation-delay: 0.10s; }
+    .sidebar-nav .nav-category:nth-child(6) { animation-delay: 0.12s; }
+    .sidebar-nav .nav-category:nth-child(7) { animation-delay: 0.14s; }
+    .sidebar-nav .nav-category:nth-child(8) { animation-delay: 0.16s; }
+    .sidebar-nav .nav-category:nth-child(9) { animation-delay: 0.18s; }
+    .sidebar-nav .nav-category:nth-child(10) { animation-delay: 0.20s; }
+    .sidebar-nav .nav-category:nth-child(11) { animation-delay: 0.22s; }
+    .sidebar-nav .nav-category:nth-child(12) { animation-delay: 0.24s; }
+    .sidebar-nav .nav-category:nth-child(13) { animation-delay: 0.26s; }
+    .sidebar-nav .nav-category:nth-child(14) { animation-delay: 0.28s; }
+    .sidebar-nav .nav-category:nth-child(15) { animation-delay: 0.30s; }
+    .sidebar-nav .nav-category:nth-child(16) { animation-delay: 0.32s; }
+    .sidebar-nav .nav-category:nth-child(17) { animation-delay: 0.34s; }
+    .sidebar-nav .nav-category:nth-child(18) { animation-delay: 0.36s; }
+    .sidebar-nav .nav-category:nth-child(19) { animation-delay: 0.38s; }
+    .sidebar-nav .nav-category:nth-child(20) { animation-delay: 0.40s; }
     
     .nav-category:hover {
-      background: rgba(255, 255, 255, 0.03);
+      background: rgba(255, 255, 255, 0.02) !important;
       color: #fff;
-      transform: translateX(4px) scale(1.02);
+      transform: translateX(4px);
+      border-left-color: rgba(255, 255, 255, 0.25);
     }
     
     .nav-category.active {
-      background: rgba(78, 205, 196, 0.08);
-      color: var(--c2);
+      background: rgba(255, 45, 85, 0.05) !important;
+      color: var(--c1) !important;
       font-weight: 600;
-      transform: translateX(8px) scale(1.04);
-      box-shadow: -4px 0 0 var(--c2), 0 4px 20px rgba(10, 254, 228, 0.15);
+      border-left-color: var(--c1);
+      transform: translateX(6px);
+      box-shadow: inset 1px 0px 0px rgba(255, 45, 85, 0.2) !important;
+    }
+    
+    .nav-category.active .svg-icon {
+      color: var(--c1);
     }
     
     .content-area {
@@ -117,40 +256,37 @@
     
     .tab-content.active {
       display: block;
-      animation: animePopIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      animation: animePopIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
     
     @keyframes animePopIn {
       0% {
         opacity: 0;
-        transform: scale(0.96) translateY(25px) rotate(-1deg);
-        filter: brightness(0.6) contrast(1.2) blur(4px);
-      }
-      35% {
-        filter: brightness(1.25) contrast(1.1) blur(0);
+        transform: scale(0.98) translateY(15px);
+        filter: brightness(0.7) blur(2px);
       }
       100% {
         opacity: 1;
-        transform: scale(1) translateY(0) rotate(0deg);
-        filter: brightness(1) contrast(1) blur(0);
+        transform: scale(1) translateY(0);
+        filter: brightness(1) blur(0);
       }
     }
     
     /* ── GLASS PANEL ── */
     .glass-panel {
       background: rgba(255, 255, 255, 0.015) !important;
-      border: 1px solid rgba(255, 255, 255, 0.06) !important;
-      border-radius: 16px !important;
-      padding: clamp(20px, 4vw, 30px) !important;
-      backdrop-filter: blur(20px) !important;
-      -webkit-backdrop-filter: blur(20px) !important;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5) !important;
-      margin-bottom: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.05) !important;
+      border-left: 2px solid var(--c1) !important;
+      border-radius: 0px !important;
+      padding: 30px !important;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6) !important;
+      margin-bottom: 30px;
       transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .glass-panel:hover {
-      border-color: rgba(78, 205, 196, 0.2) !important;
-      box-shadow: 0 20px 45px rgba(78, 205, 196, 0.08) !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      border-left-color: var(--c2) !important;
+      box-shadow: 0 25px 60px rgba(10, 254, 228, 0.04) !important;
     }
 
     /* ── FORM ELEMENTS ── */
@@ -168,20 +304,20 @@
     }
     .form-control, .form-select, textarea {
       width: 100%;
-      background: rgba(0, 0, 0, 0.4) !important;
+      background: rgba(0, 0, 0, 0.55) !important;
       border: 1px solid rgba(255, 255, 255, 0.08) !important;
       color: #fff !important;
       padding: 12px 16px !important;
-      border-radius: 8px !important;
+      border-radius: 0px !important;
       font-family: 'Space Grotesk', sans-serif !important;
       font-size: 14px !important;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .form-control:focus, .form-select:focus, textarea:focus {
       outline: none !important;
-      border-color: var(--teal) !important;
-      box-shadow: 0 0 15px rgba(78, 205, 196, 0.2) !important;
-      background: rgba(0, 0, 0, 0.5) !important;
+      border-color: var(--c2) !important;
+      box-shadow: 0 0 15px rgba(10, 254, 228, 0.15) !important;
+      background: rgba(0, 0, 0, 0.7) !important;
     }
     .form-control::placeholder, textarea::placeholder {
       color: rgba(255, 255, 255, 0.25) !important;
@@ -191,14 +327,14 @@
     .form-select {
       cursor: pointer;
       appearance: none;
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%234ECDC4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") !important;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='none' stroke='%230affe4' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>") !important;
       background-repeat: no-repeat !important;
       background-position: right 16px center !important;
       background-size: 16px !important;
       padding-right: 40px !important;
     }
     .form-select option {
-      background: #0f0f14 !important;
+      background: #08080a !important;
       color: #fff !important;
       padding: 10px;
     }
@@ -206,10 +342,11 @@
     /* ── TOGGLE SWITCH ── */
     .switch {
       position: relative;
-      display: inline-block;
-      height: 24px;
-      line-height: 24px;
-      padding-left: 55px; /* Leave space for the absolute slider */
+      display: inline-flex;
+      align-items: center;
+      height: 20px;
+      line-height: 20px;
+      padding-left: 45px;
       cursor: pointer;
     }
     .switch input {
@@ -220,34 +357,39 @@
     .slider {
       position: absolute;
       cursor: pointer;
-      top: 1px;
+      top: 0;
       left: 0;
-      width: 44px;
-      height: 22px;
-      background-color: rgba(255, 255, 255, 0.08) !important;
+      width: 36px;
+      height: 20px;
+      background-color: rgba(255, 255, 255, 0.06) !important;
       transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-      border-radius: 34px !important;
+      border-radius: 0px !important;
       border: 1px solid rgba(255, 255, 255, 0.08) !important;
     }
     .slider:before {
       position: absolute;
       content: "";
-      height: 14px;
-      width: 14px;
-      left: 4px;
-      bottom: 4px;
+      height: 12px;
+      width: 12px;
+      left: 3px;
+      bottom: 3px;
       background-color: #fff !important;
       transition: 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
-      border-radius: 50% !important;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+      border-radius: 0px !important;
     }
     input:checked + .slider {
-      background-color: var(--teal) !important;
-      border-color: var(--teal) !important;
+      background-color: var(--c1) !important;
+      border-color: var(--c1) !important;
     }
     input:checked + .slider:before {
-      transform: translateX(22px) !important;
-      background-color: var(--dark) !important;
+      transform: translateX(16px) !important;
+      background-color: #000 !important;
+    }
+    .slider.round {
+      border-radius: 0px !important;
+    }
+    .slider.round:before {
+      border-radius: 0px !important;
     }
     .switch span:not(.slider) {
       margin-left: 0 !important;
@@ -259,11 +401,11 @@
     /* ── STYLED CHECKBOXES ── */
     input[type="checkbox"]:not(.switch input) {
       appearance: none;
-      background-color: rgba(0, 0, 0, 0.4) !important;
-      border: 1px solid rgba(255, 255, 255, 0.12) !important;
-      width: 18px;
-      height: 18px;
-      border-radius: 4px !important;
+      background-color: rgba(0, 0, 0, 0.5) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      width: 16px;
+      height: 16px;
+      border-radius: 0px !important;
       display: inline-block;
       position: relative;
       cursor: pointer;
@@ -272,18 +414,17 @@
       transition: all 0.2s ease;
     }
     input[type="checkbox"]:not(.switch input):checked {
-      background-color: var(--teal) !important;
-      border-color: var(--teal) !important;
+      background-color: var(--c1) !important;
+      border-color: var(--c1) !important;
     }
     input[type="checkbox"]:not(.switch input):checked::after {
-      content: '✓';
+      content: '◈';
       position: absolute;
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      color: var(--navy);
-      font-size: 11px;
-      font-weight: bold;
+      color: #fff;
+      font-size: 10px;
     }
 
     /* ── STYLED BUTTONS ── */
@@ -291,12 +432,12 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 12px 24px;
-      font-size: 11px;
+      padding: 14px 30px;
+      font-size: 12px;
       font-weight: 700;
-      letter-spacing: 0.18em;
+      letter-spacing: 0.15em;
       text-transform: uppercase;
-      border-radius: 100px !important;
+      border-radius: 0px !important;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       cursor: pointer;
       border: 1.5px solid transparent !important;
@@ -305,13 +446,13 @@
       text-decoration: none;
     }
     .btn-primary {
-      background: var(--teal) !important;
-      color: var(--navy) !important;
+      background: #fff !important;
+      color: #000 !important;
     }
     .btn-primary:hover {
-      background: #fff !important;
-      color: var(--navy) !important;
-      box-shadow: 0 0 25px rgba(78, 205, 196, 0.4) !important;
+      background: var(--c1) !important;
+      color: #fff !important;
+      box-shadow: 0 0 25px rgba(255, 45, 85, 0.4) !important;
       transform: translateY(-2px);
     }
     .btn-primary:active {
@@ -319,41 +460,42 @@
     }
     .btn-secondary {
       background: transparent !important;
-      color: var(--teal) !important;
-      border-color: var(--teal) !important;
+      color: var(--c2) !important;
+      border-color: var(--c2) !important;
     }
     .btn-secondary:hover {
-      background: rgba(78, 205, 196, 0.08) !important;
-      box-shadow: 0 0 15px rgba(78, 205, 196, 0.2) !important;
+      background: rgba(10, 254, 228, 0.05) !important;
+      box-shadow: 0 0 15px rgba(10, 254, 228, 0.2) !important;
       transform: translateY(-2px);
     }
 
     /* ── COMMANDS SUB-TABS ── */
     .commands-tabs {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       margin-bottom: 24px;
       border-bottom: 1px dashed rgba(255, 255, 255, 0.08);
       padding-bottom: 16px;
       flex-wrap: wrap;
     }
     .cmd-tab {
-      padding: 8px 16px;
-      background: rgba(255, 255, 255, 0.02);
+      padding: 8px 20px;
+      background: rgba(255, 255, 255, 0.01);
       border: 1px solid rgba(255, 255, 255, 0.05);
       color: rgba(255, 255, 255, 0.55);
-      border-radius: 30px;
+      border-radius: 0px !important;
       cursor: pointer;
       font-family: 'Space Grotesk', sans-serif;
       font-size: 13px;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .cmd-tab:hover {
-      background: rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.03);
       color: #fff;
+      border-color: rgba(255, 255, 255, 0.15);
     }
     .cmd-tab.active {
-      background: rgba(78, 205, 196, 0.1);
+      background: rgba(10, 254, 228, 0.05);
       border-color: var(--c2);
       color: var(--c2);
       font-weight: 500;
@@ -366,9 +508,9 @@
       gap: 15px;
     }
     .command-card {
-      background: rgba(255, 255, 255, 0.015);
+      background: rgba(255, 255, 255, 0.01);
       border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
+      border-radius: 0px !important;
       padding: 20px;
       display: flex;
       flex-direction: column;
@@ -377,7 +519,7 @@
     }
     .command-card:hover {
       border-color: rgba(255, 255, 255, 0.1);
-      background: rgba(255, 255, 255, 0.025);
+      background: rgba(255, 255, 255, 0.02);
     }
     .command-header {
       display: flex;
@@ -399,9 +541,9 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 20px;
-      background: rgba(0, 0, 0, 0.25);
+      background: rgba(0, 0, 0, 0.4);
       padding: 15px 20px;
-      border-radius: 8px;
+      border-radius: 0px !important;
       border: 1px solid rgba(255, 255, 255, 0.03);
     }
 
@@ -409,38 +551,52 @@
     input[type="range"] {
       appearance: none;
       width: 100%;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 5px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.08);
       outline: none;
       transition: background 0.3s;
     }
     input[type="range"]::-webkit-slider-thumb {
       appearance: none;
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: var(--teal);
+      width: 12px;
+      height: 12px;
+      border-radius: 0%;
+      background: var(--c2);
       cursor: pointer;
-      box-shadow: 0 0 10px rgba(78, 205, 196, 0.5);
-      transition: transform 0.1s;
+      box-shadow: 0 0 10px var(--c2);
+      transition: transform 0.2s;
     }
     input[type="range"]::-webkit-slider-thumb:hover {
-      transform: scale(1.2);
+      transform: scale(1.4);
     }
 
     /* ── OVERVIEW / STATS ── */
     .stat-box {
-      background: rgba(255, 255, 255, 0.015);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 24px;
-      transition: all 0.3s ease;
+      background: rgba(0, 0, 0, 0.4) !important;
+      border: 1px solid rgba(255, 255, 255, 0.05) !important;
+      border-radius: 0px !important;
+      padding: 35px 28px !important;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    }
+    .stat-box::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 2px;
+      background: var(--c1);
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
     }
     .stat-box:hover {
-      background: rgba(255, 255, 255, 0.025);
-      border-color: rgba(78, 205, 196, 0.2);
-      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.02) !important;
+      border-color: rgba(255, 255, 255, 0.1) !important;
+      transform: translateY(-4px);
+    }
+    .stat-box:hover::before {
+      transform: scaleX(1);
     }
 
     .svg-icon {
@@ -469,6 +625,7 @@
         gap: 10px;
         scrollbar-width: none;
         box-sizing: border-box;
+        background: rgba(0, 0, 0, 0.9) !important;
       }
       .sidebar-nav::-webkit-scrollbar {
         display: none;
@@ -476,17 +633,75 @@
       .nav-category {
         padding: 8px 16px;
         white-space: nowrap;
-        font-size: 13px;
+        font-size: 12px;
         gap: 8px;
-        border-radius: 6px;
+        border-radius: 0px !important;
+        border-left: none;
+        border-bottom: 2px solid transparent;
+        transform: none !important;
+        animation: none !important;
+        opacity: 1 !important;
+      }
+      .nav-category:hover {
+        transform: none !important;
+        border-bottom-color: rgba(255, 255, 255, 0.25);
+      }
+      .nav-category.active {
+        transform: none !important;
+        border-left-color: transparent !important;
+        border-bottom-color: var(--c1) !important;
       }
       .content-area {
         padding: 20px;
       }
     }
+
+    /* Discord Button Styling for Mockup */
+    .discord-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 6px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      border-radius: 3px !important;
+      cursor: pointer;
+      color: #ffffff;
+      border: none !important;
+      transition: background-color 0.15s ease, box-shadow 0.15s ease;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      text-transform: none !important;
+      letter-spacing: normal !important;
+      height: 32px;
+      user-select: none;
+    }
+    .discord-btn-primary { background-color: #5865F2; }
+    .discord-btn-primary:hover { background-color: #4752C4; }
+    .discord-btn-secondary { background-color: #4E5058; }
+    .discord-btn-secondary:hover { background-color: #6D6F78; }
+    .discord-btn-success { background-color: #248046; }
+    .discord-btn-success:hover { background-color: #1A6535; }
+    .discord-btn-danger { background-color: #DA373C; }
+    .discord-btn-danger:hover { background-color: #A1282F; }
+    .discord-btn-link { background-color: #4E5058; }
+    .discord-btn-link:hover { background-color: #6D6F78; }
+    .discord-btn-accent { background-color: #0affe4; color: #000000; font-weight: 600; box-shadow: 0 0 8px rgba(10,254,228,0.4); }
+    .discord-btn-accent:hover { background-color: #02cca8; box-shadow: 0 0 12px rgba(10,254,228,0.6); }
+    .discord-btn-amber { background-color: #F0B232; color: #000000; font-weight: 600; }
+    .discord-btn-amber:hover { background-color: #d19a26; }
   </style>
 </head>
 <body>
+
+  <!-- BACKGROUNDS & OVERLAYS -->
+  <div id="bg-wrap">
+    <img id="bg-img" src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600" alt="">
+  </div>
+  <div class="bg-grain"></div>
+  <div class="bg-color-bleed" id="colorBleed"></div>
+  <div class="vignette"></div>
+  <div id="wm">KAIZER</div>
 
   <!-- Include Shared Layout Skeleton -->
   {% set active_page = 'settings' %}
@@ -560,7 +775,7 @@
     <main class="content-area">
       <!-- 1. Overview -->
       <div id="overview" class="tab-content active">
-        <h2>Server Overview</h2>
+        <h2>Server <em>overview</em></h2>
         <p style="color: var(--text-muted); margin-bottom: 20px;">Guild ID: {{ guild_id }}</p>
         <div class="glass-panel" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
           <div class="stat-box">
@@ -580,7 +795,7 @@
 
       <!-- 2. Commands -->
       <div id="commands" class="tab-content">
-        <h2>Commands Configuration</h2>
+        <h2>Commands <em>configuration</em></h2>
         <p style="color: var(--text-muted); margin-bottom: 20px;">Enable, disable, and configure permissions for all bot commands.</p>
         
         <div class="commands-tabs" id="cmd-tabs">
@@ -610,7 +825,7 @@
 
       <!-- 3. Moderation Settings -->
       <div id="moderation" class="tab-content">
-        <h2>Moderation Settings</h2>
+        <h2>Moderation <em>settings</em></h2>
         <p style="color: var(--text-muted); margin-bottom: 20px;">Configure Automod rules, mute roles, and warn thresholds.</p>
         <div class="glass-panel">
           <form id="form-moderation" onsubmit="saveSettings(event, 'moderation')">
@@ -624,7 +839,7 @@
             </div>
             
             <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
-            <h4>🛡️ K4 Defence System</h4>
+            <h4>K4 Defence System</h4>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px;">
               Automatically detects cross-channel spammers and rapid-fire bots. Offenders are permanently muted and logged.
             </p>
@@ -653,7 +868,7 @@
 
       <!-- 4. Welcome & Goodbye -->
       <div id="welcome" class="tab-content">
-        <h2>Welcome & Goodbye</h2>
+        <h2>Welcome & <em>goodbye</em></h2>
         <p style="color: var(--text-muted); margin-bottom: 20px;">Set up welcome messages, channels, and goodbye alerts.</p>
         <div class="glass-panel">
           <form id="form-welcome" onsubmit="saveSettings(event, 'welcome')">
@@ -696,7 +911,7 @@
 
       <!-- 5. Leveling -->
       <div id="leveling" class="tab-content">
-        <h2>Leveling System</h2>
+        <h2>Leveling <em>system</em></h2>
         <p style="color: var(--text-muted); margin-bottom: 20px;">Configure XP multipliers, role rewards, and level-up announcements.</p>
         <div class="glass-panel">
           <form id="form-leveling" onsubmit="saveSettings(event, 'leveling')">
@@ -724,7 +939,7 @@
 
       <!-- 6. Logging -->
       <div id="logging" class="tab-content">
-        <h2>Security Logging</h2>
+        <h2>Security <em>logging</em></h2>
         <p style="color: var(--text-muted); margin-bottom: 20px;">Enable auditing for message deletes, member joins, and role changes.</p>
         <div class="glass-panel">
           <form id="form-logging" onsubmit="saveSettings(event, 'logging')">
@@ -750,7 +965,7 @@
 
       <!-- 7. Tickets -->
       <div id="tickets" class="tab-content">
-        <h2>Ticket System</h2>
+        <h2>Ticket <em>system</em></h2>
         <p style="color: var(--text-muted); margin-bottom: 20px;">Set up support categories, support roles, and ticket panel messages.</p>
         <div class="glass-panel">
           <form id="form-tickets" onsubmit="saveSettings(event, 'tickets')">
@@ -772,38 +987,153 @@
         </div>
       </div>
 
-      <!-- 8. Reaction Roles -->
+      <!-- 8. Embeds & Self Roles -->
       <div id="reaction" class="tab-content">
-        <h2>Reaction Roles</h2>
-        <p style="color: var(--text-muted); margin-bottom: 20px;">Create and manage self-assignable roles via reactions.</p>
-        <div class="glass-panel">
-          <form id="form-reaction" onsubmit="saveSettings(event, 'reaction_roles')">
-            <div class="form-group">
-              <label class="form-label">Message ID</label>
-              <input type="text" class="form-control" id="rr_message_id" placeholder="ID of the message to react to">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Channel ID</label>
-              <input type="text" class="form-control" id="rr_channel_id" placeholder="ID of the channel">
-            </div>
-            <div style="display: flex; gap: 20px;">
-              <div class="form-group" style="flex: 1;">
-                <label class="form-label">Emoji</label>
-                <input type="text" class="form-control" id="rr_emoji" placeholder="Unicode emoji or custom emoji ID">
+        <h2>Embeds &amp; <em>self roles</em></h2>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Create interactive messages with rich embeds and self-assignable role buttons.</p>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start;" class="embed-builder-grid">
+          <!-- Editor Form -->
+          <div class="glass-panel" style="margin-bottom: 0;">
+            <form id="form-embed-roles" onsubmit="sendEmbedRoles(event)">
+              <div class="form-group">
+                <label class="form-label">Target Text Channel</label>
+                <select class="form-select" id="embed_channel_id" required>
+                  <option value="">-- Loading channels... --</option>
+                </select>
               </div>
-              <div class="form-group" style="flex: 1;">
-                <label class="form-label">Role ID</label>
-                <input type="text" class="form-control" id="rr_role_id" placeholder="Role to assign">
+
+              <div style="border-top: 1px dashed rgba(255,255,255,0.1); margin: 20px 0; padding-top: 15px;">
+                <h4 style="color: var(--c2); margin-bottom: 15px;">Embed Editor</h4>
+                
+                <div class="form-group">
+                  <label class="form-label">Author Name</label>
+                  <input type="text" class="form-control" id="embed_author_name" placeholder="e.g. Kaizer Staff" oninput="updateLiveEmbedPreview()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Author Icon URL</label>
+                  <input type="text" class="form-control" id="embed_author_icon" placeholder="https://..." oninput="updateLiveEmbedPreview()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Embed Title</label>
+                  <input type="text" class="form-control" id="embed_title" placeholder="e.g. Verification Required" oninput="updateLiveEmbedPreview()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Embed Description</label>
+                  <textarea class="form-control" id="embed_description" rows="5" placeholder="Type embed description here..." oninput="updateLiveEmbedPreview()">Click the buttons below to assign roles to yourself!</textarea>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Theme Color</label>
+                  <div style="display: flex; gap: 10px;">
+                    <input type="color" id="embed_color" value="#0affe4" class="form-control" style="width: 60px; height: 45px; padding: 4px; cursor: pointer;" oninput="syncEmbedColorPicker(this.value)">
+                    <input type="text" id="embed_color_hex" value="#0affe4" class="form-control" style="flex: 1;" placeholder="#0affe4" oninput="syncEmbedColorHex(this.value)">
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Thumbnail Image URL</label>
+                  <input type="text" class="form-control" id="embed_thumbnail_url" placeholder="https://..." oninput="updateLiveEmbedPreview()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Large Image URL</label>
+                  <input type="text" class="form-control" id="embed_image_url" placeholder="https://..." oninput="updateLiveEmbedPreview()">
+                  <div style="margin-top: 8px;">
+                    <input type="file" id="embed_image_file" style="display: none;" accept="image/*" onchange="uploadEmbedImage()">
+                    <button type="button" class="btn btn-secondary" style="padding: 8px 16px; font-size: 10px;" onclick="document.getElementById('embed_image_file').click()">Upload Image File</button>
+                    <span id="upload_status" style="margin-left: 10px; font-size: 0.8rem; color: var(--text-muted);"></span>
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Footer Text</label>
+                  <input type="text" class="form-control" id="embed_footer_text" placeholder="e.g. Kaizer Protection System" oninput="updateLiveEmbedPreview()">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Footer Icon URL</label>
+                  <input type="text" class="form-control" id="embed_footer_icon" placeholder="https://..." oninput="updateLiveEmbedPreview()">
+                </div>
+              </div>
+
+              <!-- Roles Buttons section -->
+              <div style="border-top: 1px dashed rgba(255,255,255,0.1); margin: 25px 0; padding-top: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                  <h3 style="margin: 0; font-size: 1.25rem;">+ Self Roles?</h3>
+                  <label class="switch">
+                    <input type="checkbox" id="enable_self_roles" onchange="toggleSelfRolesSection()">
+                    <span class="slider"></span>
+                  </label>
+                </div>
+                
+                <div id="self_roles_section" style="display: none;">
+                  <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">Configure interactive buttons to let users self-assign roles.</p>
+                  <div id="buttons_list" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
+                    <!-- Dynamic Button Configurations -->
+                  </div>
+                  <button type="button" class="btn btn-secondary" style="width: 100%; font-size: 10px; padding: 10px;" onclick="addSelfRoleButton()">+ Add Role Button</button>
+                </div>
+              </div>
+
+              <button type="submit" class="btn btn-primary" style="width: 100%;">Send Interactive Message</button>
+            </form>
+          </div>
+
+          <!-- Live Preview -->
+          <div class="glass-panel" style="margin-bottom: 0; position: sticky; top: 20px;">
+            <h4 style="color: var(--c1); margin-bottom: 15px;">Live Discord Preview</h4>
+            
+            <div class="discord-preview-container" style="background: #313338; padding: 20px; font-family: 'Space Grotesk', sans-serif; color: #dbdee1; border-left: 2px solid rgba(255,255,255,0.05);">
+              <div style="display: flex; gap: 15px;">
+                <!-- Avatar -->
+                <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--c1); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-weight: bold; color: white;">K</div>
+                
+                <!-- Message Content -->
+                <div style="flex: 1;">
+                  <!-- Message Header -->
+                  <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 5px; font-size: 0.9rem;">
+                    <span style="font-weight: 600; color: #f2f3f5;">Kaizer Bot</span>
+                    <span style="background: #5865f2; color: white; font-size: 0.6rem; padding: 2px 4px; border-radius: 3px; font-weight: bold; text-transform: uppercase;">BOT</span>
+                    <span style="font-size: 0.75rem; color: #949ba4;">Today at 7:19 PM</span>
+                  </div>
+                  
+                  <!-- Embed Wrapper -->
+                  <div id="preview_embed_wrapper" style="display: block; background: #2b2d31; border-left: 4px solid var(--c2); border-radius: 4px; padding: 12px 16px; max-width: 520px; margin-top: 5px; position: relative;">
+                    <!-- Author -->
+                    <div id="preview_embed_author" style="display: none; align-items: center; gap: 8px; margin-bottom: 8px;">
+                      <img id="preview_embed_author_icon" src="" style="width: 24px; height: 24px; border-radius: 50%; display: none;">
+                      <span id="preview_embed_author_name" style="font-size: 0.85rem; font-weight: 600; color: #f2f3f5;"></span>
+                    </div>
+                    
+                    <!-- Title -->
+                    <div id="preview_embed_title" style="font-size: 1rem; font-weight: 700; color: #ffffff; margin-bottom: 8px; display: none;"></div>
+                    
+                    <!-- Description -->
+                    <div id="preview_embed_description" style="font-size: 0.875rem; line-height: 1.375; white-space: pre-wrap; color: #dbdee1;">Click the buttons below to assign roles to yourself!</div>
+                    
+                    <!-- Thumbnail -->
+                    <img id="preview_embed_thumbnail" src="" style="display: none; width: 80px; height: 80px; object-fit: contain; float: right; margin-left: 15px; border-radius: 4px;">
+                    
+                    <!-- Main Image -->
+                    <img id="preview_embed_image" src="" style="display: none; max-width: 100%; max-height: 240px; border-radius: 4px; margin-top: 10px; object-fit: contain; clear: both;">
+                    
+                    <!-- Footer -->
+                    <div id="preview_embed_footer" style="display: none; align-items: center; gap: 8px; margin-top: 8px; color: #949ba4; font-size: 0.75rem; clear: both;">
+                      <img id="preview_embed_footer_icon" src="" style="width: 20px; height: 20px; border-radius: 50%; display: none;">
+                      <span id="preview_embed_footer_text"></span>
+                    </div>
+                  </div>
+                  
+                  <!-- Buttons Wrapper -->
+                  <div id="preview_buttons_wrapper" style="display: none; flex-wrap: wrap; gap: 8px; margin-top: 8px;">
+                    <!-- Live Buttons Rendered Here -->
+                  </div>
+                </div>
               </div>
             </div>
-            <button type="submit" class="btn btn-primary">Add Reaction Role</button>
-          </form>
+          </div>
         </div>
       </div>
 
       <!-- 9. Custom Commands -->
       <div id="customcmd" class="tab-content">
-        <h2>Custom Commands</h2>
+        <h2>Custom <em>commands</em></h2>
         <p style="color: var(--text-muted); margin-bottom: 20px;">Add specific text-based commands unique to this server.</p>
         <div class="glass-panel">
           <form id="form-custom-cmd" onsubmit="saveSettings(event, 'custom_commands')">
@@ -830,7 +1160,7 @@
 
       <!-- 10. Giveaways -->
       <div id="giveaways" class="tab-content">
-        <h2>Giveaways</h2>
+        <h2>Giveaway <em>manager</em></h2>
         <p style="color: var(--text-muted); margin-bottom: 20px;">Manage active giveaways, reroll winners, or create new ones.</p>
         <div class="glass-panel">
           <form id="form-giveaways" onsubmit="saveSettings(event, 'giveaways')">
@@ -859,7 +1189,7 @@
 
       <!-- 11. Bot Settings -->
       <div id="settings" class="tab-content">
-        <h2>Bot Settings</h2>
+        <h2>Bot <em>settings</em></h2>
         <p style="color: var(--text-muted); margin-bottom: 20px;">Change bot prefix, language, embed colors, and configure admin roles.</p>
         <div class="glass-panel">
           <form id="form-bot-settings" onsubmit="saveSettings(event, 'bot_settings')">
@@ -886,7 +1216,7 @@
 
       <!-- AUTOMOD SETTINGS -->
       <div id="automod-settings" class="tab-content">
-        <h2>AutoMod Settings</h2>
+        <h2>AutoMod <em>settings</em></h2>
         <p style="color:var(--text-muted); margin-bottom:20px;">Configure automatic moderation rules for this server.</p>
         <div class="glass-panel" style="margin-bottom:20px;">
           <h3 style="margin-bottom:10px;">Anti-Link</h3>
@@ -928,7 +1258,7 @@
 
       <!-- MUSIC SETTINGS -->
       <div id="music-settings" class="tab-content">
-        <h2>Music Settings</h2>
+        <h2>Music <em>settings</em></h2>
         <p style="color:var(--text-muted); margin-bottom:20px;">Configure music playback, DJ role, filters, and queue limits.</p>
         <div class="glass-panel" style="margin-bottom:20px;">
           <h3 style="margin-bottom:10px;">General</h3>
@@ -991,7 +1321,7 @@
 
       <!-- ECONOMY SETTINGS -->
       <div id="economy-settings" class="tab-content">
-        <h2>Economy Settings</h2>
+        <h2>Economy <em>settings</em></h2>
         <p style="color:var(--text-muted); margin-bottom:20px;">Configure the server economy: currency, rewards, and shop.</p>
         <div class="glass-panel" style="margin-bottom:20px;">
           <h3 style="margin-bottom:10px;">General Economy</h3>
@@ -1001,7 +1331,7 @@
               <span style="color:white;">Enable Economy System</span>
             </div>
             <div class="form-group"><label class="form-label">Currency Name</label><input type="text" class="form-control" id="economy_currency_name" value="Coins" placeholder="e.g. Coins, Gold, Credits"></div>
-            <div class="form-group"><label class="form-label">Currency Emoji</label><input type="text" class="form-control" id="economy_currency_emoji" value="🪙"></div>
+            <div class="form-group"><label class="form-label">Currency Icon</label><input type="text" class="form-control" id="economy_currency_emoji" value="◈"></div>
             <div class="form-group"><label class="form-label">Daily Reward Amount</label><input type="number" class="form-control" id="economy_daily" value="100" min="0"></div>
             <div class="form-group"><label class="form-label">Work Reward Range (min – max coins)</label><div style="display:flex; gap:10px;"><input type="number" class="form-control" id="economy_work_min" value="50" min="0"><input type="number" class="form-control" id="economy_work_max" value="200" min="0"></div></div>
             <button type="submit" class="btn btn-primary">Save Economy</button>
@@ -1023,7 +1353,7 @@
 
       <!-- LIVE STATS SETTINGS -->
       <div id="stats-settings" class="tab-content">
-        <h2>Live Stats Voice Channels</h2>
+        <h2>Live Stats <em>voice channels</em></h2>
         <p style="color:var(--text-muted); margin-bottom:20px;">Manage auto-updating voice channels that display live server statistics.</p>
         <div class="glass-panel" style="margin-bottom:20px;">
           <h3 style="margin-bottom:10px;">Refresh Interval</h3>
@@ -1050,7 +1380,7 @@
 
       <!-- TEMP VC SETTINGS -->
       <div id="tempvc-settings" class="tab-content">
-        <h2>Temporary VC System</h2>
+        <h2>Temporary VC <em>system</em></h2>
         <p style="color:var(--text-muted); margin-bottom:20px;">Configure the Join-to-Create temporary voice channel system.</p>
         <div class="glass-panel" style="margin-bottom:20px;">
           <h3 style="margin-bottom:10px;">Setup</h3>
@@ -1071,7 +1401,7 @@
 
       <!-- SERVER BUILDER SETTINGS -->
       <div id="serverbuilder-settings" class="tab-content">
-        <h2>Server Builder &amp; Decoration</h2>
+        <h2>Server Builder &amp; <em>decoration</em></h2>
         <p style="color:var(--text-muted); margin-bottom:20px;">Audit permissions, bulk-set overrides, clone channels, and manage server templates.</p>
         <div class="glass-panel" style="margin-bottom:20px;">
           <h3 style="margin-bottom:10px;">Server Audit</h3>
@@ -1120,38 +1450,37 @@
           <h3 style="margin-bottom:10px;">Channel Decorator (Fonts & Emoticons)</h3>
           <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Stylize your server! Apply cool Unicode fonts and emoticons to the whole server, or rename one specific channel.</p>
           
-          <div style="display:flex; gap:15px; margin-bottom:15px; flex-wrap:wrap;">
-            <div class="form-group" style="flex:1; min-width:250px;">
-              <label class="form-label">Select Font / Emoticon Preset</label>
-              <select class="form-select" id="font_selector" onchange="previewFont()">
-                <option value="FN-01">FN-01 Cursive Script (𝓪𝓫𝓬...)</option>
-                <option value="FN-02">FN-02 Gothic (𝔞𝔟𝔠...)</option>
-                <option value="FN-03">FN-03 Bold Gothic (𝕒𝕓𝕔...)</option>
-                <option value="FN-04">FN-04 Math Bold (𝐚𝐛𝐜...)</option>
-                <option value="FN-05">FN-05 Math Italic (𝑎𝑏𝑐...)</option>
-                <option value="FN-06">FN-06 Bold Italic (𝒂𝒃𝒄...)</option>
-                <option value="FN-07">FN-07 Monospace (𝚊𝚋𝚌...)</option>
-                <option value="FN-08">FN-08 Sans Bold (𝗮𝗯𝗰...)</option>
-                <option value="FN-11">FN-11 Fullwidth (ａｂｃ...)</option>
-                <option value="FN-12">FN-12 Small Caps (ᴀʙᴄ...)</option>
-                <option value="FN-15">FN-15 Squared (🄰🄱🄲...)</option>
-                <option value="FN-16">FN-16 Filled Squares (🅰🅱🅲...)</option>
-                <option value="FN-17">FN-17 Upside Down (ɐqɔ...)</option>
-                <option value="FN-21">FN-21 Cursive + Dots (· 𝓬𝓱𝓪𝓽)</option>
-                <option value="FN-22">FN-22 Gothic + Lines (━ 𝔠𝔥𝔞𝔱 ━)</option>
-                <option value="FN-25">FN-25 Small Caps + Sparkle (✦ ᴄʜᴀᴛ ✦)</option>
-                <option value="FN-30">FN-30 Cursive + Heart (𝓬𝓱𝓪𝓽 ♡)</option>
-                <option value="FN-31">FN-31 Gothic + Star (✧ 𝔠𝔥𝔞𝔱 ✧)</option>
-                <option value="FN-38">FN-38 Strikethrough Ghost (c̶h̶a̶t̶ ⌇)</option>
-                <option value="FN-40">FN-40 Cursive Gothic Mix (𝓬𝔥𝓪𝔱<3)</option>
-              </select>
+          <div style="display:flex; gap:15px; margin-bottom:15px; flex-wrap:wrap; align-items: flex-end;">
+            <div class="form-group" style="flex:1; min-width:250px; margin-bottom: 0;">
+              <label class="form-label">Search Decoration Presets</label>
+              <input type="text" class="form-control" id="decorator_search" placeholder="Search 85+ styles..." onkeyup="filterDecoratorPresets()">
             </div>
             
-            <div class="form-group" style="flex:1; min-width:200px;">
+            <div class="form-group" style="flex:1; min-width:200px; margin-bottom: 0;">
               <label class="form-label">Type Custom Channel Name (for Preview)</label>
               <input type="text" class="form-control" id="font_preview_input" value="general chat" onkeyup="previewFont()">
             </div>
           </div>
+
+          <div class="commands-tabs" id="decorator-cat-tabs" style="margin-bottom: 12px; gap: 4px;">
+            <button class="cmd-tab active" data-cat="all" onclick="filterDecoratorCategory('all', this)">All</button>
+            <button class="cmd-tab" data-cat="aesthetic" onclick="filterDecoratorCategory('aesthetic', this)">Aesthetic</button>
+            <button class="cmd-tab" data-cat="minimalist" onclick="filterDecoratorCategory('minimalist', this)">Minimalist</button>
+            <button class="cmd-tab" data-cat="cyberpunk" onclick="filterDecoratorCategory('cyberpunk', this)">Cyberpunk</button>
+            <button class="cmd-tab" data-cat="fancy" onclick="filterDecoratorCategory('fancy', this)">Fancy</button>
+            <button class="cmd-tab" data-cat="symmetric" onclick="filterDecoratorCategory('symmetric', this)">Symmetric</button>
+            <button class="cmd-tab" data-cat="sparkles" onclick="filterDecoratorCategory('sparkles', this)">Sparkles</button>
+            <button class="cmd-tab" data-cat="ancient" onclick="filterDecoratorCategory('ancient', this)">Ancient</button>
+          </div>
+
+          <div id="decorator_presets_grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; max-height: 320px; overflow-y: auto; background: rgba(0,0,0,0.45); padding: 15px; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 15px; scrollbar-width: thin;">
+            <!-- Rendered dynamically by JS -->
+          </div>
+
+          <select id="font_selector" style="display: none;" onchange="previewFont()">
+            <!-- Loaded with 105 options dynamically in JS -->
+          </select>
+
           
           <div style="background:rgba(0,0,0,0.3); padding:10px; border-radius:6px; margin-bottom:15px; border-left:3px solid var(--c1);">
               <span style="color:var(--text-muted); font-size:0.8rem; text-transform:uppercase; letter-spacing:1px;">Live Preview</span>
@@ -1161,7 +1490,7 @@
           <div style="border-top:1px solid rgba(255,255,255,0.1); margin:15px 0;"></div>
           
           <div style="background:rgba(239, 68, 68, 0.1); border-left:4px solid #ef4444; padding:15px; border-radius:4px; margin-bottom:15px;">
-              <strong style="color:#ef4444; display:block; margin-bottom:5px;">⚠️ API Rate Limit Warning</strong>
+              <strong style="color:#ef4444; display:block; margin-bottom:5px;">API Rate Limit Warning</strong>
               <span style="color:var(--text-muted); font-size:0.9rem;">Discord strictly limits how quickly bots can edit channels (approx. 2 edits per channel per 10 minutes). Applying a layout or font style to a massive server may take up to 2 minutes to process safely in the background. Please be patient!</span>
           </div>
 
@@ -1208,6 +1537,34 @@
 
   <script>
     const guildId = "{{ guild_id }}";
+
+    // --- Dynamic Color Bleed Cycling ---
+    const COLORS = [
+        ['#ff2d55', '#0affe4'],
+        ['#ff6b35', '#c7ff3a'],
+        ['#a855f7', '#22d3ee'],
+        ['#f59e0b', '#f43f5e'],
+        ['#10b981', '#6366f1'],
+        ['#ec4899', '#fbbf24']
+    ];
+    let colorIdx = Math.floor(Math.random() * COLORS.length);
+    const colorBleed = document.getElementById('colorBleed');
+
+    function applyColors(i) {
+        const [c1, c2] = COLORS[i % COLORS.length];
+        document.documentElement.style.setProperty('--c1', c1);
+        document.documentElement.style.setProperty('--c2', c2);
+        if (colorBleed) {
+          colorBleed.style.background = `radial-gradient(ellipse at 30% 70%, ${c1}33, transparent 60%), radial-gradient(ellipse at 70% 30%, ${c2}22, transparent 60%)`;
+        }
+    }
+    applyColors(colorIdx);
+    
+    // Cycle colors every 12 seconds
+    setInterval(() => {
+        colorIdx++;
+        applyColors(colorIdx);
+    }, 12000);
     
     // Sidebar Navigation
     const navCategories = document.querySelectorAll('.nav-category');
@@ -1220,7 +1577,16 @@
         
         nav.classList.add('active');
         const target = nav.getAttribute('data-target');
-        document.getElementById(target).classList.add('active');
+        const tabEl = document.getElementById(target);
+        tabEl.classList.add('active');
+        
+        // Re-trigger titleReveal animation on h2 elements inside the active tab
+        const title = tabEl.querySelector('h2');
+        if (title) {
+          title.style.animation = 'none';
+          title.offsetHeight; /* trigger reflow */
+          title.style.animation = '';
+        }
       });
     });
 
@@ -1591,12 +1957,12 @@
                     if (task.status === 'completed') {
                         clearInterval(pollInterval);
                         progressBar.style.background = 'linear-gradient(90deg, #10b981, #34d399)';
-                        resContainer.innerHTML = `<span style="color:#10b981;">✅ ${task.message}</span>`;
+                        resContainer.innerHTML = `<span style="color:#10b981;">◈ ${task.message}</span>`;
                         setTimeout(() => { progressContainer.style.display = 'none'; progressBar.style.background = 'linear-gradient(90deg, #8b5cf6, #3b82f6)'; }, 5000);
                     } else if (task.status === 'error') {
                         clearInterval(pollInterval);
                         progressBar.style.background = '#ef4444';
-                        resContainer.innerHTML = `<span style="color:#ef4444;">❌ Error: ${task.message}</span>`;
+                        resContainer.innerHTML = `<span style="color:#ef4444;">▲ Error: ${task.message}</span>`;
                         setTimeout(() => { progressContainer.style.display = 'none'; progressBar.style.background = 'linear-gradient(90deg, #8b5cf6, #3b82f6)'; }, 5000);
                     }
                 }
@@ -1656,6 +2022,599 @@
       }, 300);
     }
 
+    // ── DECORATOR PRESETS DATABASE (85+ configs) ─────────────────────────────
+    const DECORATOR_PRESETS = [
+      // Aesthetic Category
+      { id: "FN-21", name: "Sparkle Star", pattern: "✦ {word} ✦", cat: "aesthetic", font: "FN-01" },
+      { id: "FN-22", name: "Soft Sparkle", pattern: "✧ {word} ✧", cat: "aesthetic", font: "FN-02" },
+      { id: "FN-23", name: "Bold Star", pattern: "★ {word} ★", cat: "aesthetic", font: "FN-03" },
+      { id: "FN-24", name: "Hollow Star", pattern: "☆ {word} ☆", cat: "aesthetic", font: "FN-04" },
+      { id: "FN-25", name: "Glow Diamond", pattern: "◈ {word} ◈", cat: "aesthetic", font: "FN-05" },
+      { id: "FN-26", name: "Hollow Diamond", pattern: "◇ {word} ◇", cat: "aesthetic", font: "FN-06" },
+      { id: "FN-27", name: "Solid Diamond", pattern: "◆ {word} ◆", cat: "aesthetic", font: "FN-07" },
+      { id: "FN-28", name: "Lozenge", pattern: "⬪ {word} ⬪", cat: "aesthetic", font: "FN-12" },
+      { id: "FN-29", name: "Hexagon", pattern: "⬡ {word} ⬡", cat: "aesthetic", font: "FN-09" },
+      { id: "FN-30", name: "Up Triangle", pattern: "▲ {word} ▲", cat: "aesthetic", font: "FN-10" },
+      { id: "FN-31", name: "Down Triangle", pattern: "▼ {word} ▼", cat: "aesthetic", font: "FN-02" },
+      { id: "FN-34", name: "Vertical Bar", pattern: "┇ {word} ‧", cat: "aesthetic", font: "FN-11" },
+      { id: "FN-35", name: "Vertical Dot", pattern: "┇ ٫ {word} ‧", cat: "aesthetic", font: "FN-01" },
+      { id: "FN-36", name: "Lozenge Dot", pattern: "⬪ ٫ {word} ‧", cat: "aesthetic", font: "FN-02" },
+      { id: "FN-37", name: "Cross Node", pattern: "┇ ٫ {word} | ☩", cat: "aesthetic", font: "FN-03" },
+      { id: "FN-94", name: "Gothic Cross", pattern: "𓆩 ٫ {word} ‧ 𓆪", cat: "aesthetic", font: "FN-12" },
+      { id: "FN-95", name: "Ancient Coil", pattern: "𓏲 ٫ {word} ‧ 𓏲", cat: "aesthetic", font: "FN-01" },
+      { id: "FN-96", name: "Lotus Petal", pattern: "𓍢 ٫ {word} ‧ 𓍢", cat: "aesthetic", font: "FN-02" },
+      { id: "FN-97", name: "Runes Dot", pattern: "𓏴 ٫ {word} ‧ 𓏴", cat: "aesthetic", font: "FN-03" },
+      { id: "FN-98", name: "Frame Dot", pattern: "𓈀 ٫ {word} ‧ 𓈀", cat: "aesthetic", font: "FN-04" },
+      { id: "FN-99", name: "Sun Dot", pattern: "𓂋 ٫ {word} ‧ 𓂋", cat: "aesthetic", font: "FN-05" },
+
+      // Minimalist Category
+      { id: "FN-19", name: "Strikethrough", pattern: "c̶h̶a̶t̶", cat: "minimalist", font: "FN-07" },
+      { id: "FN-20", name: "Underline Deco", pattern: "c̲h̲a̲t̲", cat: "minimalist", font: "FN-07" },
+      { id: "FN-32", name: "Double Arrow Right", pattern: "» {word} «", cat: "minimalist", font: "FN-12" },
+      { id: "FN-33", name: "Double Arrow Left", pattern: "« {word} »", cat: "minimalist", font: "FN-11" },
+      { id: "FN-41", name: "Arrow Dot", pattern: "» ٫ {word} ‧", cat: "minimalist", font: "FN-12" },
+      { id: "FN-42", name: "Double Vert Bar", pattern: "┇ {word} ┇", cat: "minimalist", font: "FN-03" },
+      { id: "FN-43", name: "Dotted Vert Bar", pattern: "┊ {word} ┊", cat: "minimalist", font: "FN-07" },
+      { id: "FN-44", name: "Heavy Dotted Bar", pattern: "┋ {word} ┋", cat: "minimalist", font: "FN-08" },
+      { id: "FN-45", name: "Thick Block Bar", pattern: "━ {word} ━", cat: "minimalist", font: "FN-09" },
+      { id: "FN-46", name: "Thin Line Bar", pattern: "─ {word} ─", cat: "minimalist", font: "FN-07" },
+      { id: "FN-47", name: "Double Line Bar", pattern: "═ {word} ═", cat: "minimalist", font: "FN-11" },
+      { id: "FN-48", name: "Light Shade Blocks", pattern: "░ {word} ░", cat: "minimalist", font: "FN-12" },
+      { id: "FN-49", name: "Medium Shade Blocks", pattern: "▒ {word} ▒", cat: "minimalist", font: "FN-07" },
+      { id: "FN-50", name: "Dark Shade Blocks", pattern: "▓ {word} ▓", cat: "minimalist", font: "FN-08" },
+
+      // Cyberpunk Category
+      { id: "FN-54", name: "Lightning Bolt", pattern: "⚡ {word} ⚡", cat: "cyberpunk", font: "FN-04" },
+      { id: "FN-56", name: "Gear Spindle", pattern: "⚙ {word} ⚙", cat: "cyberpunk", font: "FN-07" },
+      { id: "FN-77", name: "Lightning Node", pattern: "☇ {word}", cat: "cyberpunk", font: "FN-07" },
+      { id: "FN-78", name: "Arrow Bolt", pattern: "☈ {word}", cat: "cyberpunk", font: "FN-07" },
+      { id: "FN-82", name: "Loop Node", pattern: "☌ {word}", cat: "cyberpunk", font: "FN-07" },
+      { id: "FN-83", name: "Diagonal Node", pattern: "☍ {word}", cat: "cyberpunk", font: "FN-07" },
+
+      // Fancy Category
+      { id: "FN-01", name: "Cursive Script", pattern: "{word}", cat: "fancy", font: "FN-01" },
+      { id: "FN-02", name: "Gothic Font", pattern: "{word}", cat: "fancy", font: "FN-02" },
+      { id: "FN-03", name: "Blackboard Bold", pattern: "{word}", cat: "fancy", font: "FN-03" },
+      { id: "FN-04", name: "Math Bold Font", pattern: "{word}", cat: "fancy", font: "FN-04" },
+      { id: "FN-05", name: "Math Italic Font", pattern: "{word}", cat: "fancy", font: "FN-05" },
+      { id: "FN-06", name: "Bold Italic Font", pattern: "{word}", cat: "fancy", font: "FN-06" },
+      { id: "FN-07", name: "Monospace Type", pattern: "{word}", cat: "fancy", font: "FN-07" },
+      { id: "FN-08", name: "Sans Bold Type", pattern: "{word}", cat: "fancy", font: "FN-08" },
+      { id: "FN-09", name: "Sans Italic Type", pattern: "{word}", cat: "fancy", font: "FN-09" },
+      { id: "FN-10", name: "Sans Bold Italic", pattern: "{word}", cat: "fancy", font: "FN-10" },
+      { id: "FN-11", name: "Fullwidth Text", pattern: "{word}", cat: "fancy", font: "FN-11" },
+      { id: "FN-12", name: "Small Caps Font", pattern: "{word}", cat: "fancy", font: "FN-12" },
+      { id: "FN-13", name: "Superscript Type", pattern: "{word}", cat: "fancy", font: "FN-13" },
+      { id: "FN-14", name: "Circled Text", pattern: "{word}", cat: "fancy", font: "FN-14" },
+      { id: "FN-15", name: "Squared Text", pattern: "{word}", cat: "fancy", font: "FN-15" },
+      { id: "FN-16", name: "Filled Squares", pattern: "{word}", cat: "fancy", font: "FN-16" },
+      { id: "FN-17", name: "Upside Down", pattern: "{word}", cat: "fancy", font: "FN-17" },
+      { id: "FN-18", name: "Mirror Text", pattern: "{word}", cat: "fancy", font: "FN-18" },
+
+      // Symmetric Category
+      { id: "FN-38", name: "Sparkle Symmetric", pattern: "✦ ─ {word} ─ ✦", cat: "symmetric", font: "FN-01" },
+      { id: "FN-39", name: "Diamond Symmetric", pattern: "⬪ ₊ {word} ₊ ⬪", cat: "symmetric", font: "FN-02" },
+      { id: "FN-40", name: "Double Arrow Symm", pattern: "» {word} | ☩", cat: "symmetric", font: "FN-03" },
+      { id: "FN-59", name: "Cross Symmetric", pattern: "♰ {word} ♰", cat: "symmetric", font: "FN-04" },
+      { id: "FN-60", name: "Hollow Cross Symm", pattern: "♱ {word} ♱", cat: "symmetric", font: "FN-02" },
+      { id: "FN-69", name: "Peace Symmetric", pattern: "☮ {word} ☮", cat: "symmetric", font: "FN-03" },
+      { id: "FN-70", name: "Yin Yang Symmetric", pattern: "☯ {word} ☯", cat: "symmetric", font: "FN-02" },
+      { id: "FN-71", name: "Wheel Symmetric", pattern: "☸ {word} ☸", cat: "symmetric", font: "FN-02" },
+      { id: "FN-72", name: "Sun Symmetric", pattern: "☼ {word} ☼", cat: "symmetric", font: "FN-01" },
+      { id: "FN-73", name: "Crescent Symmetric", pattern: "☾ {word} ☾", cat: "symmetric", font: "FN-05" },
+      { id: "FN-74", name: "Moon Symmetric", pattern: "☽ {word} ☽", cat: "symmetric", font: "FN-06" },
+      { id: "FN-75", name: "Cloud Symmetric", pattern: "☁ {word} ☁", cat: "symmetric", font: "FN-07" },
+      { id: "FN-76", name: "Comet Symmetric", pattern: "☄ {word} ☄", cat: "symmetric", font: "FN-08" },
+      { id: "FN-100", name: "Angle Symmetric", pattern: "» {word} «", cat: "symmetric", font: "FN-12" },
+
+      // Sparkles Category
+      { id: "FN-21", name: "Sparkle Star", pattern: "✦ {word} ✦", cat: "sparkles", font: "FN-01" },
+      { id: "FN-22", name: "Soft Sparkle", pattern: "✧ {word} ✧", cat: "sparkles", font: "FN-02" },
+      { id: "FN-23", name: "Bold Star", pattern: "★ {word} ★", cat: "sparkles", font: "FN-03" },
+      { id: "FN-24", name: "Hollow Star", pattern: "☆ {word} ☆", cat: "sparkles", font: "FN-04" },
+      { id: "FN-31", name: "Down Triangle Star", pattern: "▼ {word} ▼", cat: "sparkles", font: "FN-02" },
+      { id: "FN-37", name: "Cross Node Sparkle", pattern: "┇ ٫ {word} | ☩", cat: "sparkles", font: "FN-03" },
+      { id: "FN-72", name: "Sun Sparkle", pattern: "☼ {word} ☼", cat: "sparkles", font: "FN-01" },
+      { id: "FN-73", name: "Crescent Sparkle", pattern: "☾ {word} ☾", cat: "sparkles", font: "FN-05" },
+      { id: "FN-74", name: "Moon Sparkle", pattern: "☽ {word} ☽", cat: "sparkles", font: "FN-06" },
+      { id: "FN-79", name: "Sun Node Sparkle", pattern: "☉ {word}", cat: "sparkles", font: "FN-07" },
+
+      // Ancient Category
+      { id: "FN-88", name: "Gothic Frame", pattern: "𓆩 {word} 𓆪", cat: "ancient", font: "FN-01" },
+      { id: "FN-89", name: "Ancient Coil Frame", pattern: "𓏲 {word} 𓏲", cat: "ancient", font: "FN-02" },
+      { id: "FN-90", name: "Ancient Petal", pattern: "𓍢 {word} 𓍢", cat: "ancient", font: "FN-03" },
+      { id: "FN-91", name: "Ancient Cross Frame", pattern: "𓏴 {word} 𓏴", cat: "ancient", font: "FN-04" },
+      { id: "FN-92", name: "Ancient Border Frame", pattern: "𓈀 {word} 𓈀", cat: "ancient", font: "FN-05" },
+      { id: "FN-93", name: "Ancient Sun Frame", pattern: "𓂋 {word} 𓂋", cat: "ancient", font: "FN-06" },
+      { id: "FN-101", name: "Skull Frame", pattern: "☠ {word} ☠", cat: "ancient", font: "FN-12" },
+      { id: "FN-102", name: "Radioactive Frame", pattern: "☢ {word} ☢", cat: "ancient", font: "FN-11" },
+      { id: "FN-103", name: "Biohazard Frame", pattern: "☣ {word} ☣", cat: "ancient", font: "FN-10" },
+      { id: "FN-104", name: "Peace Frame", pattern: "☮ {word} ☮", cat: "ancient", font: "FN-09" },
+      { id: "FN-105", name: "Yin Yang Frame", pattern: "☯ {word} ☯", cat: "ancient", font: "FN-08" }
+    ];
+
+    const ALPHABETS = "abcdefghijklmnopqrstuvwxyz";
+    const ALPHABET_MAPS = {
+        "FN-01": "𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃",
+        "FN-02": "𝔞𝔟𝔠𝔡𝔢𝔣𝔤𝔥𝔦𝔧𝔨𝔩𝔪𝔫𝔬𝔭𝔮𝔯𝔰𝔱𝔲𝔳𝔴𝔵𝔶𝔷",
+        "FN-03": "𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫",
+        "FN-04": "𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳",
+        "FN-05": "𝑎𝑏𝑐𝑑𝑒𝑓𝑔ℎ𝑖𝑗𝑘𝑙𝑚𝑛𝑜𝑝𝑞𝑟𝑠𝑡𝑢𝑣𝑤𝑥𝑦𝑧",
+        "FN-06": "𝒂𝒃𝒄𝒅𝒆𝒇𝒈𝒉𝒊𝒋𝒌𝒍𝒎𝒏𝒐𝒑𝒒𝒓𝒔𝒕𝒖𝒗𝒘𝒙𝒚𝒛",
+        "FN-07": "𝚊𝚋c𝚍e𝚏g𝚑i𝚓k𝚕m𝚗o𝚙q𝚛s𝚝u𝚟w𝚡y𝚣",
+        "FN-08": "𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗿𝘀𝘁𝘂𝘃𝘄𝗅𝘆𝘇",
+        "FN-09": "𝘢𝘣𝘤𝘥𝘦𝘧𝘨𝘩𝘪𝘫𝘬𝘭𝘮𝘯𝘰𝘱𝘲𝘳𝘴𝘵𝘶𝘷𝘸𝘹𝘺𝘻",
+        "FN-10": "𝙖𝙗𝙘𝙙𝙚𝙛𝙜𝙝𝙞𝙟𝙠𝙡𝙢𝙣𝙤𝙥𝙦𝙧𝙨𝙩𝙪𝙫𝙬𝙭𝙮𝙯",
+        "FN-11": "ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ",
+        "FN-12": "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘQʀꜱᴛᴜᴠᴡxʏᴢ",
+        "FN-13": "ᵃᵇᶜᵈᵉᶠᵍʰⁱʲᵏˡᵐⁿᵒᵖᵠʳˢᵗᵘᵛʷˣʸᶻ",
+        "FN-14": "ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ",
+        "FN-15": "🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉",
+        "FN-16": "🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉",
+        "FN-17": "ɐqɔpǝɟƃɥıɾʞlɯuodbɹsʇnʌʍxʎz",
+        "FN-18": "dqpqǝɟƃɥᴉɾʞlɯuodbɹsʇnʌʍxʎz"
+    };
+
+    function formatPresetTextClientSide(text, presetId) {
+      const preset = DECORATOR_PRESETS.find(p => p.id === presetId);
+      if (!preset) return text;
+      
+      const baseStyleId = preset.font;
+      const alphabetMap = ALPHABET_MAPS[baseStyleId] || ALPHABET_MAPS["FN-01"];
+      
+      const lower = text.toLowerCase();
+      let res = "";
+      for (let i = 0; i < lower.length; i++) {
+        const char = lower[i];
+        const idx = ALPHABETS.indexOf(char);
+        if (idx !== -1 && idx < [...alphabetMap].length) {
+          res += Array.from(alphabetMap)[idx];
+        } else {
+          res += char;
+        }
+      }
+      
+      if (preset.pattern) {
+        return preset.pattern.replace("{word}", res);
+      }
+      return res;
+    }
+
+    let currentCategory = 'all';
+
+    function renderDecoratorPresets() {
+      const grid = document.getElementById('decorator_presets_grid');
+      if (!grid) return;
+      
+      const searchVal = document.getElementById('decorator_search').value.toLowerCase();
+      const previewText = document.getElementById('font_preview_input').value || 'general chat';
+      
+      const samplePreviews = {};
+      DECORATOR_PRESETS.forEach(p => {
+         samplePreviews[p.id] = formatPresetTextClientSide(previewText, p.id);
+      });
+
+      const filtered = DECORATOR_PRESETS.filter(p => {
+         const matchesCat = (currentCategory === 'all' || p.cat === currentCategory);
+         const matchesSearch = p.name.toLowerCase().includes(searchVal) || p.id.toLowerCase().includes(searchVal);
+         return matchesCat && matchesSearch;
+      });
+
+      const currentSelected = document.getElementById('font_selector').value;
+
+      grid.innerHTML = filtered.map(p => {
+         const activeStyle = p.id === currentSelected ? 'border-color: var(--c2) !important; box-shadow: 0 0 10px rgba(10,254,228,0.2) !important; background: rgba(10,254,228,0.03) !important;' : '';
+         return `
+           <div class="preset-card" style="background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.05); padding: 12px; cursor: pointer; text-align: center; transition: all 0.25s ease; ${activeStyle}" onclick="selectDecoratorPreset('${p.id}', this)">
+             <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; font-family: monospace;">${p.id} - ${p.name}</div>
+             <div style="font-size: 1.05rem; color: #fff; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${samplePreviews[p.id]}</div>
+           </div>
+         `;
+      }).join('');
+    }
+
+    function selectDecoratorPreset(presetId, cardEl) {
+      const select = document.getElementById('font_selector');
+      if (select) {
+         select.value = presetId;
+         previewFont();
+         
+         document.querySelectorAll('#decorator_presets_grid .preset-card').forEach(card => {
+            card.style.borderColor = 'rgba(255,255,255,0.05)';
+            card.style.boxShadow = 'none';
+            card.style.background = 'rgba(255,255,255,0.015)';
+         });
+         
+         if (cardEl) {
+            cardEl.style.borderColor = 'var(--c2)';
+            cardEl.style.boxShadow = '0 0 10px rgba(10,254,228,0.2)';
+            cardEl.style.background = 'rgba(10,254,228,0.03)';
+         }
+      }
+    }
+
+    function filterDecoratorCategory(cat, btnEl) {
+      currentCategory = cat;
+      document.querySelectorAll('#decorator-cat-tabs .cmd-tab').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      renderDecoratorPresets();
+    }
+
+    function filterDecoratorPresets() {
+      renderDecoratorPresets();
+    }
+
+    function initFontSelectorOptions() {
+      const select = document.getElementById('font_selector');
+      if (!select) return;
+      select.innerHTML = '';
+      for (let i = 1; i <= 18; i++) {
+         const id = `FN-${String(i).padStart(2, '0')}`;
+         const opt = document.createElement('option');
+         opt.value = id;
+         opt.innerText = id;
+         select.appendChild(opt);
+      }
+      for (let i = 19; i <= 105; i++) {
+         const id = `FN-${String(i).padStart(2, '0')}`;
+         const opt = document.createElement('option');
+         opt.value = id;
+         opt.innerText = id;
+         select.appendChild(opt);
+      }
+      select.value = "FN-01";
+    }
+
+    // ── EMBED & SELF ROLES LOGIC ─────────────────────────────────────────────
+    function toggleSelfRolesSection() {
+      const enabled = document.getElementById('enable_self_roles').checked;
+      document.getElementById('self_roles_section').style.display = enabled ? 'block' : 'none';
+      const previewWrapper = document.getElementById('preview_buttons_wrapper');
+      if (previewWrapper) {
+         previewWrapper.style.display = enabled ? 'flex' : 'none';
+      }
+      updateLiveEmbedPreview();
+    }
+
+    let buttonCounter = 0;
+    function addSelfRoleButton() {
+      const container = document.getElementById('buttons_list');
+      if (!container) return;
+      
+      buttonCounter++;
+      const btnId = `btn_cfg_${buttonCounter}`;
+      
+      const rolesOptions = (activeLayoutData && activeLayoutData.roles) ? 
+        activeLayoutData.roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('') : '';
+      
+      const card = document.createElement('div');
+      card.id = btnId;
+      card.className = 'glass-panel btn-config-card';
+      card.style.padding = '20px';
+      card.style.marginBottom = '12px';
+      card.style.borderLeft = '2.5px solid var(--c2)';
+      card.style.position = 'relative';
+      card.style.background = 'rgba(0,0,0,0.3)';
+      
+      card.innerHTML = `
+        <button type="button" class="btn-remove" style="position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--c1); font-weight: bold; cursor: pointer; font-size: 14px;" onclick="removeSelfRoleButton('${btnId}')">✕</button>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 0.72rem; letter-spacing: 1px;">Button Style</label>
+            <select class="form-select btn-style" style="padding: 8px 12px !important;" onchange="onButtonStyleChange('${btnId}')" required>
+              <option value="primary">Primary (Blue)</option>
+              <option value="secondary">Secondary (Grey)</option>
+              <option value="success">Success (Green)</option>
+              <option value="danger">Danger (Red)</option>
+              <option value="link">Link (Redirect URL)</option>
+              <option value="accent">Accent (Kaizer Neon)</option>
+              <option value="amber">Amber Warning</option>
+            </select>
+          </div>
+          
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 0.72rem; letter-spacing: 1px;">Label Text</label>
+            <input type="text" class="form-control btn-label" style="padding: 8px 12px !important;" placeholder="e.g. Verify Me" oninput="updateLiveEmbedPreview()">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 0.72rem; letter-spacing: 1px;">Emoji Symbol (Optional)</label>
+            <input type="text" class="form-control btn-emoji" style="padding: 8px 12px !important;" placeholder="e.g. ◈" oninput="updateLiveEmbedPreview()">
+          </div>
+          
+          <div class="form-group btn-role-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 0.72rem; letter-spacing: 1px;">Assign Role</label>
+            <select class="form-select btn-role" style="padding: 8px 12px !important;" onchange="updateLiveEmbedPreview()">
+              <option value="">-- Choose Role --</option>
+              ${rolesOptions}
+            </select>
+          </div>
+
+          <div class="form-group btn-url-group" style="margin: 0; display: none;">
+            <label class="form-label" style="font-size: 0.72rem; letter-spacing: 1px;">Link URL</label>
+            <input type="url" class="form-control btn-url" style="padding: 8px 12px !important;" placeholder="https://..." oninput="updateLiveEmbedPreview()">
+          </div>
+        </div>
+
+        <div class="form-group btn-mode-group" style="margin: 0;">
+          <label class="form-label" style="font-size: 0.72rem; letter-spacing: 1px;">Interaction Action Mode</label>
+          <select class="form-select btn-mode" style="padding: 8px 12px !important;">
+            <option value="toggle">Toggle Role (Assign or Remove)</option>
+            <option value="add">Add Role Only (Cannot remove)</option>
+            <option value="remove">Remove Role Only</option>
+          </select>
+        </div>
+      `;
+      
+      container.appendChild(card);
+      updateLiveEmbedPreview();
+    }
+
+    function removeSelfRoleButton(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+      updateLiveEmbedPreview();
+    }
+
+    function onButtonStyleChange(cardId) {
+      const card = document.getElementById(cardId);
+      if (!card) return;
+      const style = card.querySelector('.btn-style').value;
+      const roleGroup = card.querySelector('.btn-role-group');
+      const urlGroup = card.querySelector('.btn-url-group');
+      const modeGroup = card.querySelector('.btn-mode-group');
+      
+      if (style === 'link') {
+         roleGroup.style.display = 'none';
+         urlGroup.style.display = 'block';
+         modeGroup.style.display = 'none';
+      } else {
+         roleGroup.style.display = 'block';
+         urlGroup.style.display = 'none';
+         modeGroup.style.display = 'block';
+      }
+      updateLiveEmbedPreview();
+    }
+
+    function syncEmbedColorPicker(val) {
+      document.getElementById('embed_color_hex').value = val;
+      updateLiveEmbedPreview();
+    }
+    function syncEmbedColorHex(val) {
+      if (/^#[0-9A-F]{6}$/i.test(val)) {
+         document.getElementById('embed_color').value = val;
+         updateLiveEmbedPreview();
+      }
+    }
+
+    function updateLiveEmbedPreview() {
+      const authorName = document.getElementById('embed_author_name').value;
+      const authorIcon = document.getElementById('embed_author_icon').value;
+      const title = document.getElementById('embed_title').value;
+      const desc = document.getElementById('embed_description').value;
+      const color = document.getElementById('embed_color_hex').value || '#0affe4';
+      const thumbnail = document.getElementById('embed_thumbnail_url').value;
+      const image = document.getElementById('embed_image_url').value;
+      const footerText = document.getElementById('embed_footer_text').value;
+      const footerIcon = document.getElementById('embed_footer_icon').value;
+      
+      // Author
+      const previewAuthor = document.getElementById('preview_embed_author');
+      const previewAuthorIcon = document.getElementById('preview_embed_author_icon');
+      const previewAuthorName = document.getElementById('preview_embed_author_name');
+      if (authorName) {
+         previewAuthor.style.display = 'flex';
+         previewAuthorName.innerText = authorName;
+         if (authorIcon) {
+            previewAuthorIcon.src = authorIcon;
+            previewAuthorIcon.style.display = 'block';
+         } else {
+            previewAuthorIcon.style.display = 'none';
+         }
+      } else {
+         previewAuthor.style.display = 'none';
+      }
+      
+      // Title
+      const previewTitle = document.getElementById('preview_embed_title');
+      if (title) {
+         previewTitle.style.display = 'block';
+         previewTitle.innerText = title;
+      } else {
+         previewTitle.style.display = 'none';
+      }
+      
+      // Description
+      document.getElementById('preview_embed_description').innerText = desc || 'Click the buttons below to assign roles to yourself!';
+      
+      // Color
+      document.getElementById('preview_embed_wrapper').style.borderLeftColor = color;
+      
+      // Thumbnail
+      const previewThumbnail = document.getElementById('preview_embed_thumbnail');
+      if (thumbnail) {
+         previewThumbnail.src = thumbnail;
+         previewThumbnail.style.display = 'block';
+      } else {
+         previewThumbnail.style.display = 'none';
+      }
+      
+      // Large Image
+      const previewImage = document.getElementById('preview_embed_image');
+      if (image) {
+         previewImage.src = image.startsWith('/') ? window.location.origin + image : image;
+         previewImage.style.display = 'block';
+      } else {
+         previewImage.style.display = 'none';
+      }
+      
+      // Footer
+      const previewFooter = document.getElementById('preview_embed_footer');
+      const previewFooterIcon = document.getElementById('preview_embed_footer_icon');
+      const previewFooterText = document.getElementById('preview_embed_footer_text');
+      if (footerText) {
+         previewFooter.style.display = 'flex';
+         previewFooterText.innerText = footerText;
+         if (footerIcon) {
+            previewFooterIcon.src = footerIcon;
+            previewFooterIcon.style.display = 'block';
+         } else {
+            previewFooterIcon.style.display = 'none';
+         }
+      } else {
+         previewFooter.style.display = 'none';
+      }
+      
+      // Render Buttons
+      const previewButtonsWrapper = document.getElementById('preview_buttons_wrapper');
+      const enableSelfRoles = document.getElementById('enable_self_roles').checked;
+      
+      if (previewButtonsWrapper) {
+         previewButtonsWrapper.innerHTML = '';
+         if (enableSelfRoles) {
+            const btnCards = document.querySelectorAll('#buttons_list .btn-config-card');
+            if (btnCards.length > 0) {
+               previewButtonsWrapper.style.display = 'flex';
+               btnCards.forEach(card => {
+                  const style = card.querySelector('.btn-style').value;
+                  const label = card.querySelector('.btn-label').value || 'Button';
+                  const emoji = card.querySelector('.btn-emoji').value;
+                  
+                  let emojiHtml = emoji ? `<span style="font-size:14px; margin-right: 4px;">${emoji}</span>` : '';
+                  let linkIconHtml = style === 'link' ? '<span style="font-size:11px; margin-left: 4px; opacity: 0.7;">↗</span>' : '';
+                  
+                  const btnPreview = document.createElement('div');
+                  btnPreview.className = `discord-btn discord-btn-${style}`;
+                  btnPreview.innerHTML = `${emojiHtml}<span>${label}</span>${linkIconHtml}`;
+                  previewButtonsWrapper.appendChild(btnPreview);
+               });
+            } else {
+               previewButtonsWrapper.style.display = 'none';
+            }
+         } else {
+            previewButtonsWrapper.style.display = 'none';
+         }
+      }
+    }
+
+    async function uploadEmbedImage() {
+      const fileInput = document.getElementById('embed_image_file');
+      const statusEl = document.getElementById('upload_status');
+      if (!fileInput.files || fileInput.files.length === 0) return;
+      
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      statusEl.innerText = 'Uploading...';
+      statusEl.style.color = 'var(--c2)';
+      
+      try {
+         const res = await fetch('/api/upload-image', {
+            method: 'POST',
+            body: formData
+         });
+         const data = await res.json().catch(() => ({}));
+         if (res.ok && data.success) {
+            statusEl.innerText = 'Upload successful!';
+            statusEl.style.color = '#10b981';
+            document.getElementById('embed_image_url').value = data.url;
+            updateLiveEmbedPreview();
+         } else {
+            statusEl.innerText = 'Upload failed: ' + (data.error || 'Unknown error');
+            statusEl.style.color = 'var(--c1)';
+         }
+      } catch (e) {
+         statusEl.innerText = 'Upload error.';
+         statusEl.style.color = 'var(--c1)';
+      }
+    }
+
+    async function sendEmbedRoles(event) {
+      if (event) event.preventDefault();
+      
+      const channelId = document.getElementById('embed_channel_id').value;
+      if (!channelId) {
+         showToast('Please select a target channel.', 'error');
+         return;
+      }
+      
+      const embedData = {
+         author_name: document.getElementById('embed_author_name').value,
+         author_icon_url: document.getElementById('embed_author_icon').value,
+         title: document.getElementById('embed_title').value,
+         description: document.getElementById('embed_description').value,
+         color: document.getElementById('embed_color_hex').value || '#0affe4',
+         thumbnail_url: document.getElementById('embed_thumbnail_url').value,
+         image_url: document.getElementById('embed_image_url').value,
+         footer_text: document.getElementById('embed_footer_text').value,
+         footer_icon_url: document.getElementById('embed_footer_icon').value
+      };
+      
+      const buttons = [];
+      const enableSelfRoles = document.getElementById('enable_self_roles').checked;
+      
+      if (enableSelfRoles) {
+         const btnCards = document.querySelectorAll('#buttons_list .btn-config-card');
+         for (let i = 0; i < btnCards.length; i++) {
+            const card = btnCards[i];
+            const style = card.querySelector('.btn-style').value;
+            const label = card.querySelector('.btn-label').value;
+            const emoji = card.querySelector('.btn-emoji').value;
+            
+            if (style === 'link') {
+               const url = card.querySelector('.btn-url').value;
+               if (!url) {
+                  showToast('Please specify a URL link for the button.', 'error');
+                  return;
+               }
+               buttons.push({ style, label, emoji, url });
+            } else {
+               const roleId = card.querySelector('.btn-role').value;
+               const mode = card.querySelector('.btn-mode').value;
+               if (!roleId) {
+                  showToast('Please select a role for the interactive button.', 'error');
+                  return;
+               }
+               buttons.push({ style, label, emoji, role_id: roleId, mode });
+            }
+         }
+      }
+      
+      const payload = {
+         channel_id: channelId,
+         embed_data: embedData,
+         buttons: buttons
+      };
+      
+      const submitBtn = document.querySelector('#form-embed-roles button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<span>Sending Message...</span>';
+      submitBtn.disabled = true;
+      
+      try {
+         const res = await fetch(`/api/guild/${guildId}/send-embed-roles`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+         });
+         const data = await res.json().catch(() => ({}));
+         if (res.ok && data.success) {
+            showToast('Embed and buttons sent successfully!', 'success');
+         } else {
+            showToast(data.error || 'Failed to send message.', 'error');
+         }
+      } catch (e) {
+         showToast('Network error occurred.', 'error');
+      } finally {
+         submitBtn.innerHTML = originalText;
+         submitBtn.disabled = false;
+      }
+    }
+
     let activeLayoutData = null;
 
     async function fetchServerLayout() {
@@ -1680,9 +2639,14 @@
           let html = '';
           const roles = activeLayoutData.roles || [];
           
-          // Also populate the Target Channel dropdown for the Decorator
+          // Populate target select dropdowns for Decorator and Embed target channel
           const targetSelect = document.getElementById('font_target_channel');
           targetSelect.innerHTML = '<option value="all">-- RENAME ALL CHANNELS IN SERVER --</option>';
+          
+          const embedChannelSelect = document.getElementById('embed_channel_id');
+          if (embedChannelSelect) {
+             embedChannelSelect.innerHTML = '<option value="">-- Select Channel --</option>';
+          }
           
           activeLayoutData.categories.forEach(cat => {
             html += `<div style="margin-bottom:15px;">
@@ -1690,13 +2654,22 @@
               <div style="margin-left:15px;">`;
             
             cat.channels.forEach(chan => {
-              const icon = chan.type === 'voice' ? '🔊' : '#';
+              const icon = chan.type === 'voice' ? '☊' : '#';
               
               // Add to Target Channel Select
               const opt = document.createElement('option');
               opt.value = chan.id;
               opt.innerText = `[${cat.name}] ${chan.name}`;
               targetSelect.appendChild(opt);
+              
+              // Add text channels to Embed target channel dropdown
+              if (chan.type === 'text' && embedChannelSelect) {
+                 const embOpt = document.createElement('option');
+                 embOpt.value = chan.id;
+                 embOpt.innerText = `# ${chan.name} (${cat.name})`;
+                 embedChannelSelect.appendChild(embOpt);
+              }
+              
               html += `<div style="display:flex; flex-direction:column; background:rgba(255,255,255,0.05); padding:10px; border-radius:6px; margin-bottom:8px;">
                   <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                     <span style="font-weight:bold;">${icon} ${chan.name}</span>
@@ -1712,6 +2685,9 @@
             html += `</div></div>`;
           });
           editorContainer.innerHTML = html;
+          
+          // Re-trigger live preview so role options populate inside card buttons
+          updateLiveEmbedPreview();
         } else {
           resContainer.innerHTML = 'Failed to fetch layout.';
         }
@@ -1786,6 +2762,8 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => { 
+      initFontSelectorOptions(); // Initialize selector options
+      renderDecoratorPresets(); // Initialize visual grid
       loadCommandsForCategory('moderation'); 
       loadActiveTempVCs();
       fetchServerLayout(); // Pre-fetch layout so the channel dropdown populates
