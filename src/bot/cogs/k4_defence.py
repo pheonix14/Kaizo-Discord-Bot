@@ -15,6 +15,12 @@ class K4DefenceCog(commands.Cog, name="K4 Defence"):
         self.message_cache: Dict[str, List[Tuple[str, float, str]]] = {}
         # user_id -> list of message IDs for rapid deletion
         self.message_objects: Dict[str, List[discord.Message]] = {}
+        
+        # custom AutoMod rate caches
+        # guild_id -> user_id -> list of records: {"timestamp": float, "attachments": int, "mentions": int, "channel_id": str}
+        self.spam_cache: Dict[str, Dict[str, List[dict]]] = {}
+        # user_id -> list of message objects for deletion
+        self.custom_message_objects: Dict[str, List[discord.Message]] = {}
 
     def get_content_hash(self, message: discord.Message) -> str:
         """Create a hash representing the message content and attachments."""
@@ -55,17 +61,164 @@ class K4DefenceCog(commands.Cog, name="K4 Defence"):
         # 3. Log to DB Protection Logs
         db_client.log_protection_event(str(guild.id), "k4_defence", str(self.bot.user.id), "System", "Muted", f"Target: {member.id}. Reason: {reason}")
 
+    async def execute_automod_action(self, member: discord.Member, guild: discord.Guild, channel: discord.TextChannel, action: str, reason: str, user_id: str):
+        """Execute action for custom AutoMod rule trigger."""
+        settings = db_client.get_guild_settings(str(guild.id))
+        mute_role_id = settings.get("mute_role")
+        modlog_id = settings.get("mod_log_channel")
+        
+        # 1. Delete matching messages from the last 60 seconds (spam messages)
+        if user_id in self.custom_message_objects:
+            for msg in self.custom_message_objects[user_id]:
+                try:
+                    await msg.delete()
+                except discord.NotFound:
+                    pass
+                except discord.Forbidden:
+                    pass
+        
+        # 2. Perform Action
+        action_name = "None"
+        if action == "mute":
+            action_name = "Muted permanently"
+            if mute_role_id:
+                role = guild.get_role(int(mute_role_id))
+                if role:
+                    try:
+                        await member.add_roles(role, reason=f"AutoMod triggered: {reason}")
+                    except discord.Forbidden:
+                        pass
+        elif action == "warn":
+            action_name = "Warned"
+            # Send warning message/embed to channel
+            embed = discord.Embed(
+                title="⚠️ Warning",
+                description=f"{member.mention}, please stop. **Reason:** {reason}",
+                color=discord.Color.orange()
+            )
+            try:
+                await channel.send(embed=embed, delete_after=10)
+            except discord.Forbidden:
+                pass
+        elif action == "kick":
+            action_name = "Kicked"
+            try:
+                await member.kick(reason=f"AutoMod triggered: {reason}")
+            except discord.Forbidden:
+                pass
+        elif action == "ban":
+            action_name = "Banned"
+            try:
+                await member.ban(reason=f"AutoMod triggered: {reason}")
+            except discord.Forbidden:
+                pass
+                
+        # 3. Log to Mod Log channel
+        if modlog_id:
+            modlog = guild.get_channel(int(modlog_id))
+            if modlog:
+                embed = discord.Embed(
+                    title="🛡️ AutoMod Rule Triggered",
+                    description=f"**User:** {member.mention} ({member.id})\n**Action Taken:** {action_name}\n**Reason:** {reason}",
+                    color=discord.Color.red() if action in ["ban", "kick", "mute"] else discord.Color.orange(),
+                    timestamp=discord.utils.utcnow()
+                )
+                try:
+                    await modlog.send(embed=embed)
+                except discord.Forbidden:
+                    pass
+                    
+        # 4. Log to DB Protection Logs
+        db_client.log_protection_event(
+            str(guild.id),
+            "automod",
+            str(self.bot.user.id),
+            "System AutoMod",
+            action_name,
+            f"Target: {member.id}. Reason: {reason}"
+        )
+
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message):
         if message.author.bot or not message.guild:
             return
 
-        settings = db_client.get_guild_settings(str(message.guild.id))
+        guild_id = str(message.guild.id)
+        user_id = str(message.author.id)
+        current_time = time.time()
+        
+        settings = db_client.get_guild_settings(guild_id)
+        
+        # 1. Evaluate custom AutoMod rules (Creator Studio)
+        automod_rules = settings.get("automod_rules", {})
+        if automod_rules:
+            if guild_id not in self.spam_cache:
+                self.spam_cache[guild_id] = {}
+            if user_id not in self.spam_cache[guild_id]:
+                self.spam_cache[guild_id][user_id] = []
+            if user_id not in self.custom_message_objects:
+                self.custom_message_objects[user_id] = []
+                
+            attachment_count = len(message.attachments)
+            mention_count = len(message.mentions) + len(message.role_mentions) + (1 if message.mention_everyone else 0)
+            
+            self.spam_cache[guild_id][user_id].append({
+                "timestamp": current_time,
+                "attachments": attachment_count,
+                "mentions": mention_count,
+                "channel_id": str(message.channel.id)
+            })
+            self.custom_message_objects[user_id].append(message)
+            
+            # Prune cache older than 60 seconds
+            self.spam_cache[guild_id][user_id] = [m for m in self.spam_cache[guild_id][user_id] if m["timestamp"] >= current_time - 60.0]
+            self.custom_message_objects[user_id] = [msg for msg in self.custom_message_objects[user_id] if msg.created_at.timestamp() >= current_time - 60.0]
+            
+            recent_activities = self.spam_cache[guild_id][user_id]
+            
+            # If rules is a list or dict, normalize to iterable
+            rules_list = automod_rules.values() if isinstance(automod_rules, dict) else automod_rules
+            for rule in rules_list:
+                if not isinstance(rule, dict):
+                    continue
+                trigger = rule.get("trigger")
+                count = int(rule.get("count", 0))
+                seconds = int(rule.get("seconds", 0))
+                action = rule.get("action", "mute")
+                
+                if not trigger or count <= 0 or seconds <= 0:
+                    continue
+                
+                recent_window = [m for m in recent_activities if m["timestamp"] >= current_time - seconds]
+                
+                triggered = False
+                reason = ""
+                
+                if trigger == "spam_messages":
+                    if len(recent_window) >= count:
+                        triggered = True
+                        reason = f"Spamming messages ({len(recent_window)} messages in {seconds}s)"
+                elif trigger == "spam_attachments":
+                    tot_attach = sum(m["attachments"] for m in recent_window)
+                    if tot_attach >= count:
+                        triggered = True
+                        reason = f"Spamming attachments/files ({tot_attach} attachments in {seconds}s)"
+                elif trigger == "spam_mentions":
+                    tot_mentions = sum(m["mentions"] for m in recent_window)
+                    if tot_mentions >= count:
+                        triggered = True
+                        reason = f"Spamming mentions/pings ({tot_mentions} mentions in {seconds}s)"
+                        
+                if triggered:
+                    await self.execute_automod_action(message.author, message.guild, message.channel, action, reason, user_id)
+                    self.spam_cache[guild_id][user_id] = []
+                    self.custom_message_objects[user_id] = []
+                    return
+
+        # 2. Standard K4 Defence checks
         if not settings.get("k4_defence_enabled", False):
             return
 
-        user_id = str(message.author.id)
-        current_time = time.time()
         content_hash = self.get_content_hash(message)
 
         # Initialize cache for user
@@ -88,7 +241,6 @@ class K4DefenceCog(commands.Cog, name="K4 Defence"):
         reason = ""
 
         # RULE 1: Cross-channel Exact Match Spam (3+ channels in 15 seconds)
-        # Find all channels where this specific hash was sent
         channels_with_hash = set(m[0] for m in recent_messages if m[2] == content_hash)
         if len(channels_with_hash) >= 3:
             triggered = True

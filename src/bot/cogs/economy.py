@@ -6,6 +6,7 @@ import asyncio
 import datetime
 from typing import Optional
 from src.db import client as db_client
+from src.bot.admin_utils import admin_only
 
 class BlackjackView(discord.ui.View):
     def __init__(self, ctx, cog, bet: int):
@@ -171,8 +172,11 @@ class EconomyCog(commands.Cog, name="Economy"):
         bank = data.get("bank", 0)
         net_worth = wallet + bank
         
+        settings = db_client.get_guild_settings(str(ctx.guild.id))
+        c_icon = settings.get("economy_currency_emoji", "🪙")
+        
         embed = discord.Embed(title=f"Balance - {user.display_name}", color=0xF1C40F)
-        embed.add_field(name="Wallet", value=f"🪙 {wallet:,}", inline=True)
+        embed.add_field(name="Wallet", value=f"{c_icon} {wallet:,}", inline=True)
         embed.add_field(name="Bank", value=f"🏦 {bank:,}", inline=True)
         embed.add_field(name="Net Worth", value=f"💎 {net_worth:,}", inline=False)
         embed.set_thumbnail(url=user.display_avatar.url)
@@ -268,11 +272,19 @@ class EconomyCog(commands.Cog, name="Economy"):
         if cooldown:
             return await self.send_cooldown_error(ctx, cooldown)
             
-        reward = random.randint(500, 1000)
+        settings = db_client.get_guild_settings(str(ctx.guild.id))
+        c_name = settings.get("economy_currency_name", "coins")
+        c_icon = settings.get("economy_currency_emoji", "🪙")
+        
+        try:
+            reward = int(settings.get("economy_daily", 100))
+        except (ValueError, TypeError):
+            reward = random.randint(500, 1000)
+            
         db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), reward, 0)
         self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_daily")
         
-        await ctx.send(embed=discord.Embed(description=f"📅 You claimed your daily reward of **{reward:,}** coins!", color=discord.Color.green()))
+        await ctx.send(embed=discord.Embed(description=f"📅 You claimed your daily reward of **{reward:,}** {c_icon} {c_name}!", color=discord.Color.green()))
 
     @commands.hybrid_command(name="weekly", description="Claim your weekly coins.")
     async def weekly(self, ctx: commands.Context):
@@ -304,12 +316,24 @@ class EconomyCog(commands.Cog, name="Economy"):
         if cooldown:
             return await self.send_cooldown_error(ctx, cooldown)
             
+        settings = db_client.get_guild_settings(str(ctx.guild.id))
+        c_name = settings.get("economy_currency_name", "coins")
+        
+        try:
+            min_work = int(settings.get("economy_work_min", 50))
+            max_work = int(settings.get("economy_work_max", 200))
+        except (ValueError, TypeError):
+            min_work, max_work = 50, 200
+            
+        if min_work > max_work:
+            min_work, max_work = max_work, min_work
+            
         jobs = ["developer", "designer", "teacher", "chef", "driver", "streamer", "mechanic", "doctor", "cashier"]
-        reward = random.randint(100, 400)
+        reward = random.randint(min_work, max(min_work, max_work))
         db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), reward, 0)
         self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_work")
         
-        await ctx.send(embed=discord.Embed(description=f"💼 You worked as a **{random.choice(jobs)}** and earned **{reward:,}** coins!", color=discord.Color.green()))
+        await ctx.send(embed=discord.Embed(description=f"💼 You worked as a **{random.choice(jobs)}** and earned **{reward:,}** {c_name}!", color=discord.Color.green()))
 
     @commands.hybrid_command(name="crime", description="Commit a crime for high rewards, but risk a fine.")
     async def crime(self, ctx: commands.Context):
@@ -792,25 +816,29 @@ class EconomyCog(commands.Cog, name="Economy"):
     # ── Admin Economy ────────────────────────────────────────────────────────
 
     @commands.hybrid_command(name="give", description="Give money to a user.")
-    @commands.has_permissions(administrator=True)
+    @admin_only()
     async def give(self, ctx: commands.Context, user: discord.Member, amount: int):
         db_client.add_economy_balance(str(ctx.guild.id), str(user.id), amount, 0)
-        await ctx.send(embed=discord.Embed(description=f"✅ Added **{amount:,}** coins to {user.mention}'s wallet.", color=discord.Color.green()))
+        settings = db_client.get_guild_settings(str(ctx.guild.id))
+        c_name = settings.get("economy_currency_name", "coins")
+        await ctx.send(embed=discord.Embed(description=f"✅ Added **{amount:,}** {c_name} to {user.mention}'s wallet.", color=discord.Color.green()))
 
     @commands.hybrid_command(name="remove", description="Remove money from a user.")
-    @commands.has_permissions(administrator=True)
+    @admin_only()
     async def remove(self, ctx: commands.Context, user: discord.Member, amount: int):
         db_client.add_economy_balance(str(ctx.guild.id), str(user.id), -amount, 0)
-        await ctx.send(embed=discord.Embed(description=f"✅ Removed **{amount:,}** coins from {user.mention}'s wallet.", color=discord.Color.green()))
+        settings = db_client.get_guild_settings(str(ctx.guild.id))
+        c_name = settings.get("economy_currency_name", "coins")
+        await ctx.send(embed=discord.Embed(description=f"✅ Removed **{amount:,}** {c_name} from {user.mention}'s wallet.", color=discord.Color.green()))
 
     @commands.hybrid_command(name="reset", description="Reset a user's economy data completely.")
-    @commands.has_permissions(administrator=True)
+    @admin_only()
     async def reset(self, ctx: commands.Context, user: discord.Member):
         db_client.delete_economy_user(str(ctx.guild.id), str(user.id))
         await ctx.send(embed=discord.Embed(description=f"⚠️ Reset economy data for {user.mention}.", color=discord.Color.orange()))
 
     @commands.hybrid_command(name="additem", description="Add an item to the shop.")
-    @commands.has_permissions(administrator=True)
+    @admin_only()
     async def additem(self, ctx: commands.Context, name: str, price: int, emoji: str = None, desc: str = None):
         data = {
             "guild_id": str(ctx.guild.id),
@@ -819,13 +847,15 @@ class EconomyCog(commands.Cog, name="Economy"):
             "emoji": emoji,
             "description": desc
         }
+        settings = db_client.get_guild_settings(str(ctx.guild.id))
+        c_name = settings.get("economy_currency_name", "coins")
         if db_client.add_shop_item(data):
-            await ctx.send(f"✅ Added **{name}** to the shop for **{price}** coins.")
+            await ctx.send(f"✅ Added **{name}** to the shop for **{price}** {c_name}.")
         else:
             await ctx.send("❌ Failed to add item.")
 
     @commands.hybrid_command(name="removeitem", description="Remove an item from the shop.")
-    @commands.has_permissions(administrator=True)
+    @admin_only()
     async def removeitem(self, ctx: commands.Context, name: str):
         if db_client.remove_shop_item(str(ctx.guild.id), name):
             await ctx.send(f"✅ Removed **{name}** from the shop.")

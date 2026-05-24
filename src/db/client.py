@@ -15,7 +15,7 @@ except Exception as e:
 _settings_cache: Dict[str, Dict[str, Any]] = {}
 _whitelist_cache: Dict[str, List[str]] = {}
 _command_configs_cache: Dict[str, List[Dict[str, Any]]] = {}
-_custom_commands_cache: Dict[str, Dict[str, str]] = {}
+_custom_commands_cache: Dict[str, Dict[str, Dict[str, Any]]] = {}
 
 def clear_guild_cache(guild_id: str):
     """Clear all cache entries for a specific guild ID."""
@@ -25,15 +25,23 @@ def clear_guild_cache(guild_id: str):
     _command_configs_cache.pop(guild_id, None)
     _custom_commands_cache.pop(guild_id, None)
 
-def get_custom_commands(guild_id: str) -> Dict[str, str]:
-    """Fetch custom commands dictionary mapping trigger -> response for a guild."""
+def get_custom_commands(guild_id: str) -> Dict[str, Dict[str, Any]]:
+    """Fetch custom commands dictionary mapping trigger -> details for a guild."""
     guild_id = str(guild_id)
     if guild_id in _custom_commands_cache:
         return _custom_commands_cache[guild_id]
         
     try:
-        response = supabase.table("custom_commands").select("trigger_word,response_text").eq("guild_id", guild_id).execute()
-        res = {row["trigger_word"]: row["response_text"] for row in response.data} if response.data else {}
+        response = supabase.table("custom_commands").select("trigger_word,response_text,permission_level,image_url,gif_url").eq("guild_id", guild_id).execute()
+        res = {}
+        if response.data:
+            for row in response.data:
+                res[row["trigger_word"]] = {
+                    "response_text": row.get("response_text", ""),
+                    "permission_level": row.get("permission_level", "Everyone"),
+                    "image_url": row.get("image_url"),
+                    "gif_url": row.get("gif_url")
+                }
         _custom_commands_cache[guild_id] = res
         return res
     except Exception as e:
@@ -49,14 +57,41 @@ def get_guild_settings(guild_id: str, guild_name: Optional[str] = None) -> Dict[
     if guild_id in _settings_cache:
         return _settings_cache[guild_id]
         
+    def unpack_settings(settings):
+        if not settings:
+            return settings
+        import json
+        warn_th = settings.get("warn_thresholds") or {}
+        if isinstance(warn_th, str):
+            try:
+                warn_th = json.loads(warn_th)
+            except:
+                warn_th = {}
+        if isinstance(warn_th, dict):
+            # Unpack economy
+            if "economy" in warn_th:
+                eco = warn_th["economy"]
+                if isinstance(eco, dict):
+                    for k, v in eco.items():
+                        settings[k] = v
+            # Unpack tempvc
+            if "tempvc" in warn_th:
+                tvc = warn_th["tempvc"]
+                if isinstance(tvc, dict):
+                    for k, v in tvc.items():
+                        settings[k] = v
+        settings["economy_enabled"] = True  # Compulsory
+        return settings
+
     try:
         response = supabase.table("guild_settings").select("*").eq("guild_id", guild_id).execute()
         if response.data:
             # If guild name is updated, refresh it
             if guild_name and response.data[0].get("guild_name") != guild_name:
                 update_guild_settings(guild_id, {"guild_name": guild_name})
-            _settings_cache[guild_id] = response.data[0]
-            return response.data[0]
+            settings = unpack_settings(response.data[0])
+            _settings_cache[guild_id] = settings
+            return settings
         
         # Create default settings
         default_settings = {
@@ -76,10 +111,12 @@ def get_guild_settings(guild_id: str, guild_name: Optional[str] = None) -> Dict[
         }
         insert_response = supabase.table("guild_settings").insert(default_settings).execute()
         if insert_response.data:
-            _settings_cache[guild_id] = insert_response.data[0]
-            return insert_response.data[0]
-        _settings_cache[guild_id] = default_settings
-        return default_settings
+            settings = unpack_settings(insert_response.data[0])
+            _settings_cache[guild_id] = settings
+            return settings
+        settings = unpack_settings(default_settings)
+        _settings_cache[guild_id] = settings
+        return settings
     except Exception as e:
         logger.error(f"Error fetching guild settings for {guild_id}: {e}")
         # Return sensible defaults if db call fails

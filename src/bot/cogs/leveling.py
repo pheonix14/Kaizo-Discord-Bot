@@ -24,6 +24,66 @@ class LevelingCog(commands.Cog, name="Leveling"):
         if message.author.bot or not message.guild:
             return
             
+        # Get guild settings
+        settings = await asyncio.to_thread(db_client.get_guild_settings, str(message.guild.id))
+        if not settings.get("leveling_enabled", False):
+            return
+            
+        # Get user's current level
+        user_data = await asyncio.to_thread(db_client.get_xp, str(message.guild.id), str(message.author.id))
+        user_level = user_data.get("level", 0)
+        
+        # Enforce Level-Based Action Permissions
+        level_permissions = settings.get("level_permissions", [])
+        if level_permissions:
+            # Parse message content types
+            has_image = len(message.attachments) > 0 or any(ext in message.content.lower() for ext in ['.png', '.jpg', '.jpeg', '.webp', '.tiff', '.bmp'])
+            has_gif = 'tenor.com' in message.content.lower() or 'giphy.com' in message.content.lower() or '.gif' in message.content.lower()
+            
+            # Find the active rule for user's level (highest rule level <= user's level)
+            sorted_rules = sorted(level_permissions, key=lambda x: x.get("level", 0))
+            active_rule = None
+            for r in sorted_rules:
+                if r.get("level", 0) <= user_level:
+                    active_rule = r
+                else:
+                    break
+            
+            if active_rule:
+                allow_text = active_rule.get("allow_text", True)
+                allow_image = active_rule.get("allow_image", True)
+                allow_gif = active_rule.get("allow_gif", True)
+                
+                violated = False
+                restriction_reason = ""
+                if has_gif and not allow_gif:
+                    violated = True
+                    restriction_reason = "send GIFs"
+                elif has_image and not allow_image:
+                    violated = True
+                    restriction_reason = "send Images/Embed links"
+                elif not has_gif and not has_image and not allow_text:
+                    violated = True
+                    restriction_reason = "send Messages"
+                
+                if violated:
+                    try:
+                        await message.delete()
+                        warn_embed = discord.Embed(
+                            title="🚫 Action Restricted",
+                            description=f"{message.author.mention}, your level is too low to {restriction_reason} in this server. (Current Level: **{user_level}**)",
+                            color=discord.Color.red()
+                        )
+                        warn_msg = await message.channel.send(embed=warn_embed)
+                        # Delete the warning message after a few seconds
+                        await asyncio.sleep(5)
+                        await warn_msg.delete()
+                    except discord.Forbidden:
+                        pass
+                    except Exception:
+                        pass
+                    return  # Exit, do not award XP
+            
         # Add random XP for messages
         xp_gain = random.randint(5, 15)
         
@@ -38,10 +98,22 @@ class LevelingCog(commands.Cog, name="Leveling"):
             reward = new_level * 500
             await asyncio.to_thread(db_client.add_economy_balance, str(message.guild.id), str(message.author.id), wallet_delta=reward)
             
+            role_awarded_text = ""
+            level_roles = settings.get("level_roles", {})
+            role_id_str = level_roles.get(str(new_level))
+            if role_id_str:
+                try:
+                    role = message.guild.get_role(int(role_id_str))
+                    if role:
+                        await message.author.add_roles(role, reason=f"Level up reward for Level {new_level}")
+                        role_awarded_text = f"\n\n🏆 You have been awarded the **{role.name}** role!"
+                except Exception as e:
+                    role_awarded_text = f"\n\n⚠️ Failed to award level role reward: Role not found or missing bot permissions."
+            
             try:
                 embed = discord.Embed(
                     title="🎉 Level Up!", 
-                    description=f"Congratulations {message.author.mention}, you reached level **{new_level}**!\n\nAs a reward, you received **{reward:,}** 🪙 coins!", 
+                    description=f"Congratulations {message.author.mention}, you reached level **{new_level}**!\n\nAs a reward, you received **{reward:,}** 🪙 coins!{role_awarded_text}", 
                     color=discord.Color.gold()
                 )
                 await message.channel.send(embed=embed)

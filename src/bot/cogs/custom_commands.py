@@ -70,7 +70,38 @@ class CustomCommandsCog(commands.Cog, name="Custom Commands"):
         try:
             custom_cmds = db_client.get_custom_commands(str(message.guild.id))
             if trigger in custom_cmds:
-                await message.channel.send(custom_cmds[trigger])
+                cmd_data = custom_cmds[trigger]
+                permission_level = cmd_data.get("permission_level", "Everyone")
+                
+                # Check permissions
+                if permission_level and permission_level != "Everyone":
+                    author_role_ids = [str(r.id) for r in message.author.roles]
+                    author_role_names = [r.name.lower() for r in message.author.roles]
+                    if (permission_level not in author_role_ids) and (permission_level.lower() not in author_role_names):
+                        return  # User does not have the required role
+                
+                response_text = cmd_data.get("response_text", "")
+                image_url = cmd_data.get("image_url")
+                gif_url = cmd_data.get("gif_url")
+                
+                # Build embeds for images and gifs
+                embeds = []
+                if image_url:
+                    img_emb = discord.Embed(color=0x0affe4)
+                    img_emb.set_image(url=image_url)
+                    embeds.append(img_emb)
+                if gif_url:
+                    gif_emb = discord.Embed(color=0x0affe4)
+                    gif_emb.set_image(url=gif_url)
+                    embeds.append(gif_emb)
+                
+                if embeds:
+                    if response_text:
+                        embeds[0].description = response_text
+                    await message.channel.send(embeds=embeds)
+                else:
+                    if response_text:
+                        await message.channel.send(response_text)
         except Exception:
             pass
 

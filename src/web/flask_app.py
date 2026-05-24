@@ -402,7 +402,9 @@ def server_dashboard(guild_id):
             pass
     session_data["guild_id"] = guild_id
     
-    resp = make_response(render_template("server.html", user=user, guild_id=guild_id))
+    from src.bot.admin_utils import is_developer
+    is_dev = is_developer(user.get("id"))
+    resp = make_response(render_template("server.html", user=user, guild_id=guild_id, is_developer=is_dev))
     resp.set_cookie("session", json.dumps(session_data), httponly=True, samesite="Lax")
     return resp
 
@@ -627,14 +629,182 @@ def api_guild_settings(guild_id):
         return jsonify({"error": "unauthorized"}), 401
     if request.method == "GET":
         resp = supabase.from_("guild_settings").select("*").eq("guild_id", guild_id).execute()
-        return jsonify(resp.data[0] if resp.data else {})
+        data = resp.data[0] if resp.data else {}
+        warn_th = data.get("warn_thresholds") or {}
+        if isinstance(warn_th, str):
+            try:
+                warn_th = json.loads(warn_th)
+            except:
+                warn_th = {}
+        if isinstance(warn_th, dict):
+            if "economy" in warn_th:
+                eco = warn_th["economy"]
+                if isinstance(eco, dict):
+                    for k, v in eco.items():
+                        data[k] = v
+            if "tempvc" in warn_th:
+                tvc = warn_th["tempvc"]
+                if isinstance(tvc, dict):
+                    for k, v in tvc.items():
+                        data[k] = v
+        # Map DB columns to UI expected IDs
+        data["tempvc_join_channel"] = data.get("temp_vc_lobby") or ""
+        data["tempvc_category"] = data.get("temp_vc_category") or ""
+        data["tempvc_name_template"] = data.get("temp_vc_name_format") or "{user}'s Channel"
+        data["tempvc_default_limit"] = data.get("temp_vc_limit") or 0
+        if "warn_thresholds" in data and isinstance(data["warn_thresholds"], dict) and "tempvc" in data["warn_thresholds"]:
+            data["tempvc_enabled"] = data["warn_thresholds"]["tempvc"].get("tempvc_enabled", data.get("temp_vc_lobby") is not None)
+        else:
+            data["tempvc_enabled"] = data.get("temp_vc_lobby") is not None
+
+        # Unpack log_events
+        log_events = data.get("log_events") or []
+        if isinstance(log_events, str):
+            log_events = log_events.strip("{}[]").split(",")
+            log_events = [e.strip().strip('"') for e in log_events if e.strip()]
+        data["log_msg_del"] = "message_delete" in log_events
+        data["log_msg_edit"] = "message_edit" in log_events
+        data["log_mem_join"] = ("member_join" in log_events or "member_leave" in log_events)
+        data["log_role_upd"] = "role_update" in log_events
+
+        data["economy_enabled"] = True  # Compulsory
+        return jsonify(data)
     elif request.method == "PATCH":
         payload = request.get_json()
         if not payload:
             return jsonify({"success": False, "error": "Missing JSON"}), 400
         
-        # Remove category if it exists since it's just for frontend tracking
         category = payload.pop("category", None)
+        
+        # Check developer permission for economy
+        eco_keys = ["economy_enabled", "economy_currency_name", "economy_currency_emoji", "economy_daily", "economy_work_min", "economy_work_max"]
+        is_eco_change = category in ["economy_general", "economy_shop_add"] or any(k in payload for k in eco_keys) or any(k.startswith("shop_") for k in payload)
+        
+        if is_eco_change:
+            token = request.cookies.get("discord_token")
+            try:
+                user_info = get_user_info(token)
+                user_id = user_info.get("id")
+            except Exception:
+                user_id = None
+            from src.bot.admin_utils import is_developer
+            if not is_developer(user_id):
+                return jsonify({"success": False, "error": "Only the developer can modify economy settings."}), 403
+
+        # Handle Shop Item Addition
+        if category == "economy_shop_add":
+            name = payload.get("shop_item_name")
+            price = payload.get("shop_item_price")
+            item_type = payload.get("shop_item_type", "item")
+            if not name:
+                return jsonify({"success": False, "error": "Item Name is required."}), 400
+            try:
+                price = int(price)
+            except (TypeError, ValueError):
+                return jsonify({"success": False, "error": "Price must be a valid number."}), 400
+            
+            # Find matching role in Discord if type is role
+            role_id = None
+            if item_type == "role":
+                from src.bot.engine import bot
+                import discord
+                guild = bot.get_guild(int(guild_id)) if bot else None
+                if guild:
+                    role = discord.utils.get(guild.roles, name=name)
+                    if role:
+                        role_id = str(role.id)
+            
+            db_payload = {
+                "guild_id": str(guild_id),
+                "name": name,
+                "price": price,
+                "type": item_type,
+                "role_id": role_id
+            }
+            from src.db import client as db_client
+            if db_client.add_shop_item(db_payload):
+                return jsonify({"success": True, "message": f"Added shop item '{name}' successfully!"}), 200
+            else:
+                return jsonify({"success": False, "error": "Failed to add shop item to database."}), 500
+
+        # Pack general economy settings into warn_thresholds JSONB
+        eco_data = {}
+        for key in eco_keys:
+            if key in payload:
+                eco_data[key] = payload.pop(key)
+        
+        if eco_data or category == "economy_general":
+            eco_data["economy_enabled"] = True  # Forced compulsory
+            existing_warn_th = {}
+            resp = supabase.from_("guild_settings").select("warn_thresholds").eq("guild_id", guild_id).execute()
+            if resp.data:
+                existing_warn_th = resp.data[0].get("warn_thresholds") or {}
+                if isinstance(existing_warn_th, str):
+                    try:
+                        existing_warn_th = json.loads(existing_warn_th)
+                    except:
+                        existing_warn_th = {}
+            if not isinstance(existing_warn_th, dict):
+                existing_warn_th = {}
+            existing_warn_th["economy"] = eco_data
+            payload["warn_thresholds"] = existing_warn_th
+
+        # Pack logging checkboxes into log_events list
+        if category == "logging" or any(k in payload for k in ["log_msg_del", "log_msg_edit", "log_mem_join", "log_role_upd"]):
+            log_events = []
+            if payload.pop("log_msg_del", False):
+                log_events.append("message_delete")
+            if payload.pop("log_msg_edit", False):
+                log_events.append("message_edit")
+            if payload.pop("log_mem_join", False):
+                log_events.append("member_join")
+                log_events.append("member_leave")
+            if payload.pop("log_role_upd", False):
+                log_events.append("role_update")
+            payload["log_events"] = log_events
+
+        # Map UI tempvc expected IDs to DB columns
+        if category == "tempvc_setup" or any(k in payload for k in ["tempvc_enabled", "tempvc_join_channel", "tempvc_category", "tempvc_name_template", "tempvc_default_limit"]):
+            enabled = payload.pop("tempvc_enabled", True)
+            lobby = payload.pop("tempvc_join_channel", None)
+            category_id = payload.pop("tempvc_category", None)
+            name_fmt = payload.pop("tempvc_name_template", None)
+            limit = payload.pop("tempvc_default_limit", None)
+            
+            if lobby is not None:
+                payload["temp_vc_lobby"] = lobby
+            if category_id is not None:
+                payload["temp_vc_category"] = category_id
+            if name_fmt is not None:
+                payload["temp_vc_name_format"] = name_fmt
+            if limit is not None:
+                try:
+                    payload["temp_vc_limit"] = int(limit)
+                except (ValueError, TypeError):
+                    payload["temp_vc_limit"] = 0
+            
+            # Save enabled state in warn_thresholds JSONB
+            existing_warn_th = {}
+            resp = supabase.from_("guild_settings").select("warn_thresholds").eq("guild_id", guild_id).execute()
+            if resp.data:
+                existing_warn_th = resp.data[0].get("warn_thresholds") or {}
+                if isinstance(existing_warn_th, str):
+                    try:
+                        existing_warn_th = json.loads(existing_warn_th)
+                    except:
+                        existing_warn_th = {}
+            if not isinstance(existing_warn_th, dict):
+                existing_warn_th = {}
+            existing_warn_th["tempvc"] = {"tempvc_enabled": enabled}
+            payload["warn_thresholds"] = existing_warn_th
+
+        # Safely deserialize JSON string fields from client to write properly to JSONB or array columns
+        for key in ["level_roles", "level_permissions", "automod_rules", "admin_roles", "mod_roles"]:
+            if key in payload and isinstance(payload[key], str):
+                try:
+                    payload[key] = json.loads(payload[key])
+                except Exception as e:
+                    logger.warning(f"Failed to deserialize {key}: {e}")
         
         resp = supabase.from_("guild_settings").select("*").eq("guild_id", guild_id).execute()
         try:
@@ -648,6 +818,35 @@ def api_guild_settings(guild_id):
             return jsonify({"success": True, "message": f"{category.capitalize() + ' s' if category else 'S'}ettings saved successfully!"}), 200
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/guild/<guild_id>/shop_items", methods=["GET"])
+def api_guild_shop_items(guild_id):
+    if not verify_session():
+        return jsonify({"error": "unauthorized"}), 401
+    from src.db import client as db_client
+    items = db_client.get_shop_items(guild_id)
+    return jsonify(items)
+
+@app.route("/api/guild/<guild_id>/shop_items/<path:item_name>", methods=["DELETE"])
+def api_guild_delete_shop_item(guild_id, item_name):
+    if not verify_session():
+        return jsonify({"success": False, "error": "unauthorized"}), 401
+    
+    token = request.cookies.get("discord_token")
+    try:
+        user_info = get_user_info(token)
+        user_id = user_info.get("id")
+    except Exception:
+        user_id = None
+    from src.bot.admin_utils import is_developer
+    if not is_developer(user_id):
+        return jsonify({"success": False, "error": "Only the developer can delete shop items."}), 403
+
+    from src.db import client as db_client
+    if db_client.remove_shop_item(guild_id, item_name):
+        return jsonify({"success": True, "message": f"Shop item '{item_name}' removed successfully!"}), 200
+    else:
+        return jsonify({"success": False, "error": f"Failed to remove shop item '{item_name}'."}), 500
 
 @app.route("/api/guild/<guild_id>/welcome/test", methods=["POST"])
 def api_guild_welcome_test(guild_id):
@@ -1089,20 +1288,188 @@ def api_guild_server_action(guild_id):
             
     elif action == "create_role":
         role_name = payload.get("role_name")
+        role_color = payload.get("role_color")
         if not role_name:
             return jsonify({"success": False, "error": "Missing role_name"}), 400
             
         async def do_create():
             guild = bot.get_guild(int(guild_id))
             if not guild: return None
-            role = await guild.create_role(name=role_name, reason="Created via Dashboard Bulk Permissions")
-            return {"id": str(role.id), "name": role.name, "color": str(role.color)}
+            
+            kwargs = {"name": role_name, "reason": "Created via Dashboard"}
+            if role_color:
+                try:
+                    color_hex = role_color.lstrip('#')
+                    kwargs["color"] = discord.Color(int(color_hex, 16))
+                except Exception as e:
+                    logger.warning(f"Failed to parse role color {role_color}: {e}")
+            
+            # NO DUPLICATE ROLES, OVERWRITES IT
+            role = discord.utils.get(guild.roles, name=role_name)
+            if role:
+                # Overwrite/edit the color of the existing role
+                if role_color:
+                    try:
+                        color_hex = role_color.lstrip('#')
+                        await role.edit(color=discord.Color(int(color_hex, 16)), reason="Overwritten/Updated via Dashboard")
+                    except Exception as e:
+                        logger.warning(f"Failed to overwrite role color {role_color}: {e}")
+            else:
+                # Create a new one
+                role = await guild.create_role(**kwargs)
+                
+            color_str = f"#{role.color.value:06x}" if role.color.value else "#99aab5"
+            return {"id": str(role.id), "name": role.name, "color": color_str}
             
         future = asyncio.run_coroutine_threadsafe(do_create(), bot.loop)
         try:
             role_data = future.result(timeout=10)
             if role_data:
                 return jsonify({"success": True, "role": role_data}), 200
+            else:
+                return jsonify({"success": False, "error": "Guild not found"}), 400
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    elif action == "create_mute_role":
+        async def do_create():
+            guild = bot.get_guild(int(guild_id))
+            if not guild: return None
+            
+            # Check if there is already a Muted / Flagged role
+            role = discord.utils.get(guild.roles, name="Muted")
+            if not role:
+                role = discord.utils.get(guild.roles, name="Flagged")
+            
+            if not role:
+                # Create a new Muted role
+                role = await guild.create_role(
+                    name="Muted",
+                    color=discord.Color.dark_grey(),
+                    reason="Mute/Flag role created via Dashboard"
+                )
+            
+            # Set overrides on all channels concurrently
+            tasks = []
+            for channel in guild.channels:
+                try:
+                    if isinstance(channel, discord.TextChannel):
+                        tasks.append(channel.set_permissions(role, send_messages=False, add_reactions=False, reason="Muted override set via Dashboard"))
+                    elif isinstance(channel, discord.VoiceChannel):
+                        tasks.append(channel.set_permissions(role, speak=False, reason="Muted override set via Dashboard"))
+                except Exception as e:
+                    logger.warning(f"Error preparing overrides for channel {channel.name}: {e}")
+                    
+            if tasks:
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+                for r, channel in zip(results, guild.channels):
+                    if isinstance(r, Exception):
+                        logger.warning(f"Error setting permission override on channel {channel.name}: {r}")
+            
+            # Save it to guild_settings
+            db_payload = {"mute_role": str(role.id)}
+            supabase.from_("guild_settings").update(db_payload).eq("guild_id", guild_id).execute()
+            from src.db.client import clear_guild_cache
+            clear_guild_cache(guild_id)
+            
+            color_str = f"#{role.color.value:06x}" if role.color.value else "#99aab5"
+            return {"id": str(role.id), "name": role.name, "color": color_str}
+            
+        future = asyncio.run_coroutine_threadsafe(do_create(), bot.loop)
+        try:
+            role_data = future.result(timeout=25)
+            if role_data:
+                return jsonify({"success": True, "role": role_data}), 200
+            else:
+                return jsonify({"success": False, "error": "Guild not found"}), 400
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    elif action == "create_mod_log_channel":
+        async def do_create():
+            guild = bot.get_guild(int(guild_id))
+            if not guild: return None
+            
+            # Check if there is already a mod-logs channel
+            channel = discord.utils.get(guild.text_channels, name="mod-logs")
+            if not channel:
+                # Create a new mod-logs channel hidden to @everyone
+                overwrites = {
+                    guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                    guild.me: discord.PermissionOverwrite(read_messages=True, send_messages=True, embed_links=True)
+                }
+                channel = await guild.create_text_channel(
+                    "mod-logs",
+                    overwrites=overwrites,
+                    reason="Mod logs channel created via Dashboard"
+                )
+            
+            # Save it to guild_settings
+            db_payload = {"mod_log_channel": str(channel.id)}
+            supabase.from_("guild_settings").update(db_payload).eq("guild_id", guild_id).execute()
+            from src.db.client import clear_guild_cache
+            clear_guild_cache(guild_id)
+            
+            return {"id": str(channel.id), "name": channel.name}
+            
+        future = asyncio.run_coroutine_threadsafe(do_create(), bot.loop)
+        try:
+            channel_data = future.result(timeout=15)
+            if channel_data:
+                return jsonify({"success": True, "channel": channel_data}), 200
+            else:
+                return jsonify({"success": False, "error": "Guild not found"}), 400
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    elif action == "create_temp_vc_lobby":
+        lobby_name = payload.get("lobby_name", "Join to Create")
+        is_private = payload.get("is_private", False)
+        
+        async def do_create():
+            guild = bot.get_guild(int(guild_id))
+            if not guild: return None
+            
+            # Find or create category named "Temporary Channels"
+            category = discord.utils.get(guild.categories, name="Temporary Channels")
+            if not category:
+                category = await guild.create_category("Temporary Channels")
+            
+            # Create lobby voice channel
+            overwrites = {}
+            if is_private:
+                overwrites[guild.default_role] = discord.PermissionOverwrite(connect=False)
+                # Ensure bot has connect permissions
+                overwrites[guild.me] = discord.PermissionOverwrite(connect=True, view_channel=True)
+                
+            channel = await guild.create_voice_channel(
+                lobby_name,
+                category=category,
+                overwrites=overwrites,
+                reason="Temporary VC lobby created via Dashboard"
+            )
+            
+            # Save it to guild_settings
+            db_payload = {
+                "temp_vc_lobby": str(channel.id),
+                "temp_vc_category": str(category.id)
+            }
+            supabase.from_("guild_settings").update(db_payload).eq("guild_id", guild_id).execute()
+            from src.db.client import clear_guild_cache
+            clear_guild_cache(guild_id)
+            
+            return {
+                "id": str(channel.id), 
+                "name": channel.name, 
+                "category_id": str(category.id),
+                "category_name": category.name
+            }
+            
+        future = asyncio.run_coroutine_threadsafe(do_create(), bot.loop)
+        try:
+            channel_data = future.result(timeout=20)
+            if channel_data:
+                return jsonify({"success": True, "channel": channel_data}), 200
             else:
                 return jsonify({"success": False, "error": "Guild not found"}), 400
         except Exception as e:
@@ -1493,21 +1860,56 @@ def api_guild_custom_commands(guild_id):
     payload = request.get_json()
     payload.pop("category", None)
     
+    trigger_word = str(payload.get("cc_trigger", "")).strip().lower()
+    if not trigger_word:
+        return jsonify({"success": False, "error": "Trigger word is required."}), 400
+        
     db_payload = {
         "guild_id": guild_id,
-        "trigger_word": payload.get("cc_trigger"),
-        "response_text": payload.get("cc_response"),
-        "permission_level": payload.get("cc_permission", "Everyone")
+        "trigger_word": trigger_word,
+        "response_text": payload.get("cc_response", ""),
+        "permission_level": payload.get("cc_permission", "Everyone"),
+        "image_url": payload.get("cc_image") or None,
+        "gif_url": payload.get("cc_gif") or None
     }
     
     try:
         # Update if exists, else insert
-        resp = supabase.from_("custom_commands").select("*").eq("guild_id", guild_id).eq("trigger_word", db_payload["trigger_word"]).execute()
+        resp = supabase.from_("custom_commands").select("*").eq("guild_id", guild_id).eq("trigger_word", trigger_word).execute()
         if resp.data:
-            supabase.from_("custom_commands").update(db_payload).eq("guild_id", guild_id).eq("trigger_word", db_payload["trigger_word"]).execute()
+            supabase.from_("custom_commands").update(db_payload).eq("guild_id", guild_id).eq("trigger_word", trigger_word).execute()
         else:
             supabase.from_("custom_commands").insert(db_payload).execute()
+            
+        from src.db import client as db_client
+        db_client.clear_guild_cache(guild_id)
+        
         return jsonify({"success": True, "message": "Custom command saved successfully!"}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/guild/<guild_id>/custom_commands", methods=["GET"])
+def api_guild_get_custom_commands(guild_id):
+    if not verify_session():
+        return jsonify({"success": False, "error": "unauthorized"}), 401
+    try:
+        resp = supabase.from_("custom_commands").select("*").eq("guild_id", guild_id).order("trigger_word").execute()
+        return jsonify({"success": True, "commands": resp.data or []}), 200
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500
+
+@app.route("/api/guild/<guild_id>/custom_commands/<path:trigger_word>", methods=["DELETE"])
+def api_guild_delete_custom_command(guild_id, trigger_word):
+    if not verify_session():
+        return jsonify({"success": False, "error": "unauthorized"}), 401
+    trigger_word = trigger_word.strip().lower()
+    try:
+        supabase.from_("custom_commands").delete().eq("guild_id", guild_id).eq("trigger_word", trigger_word).execute()
+        
+        from src.db import client as db_client
+        db_client.clear_guild_cache(guild_id)
+        
+        return jsonify({"success": True, "message": f"Custom command '{trigger_word}' deleted successfully!"}), 200
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -1528,24 +1930,83 @@ def api_guild_giveaways(guild_id):
         except:
             pass
 
+    import uuid
     import datetime
-    duration_hours = int(payload.get("gw_duration", 24))
-    end_time = (datetime.datetime.utcnow() + datetime.timedelta(hours=duration_hours)).isoformat()
+    import json
+    
+    db_id = str(uuid.uuid4())
+    
+    # Parse Timing
+    start_time = None
+    if payload.get("gw_use_dates"):
+        start_str = payload.get("gw_start_time")
+        end_str = payload.get("gw_end_time")
+        if start_str:
+            if "T" in start_str and not start_str.endswith("Z") and "+" not in start_str:
+                start_time = f"{start_str}:00Z"
+            else:
+                start_time = start_str
+        if end_str:
+            if "T" in end_str and not end_str.endswith("Z") and "+" not in end_str:
+                end_time = f"{end_str}:00Z"
+            else:
+                end_time = end_str
+        else:
+            duration_hours = int(payload.get("gw_duration", 24))
+            end_time = (datetime.datetime.utcnow() + datetime.timedelta(hours=duration_hours)).isoformat() + "Z"
+    else:
+        duration_hours = int(payload.get("gw_duration", 24))
+        end_time = (datetime.datetime.utcnow() + datetime.timedelta(hours=duration_hours)).isoformat() + "Z"
+
+    # Deserialize role list & embed settings
+    allowed_roles = []
+    allowed_roles_str = payload.get("gw_allowed_roles")
+    if allowed_roles_str:
+        try:
+            allowed_roles = json.loads(allowed_roles_str) if isinstance(allowed_roles_str, str) else allowed_roles_str
+        except:
+            allowed_roles = []
+            
+    embed_config = {}
+    embed_config_str = payload.get("gw_embed_config")
+    if embed_config_str:
+        try:
+            embed_config = json.loads(embed_config_str) if isinstance(embed_config_str, str) else embed_config_str
+        except:
+            embed_config = {}
+
+    if isinstance(embed_config, dict):
+        embed_config["participants"] = []
 
     db_payload = {
+        "id": db_id,
         "guild_id": guild_id,
         "channel_id": payload.get("gw_channel_id"),
-        "message_id": "pending", # Would be updated by the bot when it sends the message
+        "message_id": "pending",
         "host_id": user_id,
         "prize": payload.get("gw_prize"),
-        "winners_count": payload.get("gw_winners", 1),
-        "end_time": end_time
+        "winners_count": int(payload.get("gw_winners", 1)),
+        "start_time": start_time,
+        "end_time": end_time,
+        "restrict_roles_enabled": bool(payload.get("gw_restrict_roles_enabled", False)),
+        "allowed_roles": allowed_roles,
+        "roles_mode": payload.get("gw_roles_mode", "any"),
+        "roles_reverse": bool(payload.get("gw_roles_reverse", False)),
+        "animation_style": payload.get("gw_animation_style", "scrolling_wheel"),
+        "embed_config": embed_config
     }
     
     try:
         supabase.from_("giveaways").insert(db_payload).execute()
-        # In a real scenario, you would trigger the bot via websocket/redis to send the actual Discord message
-        return jsonify({"success": True, "message": "Giveaway created! (Note: Bot needs to post the message)"}), 200
+        
+        # Trigger the bot to schedule the giveaway
+        from src.bot.engine import bot
+        cog = bot.get_cog("Giveaways")
+        if cog:
+            import asyncio
+            asyncio.run_coroutine_threadsafe(cog.start_dashboard_giveaway(db_id), bot.loop)
+            
+        return jsonify({"success": True, "message": "Giveaway successfully created and scheduled! 🎉"}), 200
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 

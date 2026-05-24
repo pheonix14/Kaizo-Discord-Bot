@@ -595,6 +595,19 @@ function initDashboard() {
             const result = await response.json();
             if (response.ok && result.success) {
                 showToast(result.message || "Settings saved successfully!", "success");
+                if (category === 'custom_commands') {
+                    if (typeof loadCustomCommands === 'function') {
+                        loadCustomCommands();
+                    }
+                    const triggerInput = document.getElementById('cc_trigger');
+                    const responseInput = document.getElementById('cc_response');
+                    const imageInput = document.getElementById('cc_image');
+                    const gifInput = document.getElementById('cc_gif');
+                    if (triggerInput) triggerInput.value = '';
+                    if (responseInput) responseInput.value = '';
+                    if (imageInput) imageInput.value = '';
+                    if (gifInput) gifInput.value = '';
+                }
             } else {
                 showToast(result.error || "Failed to save settings", "error");
             }

@@ -917,9 +917,11 @@
       <div class="nav-category" data-target="music-settings">
         <svg class="svg-icon" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"></path><circle cx="6" cy="18" r="3"></circle><circle cx="18" cy="16" r="3"></circle></svg> Music
       </div>
+      {% if is_developer %}
       <div class="nav-category" data-target="economy-settings">
         <svg class="svg-icon" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg> Economy
       </div>
+      {% endif %}
       <div class="nav-category" data-target="stats-settings">
         <svg class="svg-icon" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg> Live Stats
       </div>
@@ -989,15 +991,27 @@
         <p style="color: var(--text-muted); margin-bottom: 20px;">Configure Automod rules, mute roles, and warn thresholds.</p>
         <div class="glass-panel">
           <form id="form-moderation" onsubmit="saveSettings(event, 'moderation')">
-            <div class="form-group">
-              <label class="form-label">Mute Role ID</label>
-              <input type="text" class="form-control" id="mod_mute_role" placeholder="e.g. 123456789012345678">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Moderation Log Channel ID</label>
-              <input type="text" class="form-control" id="mod_log_channel" placeholder="Channel to send kick/ban logs">
-            </div>
             
+            <div class="form-group" style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 15px;">
+              <div style="flex: 1;">
+                <label class="form-label">Mute / Flag Role</label>
+                <select class="form-select" id="mod_mute_role">
+                  <option value="">-- Select Mute Role --</option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-secondary" onclick="createMuteRole()" id="btn-create-mute-role" style="height: 42px;">No role? Create one now</button>
+            </div>
+
+            <div class="form-group" style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 20px;">
+              <div style="flex: 1;">
+                <label class="form-label">Moderation Log Channel</label>
+                <select class="form-select" id="mod_log_channel">
+                  <option value="">-- Select Log Channel --</option>
+                </select>
+              </div>
+              <button type="button" class="btn btn-secondary" onclick="createModLogChannel()" id="btn-create-mod-log-channel" style="height: 42px;">Create Channel</button>
+            </div>
+
             <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
             <h4>K4 Defence System</h4>
             <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 10px;">
@@ -1010,8 +1024,56 @@
               </label>
               <label class="form-label" style="margin: 0;">Enable K4 Defence</label>
             </div>
+            
             <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
+            <h4>AutoMod Creator Studio</h4>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 15px;">
+              Mix and match spam triggers to enforce automated actions. Click the plus button to add a rule.
+            </p>
 
+            <div class="glass-panel" style="background: rgba(0,0,0,0.2); padding: 15px; margin-bottom: 15px; border: 1px solid rgba(255,255,255,0.05);">
+              <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 2fr auto; gap: 10px; align-items: flex-end;">
+                <div>
+                  <label class="form-label" style="font-size: 0.8rem; margin-bottom: 5px;">Trigger Condition</label>
+                  <select class="form-select" id="studio_trigger">
+                    <option value="spam_messages">Spamming Messages</option>
+                    <option value="spam_attachments">Spamming Images/Videos/Files</option>
+                    <option value="spam_mentions">Spamming Mentions/Pings</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="form-label" style="font-size: 0.8rem; margin-bottom: 5px;">Limit</label>
+                  <input type="number" class="form-control" id="studio_count" placeholder="5" value="5" min="1">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size: 0.8rem; margin-bottom: 5px;">Secs</label>
+                  <input type="number" class="form-control" id="studio_seconds" placeholder="10" value="10" min="1">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size: 0.8rem; margin-bottom: 5px;">Enforced Action</label>
+                  <select class="form-select" id="studio_action">
+                    <option value="mute">Mute Permanently (Flag Role)</option>
+                    <option value="warn">Delete & Warn</option>
+                    <option value="kick">Kick Member</option>
+                    <option value="ban">Ban Member</option>
+                  </select>
+                </div>
+                <div>
+                  <button type="button" class="btn btn-primary" onclick="addAutomodRule()" style="height: 42px; width: 42px; display: flex; align-items: center; justify-content: center; padding: 0;">
+                    <svg style="width: 20px; height: 20px; fill: white;" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hidden input for Supabase settings sync -->
+            <input type="hidden" id="automod_rules" value="{}">
+
+            <div id="automod-rules-container" style="margin-top: 15px;">
+              <!-- Rules cards list -->
+            </div>
+
+            <hr style="border-color: rgba(255,255,255,0.1); margin: 20px 0;">
             <h4>Warn Thresholds</h4>
             <div style="display: flex; gap: 10px; margin-bottom: 20px;">
               <input type="number" class="form-control" id="warn_count_1" placeholder="Warns (e.g. 3)" value="3">
@@ -1287,9 +1349,10 @@
               </div>
             </div>
           </div>
+        </div>
 
-          <!-- WELCOME DIRECT MESSAGES CONFIGURATION -->
-          <div class="glass-panel" style="margin-bottom: 20px; border-top: 2.5px solid var(--accent-cyan); padding: 20px;">
+        <!-- WELCOME DIRECT MESSAGES CONFIGURATION -->
+        <div class="glass-panel" style="margin-bottom: 20px; border-top: 2.5px solid var(--accent-cyan); padding: 20px;">
             <h3 style="margin-bottom: 15px; color: white; display: flex; align-items: center; justify-content: space-between;">
               <span>Welcome Direct Messages (DMs)</span>
               <label class="switch" style="margin: 0;">
@@ -1742,29 +1805,147 @@
       <div id="leveling" class="tab-content">
         <h2>Leveling <em>system</em></h2>
         <p style="color: var(--text-muted); margin-bottom: 20px;">Configure XP multipliers, role rewards, and level-up announcements.</p>
-        <div class="glass-panel">
-          <form id="form-leveling" onsubmit="saveSettings(event, 'leveling')">
-            <label class="switch" style="margin-bottom: 20px;">
-              <input type="checkbox" id="leveling_enabled">
-              <span class="slider"></span>
-              <span style="margin-left: 50px; color: white;">Enable Leveling System</span>
-            </label>
-            <div class="form-group">
-              <label class="form-label">XP Rate Multiplier (e.g. 1.0, 1.5, 2.0)</label>
-              <input type="number" step="0.1" class="form-control" id="xp_rate" value="1.0">
+        
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 30px; align-items: start;" class="leveling-grid">
+          <!-- Left Panel: General Settings -->
+          <div class="glass-panel" style="margin-bottom: 0;">
+            <form id="form-leveling" onsubmit="saveSettings(event, 'leveling')">
+              <label class="switch" style="margin-bottom: 20px;">
+                <input type="checkbox" id="leveling_enabled">
+                <span class="slider"></span>
+                <span style="margin-left: 50px; color: white;">Enable Leveling System</span>
+              </label>
+              <div class="form-group">
+                <label class="form-label">XP Rate Multiplier (e.g. 1.0, 1.5, 2.0)</label>
+                <input type="number" step="0.1" class="form-control" id="xp_rate" value="1.0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Level-Up Announcement Channel ID (Leave blank to DM)</label>
+                <input type="text" class="form-control" id="level_up_channel">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Level-Up Message (use {user}, {level})</label>
+                <input type="text" class="form-control" id="level_up_message" value="GG {user}, you leveled up to {level}!">
+              </div>
+              
+              <!-- Hidden fields for saving JSON values directly to Supabase -->
+              <input type="hidden" id="level_roles" value="{}">
+              <input type="hidden" id="level_permissions" value="[]">
+              
+              <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Save Leveling Settings</button>
+            </form>
+          </div>
+          
+          <!-- Right Panel: Advanced Configurations -->
+          <div style="display: flex; flex-direction: column; gap: 20px;">
+            
+            <!-- Real-Time Role Creator -->
+            <div class="glass-panel" style="border-top: 2.5px solid var(--c2); padding: 20px; margin-bottom: 0;">
+              <h3 style="color: white; margin-bottom: 15px;">Real-Time Role Creator</h3>
+              <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">Create a Discord role with a custom color in real-time, instantly loading it into the dropdown selectors below.</p>
+              
+              <div class="form-group">
+                <label class="form-label">Role Name</label>
+                <input type="text" class="form-control" id="new_role_name" placeholder="e.g. Level 10 Champion">
+              </div>
+              
+              <div class="form-group">
+                <label class="form-label">Role Color</label>
+                <div style="display: flex; gap: 10px;">
+                  <input type="color" id="new_role_color" value="#0affe4" style="width: 50px; height: 38px; padding: 0; cursor: pointer; border: 1px solid rgba(255,255,255,0.1); background: none; border-radius: 4px;" oninput="document.getElementById('new_role_color_hex').value = this.value">
+                  <input type="text" class="form-control" id="new_role_color_hex" value="#0affe4" style="max-width: 120px;" placeholder="#0affe4" oninput="if(/^#[0-9A-F]{6}$/i.test(this.value)) document.getElementById('new_role_color').value = this.value">
+                </div>
+              </div>
+              
+              <button type="button" id="btn-create-leveling-role" class="btn btn-secondary" style="width: 100%; font-size: 10px; padding: 10px;" onclick="createRoleFromLeveling()">Create Discord Role</button>
             </div>
-            <div class="form-group">
-              <label class="form-label">Level-Up Announcement Channel ID (Leave blank to DM)</label>
-              <input type="text" class="form-control" id="level_up_channel">
+            
+            <!-- Level-Up Role Rewards -->
+            <div class="glass-panel" style="border-top: 2.5px solid var(--gold); padding: 20px; margin-bottom: 0;">
+              <h3 style="color: white; margin-bottom: 15px;">Level-Up Role Rewards</h3>
+              <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">Automatically assign roles to members when they reach specific levels.</p>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label">Target Level</label>
+                  <select class="form-select" id="level_reward_level" onchange="toggleCustomLevelInput(this, 'level_reward_level_custom_wrapper')">
+                    <option value="5">Level 5</option>
+                    <option value="10">Level 10</option>
+                    <option value="15">Level 15</option>
+                    <option value="20">Level 20</option>
+                    <option value="25">Level 25</option>
+                    <option value="30">Level 30</option>
+                    <option value="40">Level 40</option>
+                    <option value="50">Level 50</option>
+                    <option value="custom">Custom Level...</option>
+                  </select>
+                  <div id="level_reward_level_custom_wrapper" style="display: none; margin-top: 10px;">
+                    <input type="number" class="form-control" id="level_reward_level_custom" placeholder="e.g. 8" min="1">
+                  </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 0;">
+                  <label class="form-label">Reward Role</label>
+                  <select class="form-select" id="level_reward_role">
+                    <option value="">-- Choose Role --</option>
+                  </select>
+                </div>
+              </div>
+              
+              <button type="button" class="btn btn-secondary" style="width: 100%; font-size: 10px; padding: 10px; margin-bottom: 20px;" onclick="addLevelRoleReward()">+ Add Role Reward</button>
+              
+              <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: bold;">Active Level-Up Roles</div>
+              <div id="level_roles_list" style="max-height: 200px; overflow-y: auto;">
+                <!-- Dynamically populated -->
+              </div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Level-Up Message (use {user}, {level})</label>
-              <input type="text" class="form-control" id="level_up_message" value="GG {user}, you leveled up to {level}!">
+            
+            <!-- Level-Based Action Permissions -->
+            <div class="glass-panel" style="border-top: 2.5px solid var(--c1); padding: 20px; margin-bottom: 0;">
+              <h3 style="color: white; margin-bottom: 15px;">Level Action Restrictions</h3>
+              <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 15px;">Limit channel permissions based on leveling rank. Restrict media/GIFs/messages until a certain level threshold is achieved.</p>
+              
+              <div class="form-group">
+                <label class="form-label">Target Level Threshold</label>
+                <select class="form-select" id="level_perm_level" onchange="toggleCustomLevelInput(this, 'level_perm_level_custom_wrapper')">
+                  <option value="5">Level 5+</option>
+                  <option value="10">Level 10+</option>
+                  <option value="15">Level 15+</option>
+                  <option value="20">Level 20+</option>
+                  <option value="25">Level 25+</option>
+                  <option value="30">Level 30+</option>
+                  <option value="50">Level 50+</option>
+                  <option value="custom">Custom Level...</option>
+                </select>
+                <div id="level_perm_level_custom_wrapper" style="display: none; margin-top: 10px;">
+                  <input type="number" class="form-control" id="level_perm_level_custom" placeholder="e.g. 12" min="1">
+                </div>
+              </div>
+              
+              <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.02);">
+                <label style="display: flex; align-items: center; cursor: pointer; color: white; margin: 0;">
+                  <input type="checkbox" id="level_perm_allow_text" checked style="width:16px; height:16px; margin-right:10px;"> Allow Text Messages
+                </label>
+                <label style="display: flex; align-items: center; cursor: pointer; color: white; margin: 0;">
+                  <input type="checkbox" id="level_perm_allow_image" checked style="width:16px; height:16px; margin-right:10px;"> Allow Images & Links
+                </label>
+                <label style="display: flex; align-items: center; cursor: pointer; color: white; margin: 0;">
+                  <input type="checkbox" id="level_perm_allow_gif" checked style="width:16px; height:16px; margin-right:10px;"> Allow GIFs
+                </label>
+              </div>
+              
+              <button type="button" class="btn btn-secondary" style="width: 100%; font-size: 10px; padding: 10px; margin-bottom: 20px;" onclick="addLevelPermissionRule()">+ Add Permission Override</button>
+              
+              <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: bold;">Active Level Restrictions</div>
+              <div id="level_permissions_list" style="max-height: 200px; overflow-y: auto;">
+                <!-- Dynamically populated -->
+              </div>
             </div>
-            <button type="submit" class="btn btn-primary">Save Leveling Settings</button>
-          </form>
+            
+          </div>
         </div>
       </div>
+
 
       <!-- 6. Logging -->
       <div id="logging" class="tab-content">
@@ -1779,7 +1960,9 @@
             </label>
             <div class="form-group">
               <label class="form-label">Master Log Channel ID</label>
-              <input type="text" class="form-control" id="log_channel">
+              <select class="form-select" id="log_channel">
+                <option value="">-- Choose Log Channel --</option>
+              </select>
             </div>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
               <label><input type="checkbox" id="log_msg_del" checked> Message Deletes</label>
@@ -1804,14 +1987,29 @@
               <span style="margin-left: 50px; color: white;">Enable Ticket System</span>
             </label>
             <div class="form-group">
-              <label class="form-label">Ticket Category ID</label>
-              <input type="text" class="form-control" id="ticket_category">
+              <label class="form-label">Ticket Category</label>
+              <select class="form-select" id="ticket_category">
+                <option value="">-- Choose Category --</option>
+              </select>
             </div>
             <div class="form-group">
-              <label class="form-label">Support Role ID</label>
-              <input type="text" class="form-control" id="ticket_support_role">
+              <label class="form-label">Support Role</label>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <select class="form-select" id="ticket_support_role">
+                  <option value="">-- Choose Support Role --</option>
+                </select>
+                <div>
+                  <button type="button" class="btn btn-secondary" style="padding: 8px 16px; font-size: 10px; border-color: var(--c2) !important; color: var(--c2) !important;" onclick="createRoleForTicketsPrompt()">No role? Create one now</button>
+                </div>
+              </div>
             </div>
-            <button type="submit" class="btn btn-primary">Save Ticket Settings</button>
+            <div class="form-group">
+              <label class="form-label">Ticket Log Channel</label>
+              <select class="form-select" id="ticket_log_channel">
+                <option value="">-- Choose Log Channel --</option>
+              </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Save Ticket Settings</button>
           </form>
         </div>
       </div>
@@ -1968,22 +2166,35 @@
           <form id="form-custom-cmd" onsubmit="saveSettings(event, 'custom_commands')">
             <div class="form-group">
               <label class="form-label">Trigger Word</label>
-              <input type="text" class="form-control" id="cc_trigger" placeholder="e.g. rules">
+              <input type="text" class="form-control" id="cc_trigger" placeholder="e.g. rules" required>
             </div>
             <div class="form-group">
               <label class="form-label">Response Text</label>
               <textarea class="form-control" id="cc_response" rows="3" placeholder="What the bot should say..."></textarea>
             </div>
             <div class="form-group">
-              <label class="form-label">Permission Level</label>
+              <label class="form-label">Permission Level (Required Role)</label>
               <select class="form-select" id="cc_permission">
                 <option value="Everyone">Everyone</option>
-                <option value="Mod">Moderator</option>
-                <option value="Admin">Admin</option>
               </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Image URL</label>
+              <input type="url" class="form-control" id="cc_image" placeholder="https://example.com/image.png (optional)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">GIF URL</label>
+              <input type="url" class="form-control" id="cc_gif" placeholder="https://example.com/animation.gif (optional)">
             </div>
             <button type="submit" class="btn btn-primary">Add Custom Command</button>
           </form>
+        </div>
+
+        <div class="glass-panel" style="margin-top: 30px;">
+          <h3 style="margin-bottom: 20px; font-weight: bold; color: var(--c2);">Saved <em>commands</em></h3>
+          <div id="custom_commands_list">
+            <p style="color: var(--text-muted); font-style: italic;">No custom commands loaded.</p>
+          </div>
         </div>
       </div>
 
@@ -1991,54 +2202,247 @@
       <div id="giveaways" class="tab-content">
         <h2>Giveaway <em>manager</em></h2>
         <p style="color: var(--text-muted); margin-bottom: 20px;">Manage active giveaways, reroll winners, or create new ones.</p>
-        <div class="glass-panel">
-          <form id="form-giveaways" onsubmit="saveSettings(event, 'giveaways')">
-            <div class="form-group">
-              <label class="form-label">Giveaway Channel ID</label>
-              <input type="text" class="form-control" id="gw_channel_id" placeholder="Where should the giveaway run?">
-            </div>
-            <div class="form-group">
-              <label class="form-label">Prize</label>
-              <input type="text" class="form-control" id="gw_prize" placeholder="e.g. Nitro Classic">
-            </div>
-            <div style="display: flex; gap: 20px;">
-              <div class="form-group" style="flex: 1;">
-                <label class="form-label">Winners Count</label>
-                <input type="number" class="form-control" id="gw_winners" value="1" min="1">
+
+        <div style="display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start;">
+          <!-- Left Column: Form Settings -->
+          <div class="glass-panel" style="flex: 1.2; min-width: 320px;">
+            <form id="form-giveaways" onsubmit="saveSettings(event, 'giveaways')">
+              <div class="form-group">
+                <label class="form-label">Giveaway Channel</label>
+                <select class="form-select" id="gw_channel_id" required>
+                  <option value="">-- Select Channel --</option>
+                </select>
               </div>
-              <div class="form-group" style="flex: 1;">
+              <div class="form-group">
+                <label class="form-label">Prize</label>
+                <input type="text" class="form-control" id="gw_prize" placeholder="e.g. Nitro Classic" required>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Winners Count</label>
+                <input type="number" class="form-control" id="gw_winners" value="1" min="1" required>
+              </div>
+
+              <!-- Timing Options -->
+              <div class="form-group">
+                <label class="switch" style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 10px;">
+                  <input type="checkbox" id="gw_use_dates" onchange="toggleGiveawayTimingStyle()">
+                  <span class="slider"></span>
+                  <span style="margin-left: 55px; font-weight: bold;">Specific Start/End Dates</span>
+                </label>
+              </div>
+
+              <div class="form-group" id="gw_duration_panel">
                 <label class="form-label">Duration (hours)</label>
                 <input type="number" class="form-control" id="gw_duration" value="24" min="1">
               </div>
+
+              <div id="gw_dates_panel" style="display: none; gap: 15px; margin-bottom: 15px;">
+                <div class="form-group" style="flex: 1;">
+                  <label class="form-label">Start Time</label>
+                  <input type="datetime-local" class="form-control" id="gw_start_time">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                  <label class="form-label">End Time</label>
+                  <input type="datetime-local" class="form-control" id="gw_end_time">
+                </div>
+              </div>
+
+              <!-- Role Restrictions -->
+              <div class="form-group">
+                <label class="switch" style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 10px;">
+                  <input type="checkbox" id="gw_restrict_roles_enabled" onchange="toggleGiveawayRoleRestrictions()">
+                  <span class="slider"></span>
+                  <span style="margin-left: 55px; font-weight: bold;">Restrict Entries by Roles</span>
+                </label>
+              </div>
+
+              <div id="gw_role_restrictions_panel" class="config-sub-panel" style="display: none; background: rgba(0,0,0,0.15); padding: 15px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.05); margin-bottom: 15px;">
+                <div class="form-group">
+                  <label class="form-label">Allowed Roles</label>
+                  <div style="display: flex; gap: 10px;">
+                    <select class="form-select" id="gw_roles_select" style="flex: 1;">
+                      <option value="">-- Select Role --</option>
+                    </select>
+                    <button type="button" class="btn btn-secondary" onclick="addGiveawayRole()" style="padding: 0 15px; font-weight: bold; font-size: 1.2rem;">+</button>
+                  </div>
+                  <div id="gw_allowed_roles_list" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;">
+                    <!-- Added roles rendered here as badges -->
+                  </div>
+                  <input type="hidden" id="gw_allowed_roles" value="[]">
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Matching Criteria Mode</label>
+                  <select class="form-select" id="gw_roles_mode">
+                    <option value="any">User has ANY of the selected roles (Default)</option>
+                    <option value="all">User has ALL of the selected roles (Multiple)</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label class="switch" style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+                    <input type="checkbox" id="gw_roles_reverse">
+                    <span class="slider"></span>
+                    <span style="margin-left: 55px; font-weight: bold;">Reverse Filter (Blacklist / Disqualify selected roles)</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Selection Animation Selector -->
+              <div class="form-group">
+                <label class="form-label">Winner Selection Animation Style</label>
+                <select class="form-select" id="gw_animation_style" onchange="updateGiveawayAnimationPreview()">
+                  <option value="scrolling_wheel">Scrolling Wheel</option>
+                  <option value="confetti">Confetti Burst</option>
+                  <option value="slot_machine">Slot Machine</option>
+                  <option value="radar_ping">Radar Ping</option>
+                </select>
+              </div>
+
+              <!-- Embed Customizer Enable -->
+              <div class="form-group">
+                <label class="switch" style="display: flex; align-items: center; gap: 10px; cursor: pointer; margin-bottom: 10px;">
+                  <input type="checkbox" id="gw_use_custom_embed" onchange="toggleGiveawayEmbedEditor()">
+                  <span class="slider"></span>
+                  <span style="margin-left: 55px; font-weight: bold;">Customize Giveaway Embed Message</span>
+                </label>
+              </div>
+
+              <input type="hidden" id="gw_embed_config" value="{}">
+              <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 15px;">Create Giveaway</button>
+            </form>
+          </div>
+
+          <!-- Right Column: Previews & Embed Maker -->
+          <div style="flex: 1; min-width: 320px; display: flex; flex-direction: column; gap: 20px;">
+            
+            <!-- Animation Live Preview Box -->
+            <div class="glass-panel" style="padding: 15px;">
+              <h3 style="margin-bottom: 10px; font-size: 1rem; font-weight: bold; color: var(--c2);">Selection Animation Preview</h3>
+              <div id="gw_animation_preview_canvas" style="background: rgba(0,0,0,0.3); border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px; min-height: 140px; display: flex; justify-content: center; align-items: center; text-align: center; padding: 15px; position: relative; overflow: hidden;">
+                <div style="color: var(--text-muted); font-style: italic;">Select an animation style and click below to test preview</div>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" onclick="triggerGiveawayAnimationDemo()" style="margin-top: 10px; width: 100%;">Test Draw Animation</button>
             </div>
-            <button type="submit" class="btn btn-primary">Create Giveaway</button>
-          </form>
+
+            <!-- Embed Maker Panel -->
+            <div class="glass-panel" id="gw_embed_maker_panel" style="display: none; padding: 15px;">
+              <h3 style="margin-bottom: 15px; font-size: 1.1rem; font-weight: bold; color: var(--c2);">Giveaway Embed Builder</h3>
+              
+              <div class="form-group">
+                <label class="form-label">Embed Title</label>
+                <input type="text" class="form-control" id="gw_embed_title" placeholder="e.g. 🎉 SPECIAL GIVEAWAY 🎉" oninput="updateGiveawayEmbedPreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Embed Description</label>
+                <textarea class="form-control" id="gw_embed_desc" rows="3" placeholder="React with 🎉 to enter!" oninput="updateGiveawayEmbedPreview()"></textarea>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Embed Accent Color</label>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                  <input type="color" id="gw_embed_color" value="#9b59b6" style="width: 45px; height: 38px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; background: none; cursor: pointer; padding: 0;" oninput="syncGiveawayEmbedColorPicker(this.value)">
+                  <input type="text" class="form-control" id="gw_embed_color_hex" value="#9b59b6" placeholder="#9b59b6" style="max-width: 120px;" oninput="syncGiveawayEmbedColorHex(this.value)">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Thumbnail URL</label>
+                <input type="url" class="form-control" id="gw_embed_thumbnail" placeholder="https://example.com/thumbnail.png" oninput="updateGiveawayEmbedPreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Large Image URL</label>
+                <input type="url" class="form-control" id="gw_embed_image" placeholder="https://example.com/banner.png" oninput="updateGiveawayEmbedPreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Footer Text</label>
+                <input type="text" class="form-control" id="gw_embed_footer" placeholder="e.g. Good luck everyone!" oninput="updateGiveawayEmbedPreview()">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Footer Icon URL</label>
+                <input type="url" class="form-control" id="gw_embed_footer_icon" placeholder="https://example.com/footer.png" oninput="updateGiveawayEmbedPreview()">
+              </div>
+            </div>
+
+            <!-- Discord Embed Message Preview -->
+            <div class="glass-panel" id="gw_embed_preview_card" style="display: none; padding: 15px;">
+              <h3 style="margin-bottom: 10px; font-size: 1rem; font-weight: bold; color: var(--c2);">Discord Embed Preview</h3>
+              <div class="discord-embed" id="gw_embed_preview_box" style="border-left: 4px solid #9b59b6; background: #2f3136; border-radius: 4px; padding: 12px 16px; position: relative;">
+                <div style="font-weight: bold; font-size: 1rem; color: #fff; margin-bottom: 4px;" id="gw_preview_title">🎉 GIVEAWAY 🎉</div>
+                <div style="font-size: 0.9rem; color: #dcddde; white-space: pre-wrap;" id="gw_preview_desc">React with 🎉 to enter!</div>
+                <img id="gw_preview_image" src="" style="max-width: 100%; border-radius: 4px; margin-top: 8px; display: none;">
+                <div id="gw_preview_footer" style="display: none; align-items: center; gap: 8px; margin-top: 8px; color: #949ba4; font-size: 0.75rem;">
+                  <img id="gw_preview_footer_icon" src="" style="width: 20px; height: 20px; border-radius: 50%; display: none;">
+                  <span id="gw_preview_footer_text"></span>
+                </div>
+              </div>
+            </div>
+
+          </div>
         </div>
       </div>
 
       <!-- 11. Bot Settings -->
       <div id="settings" class="tab-content">
         <h2>Bot <em>settings</em></h2>
-        <p style="color: var(--text-muted); margin-bottom: 20px;">Change bot prefix, language, embed colors, and configure admin roles.</p>
+        <p style="color: var(--text-muted); margin-bottom: 20px;">Change bot prefix, language, embed colors, and configure admin/mod roles.</p>
         <div class="glass-panel">
           <form id="form-bot-settings" onsubmit="saveSettings(event, 'bot_settings')">
             <div class="form-group">
-              <label class="form-label">Command Prefix</label>
-              <input type="text" class="form-control" id="bot_prefix" value="k!">
+              <label class="form-label">Command Prefixes</label>
+              <div style="display: flex; gap: 10px;">
+                <input type="text" class="form-control" id="new_prefix_input" placeholder="e.g. k!" style="flex: 1;">
+                <button type="button" class="btn btn-secondary" onclick="addBotPrefix()" style="padding: 0 15px; font-weight: bold; font-size: 1.2rem;">+</button>
+              </div>
+              <div id="bot_prefixes_list" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+              <input type="hidden" id="prefix" value="k!, !">
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px; font-style: italic;">
+                Note: Mentioning the bot (e.g. <code>@Kaizer help</code>) is always supported as a default prefix fallback.
+              </p>
             </div>
+            
             <div class="form-group">
               <label class="form-label">Language / Locale</label>
-              <select class="form-select" id="bot_language">
+              <select class="form-select" id="language">
                 <option value="en">English (US)</option>
                 <option value="es">Español</option>
                 <option value="fr">Français</option>
               </select>
             </div>
+            
             <div class="form-group">
               <label class="form-label">Default Embed Color (Hex)</label>
-              <input type="text" class="form-control" id="bot_embed_color" value="#0affe4">
+              <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="color" id="bot_embed_color_picker" value="#0affe4" style="width: 45px; height: 38px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; background: none; cursor: pointer; padding: 0;" oninput="syncBotEmbedColorPicker(this.value)">
+                <input type="text" class="form-control" id="embed_color" value="#0affe4" placeholder="#0affe4" style="max-width: 120px;" oninput="syncBotEmbedColorHex(this.value)">
+              </div>
             </div>
-            <button type="submit" class="btn btn-primary">Save Bot Settings</button>
+
+            <!-- Admin Roles -->
+            <div class="form-group">
+              <label class="form-label">Admin Roles (Full Access)</label>
+              <div style="display: flex; gap: 10px;">
+                <select class="form-select" id="admin_roles_select" style="flex: 1;">
+                  <option value="">-- Select Role --</option>
+                </select>
+                <button type="button" class="btn btn-secondary" onclick="addAdminRole()" style="padding: 0 15px; font-weight: bold; font-size: 1.2rem;">+</button>
+              </div>
+              <div id="admin_roles_list" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+              <input type="hidden" id="admin_roles" value="[]">
+            </div>
+
+            <!-- Mod Roles -->
+            <div class="form-group">
+              <label class="form-label">Mod Roles (Moderation Access)</label>
+              <div style="display: flex; gap: 10px;">
+                <select class="form-select" id="mod_roles_select" style="flex: 1;">
+                  <option value="">-- Select Role --</option>
+                </select>
+                <button type="button" class="btn btn-secondary" onclick="addModRole()" style="padding: 0 15px; font-weight: bold; font-size: 1.2rem;">+</button>
+              </div>
+              <div id="mod_roles_list" style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+              <input type="hidden" id="mod_roles" value="[]">
+            </div>
+            
+            <button type="submit" class="btn btn-primary" style="margin-top: 15px; width: 100%;">Save Bot Settings</button>
           </form>
         </div>
       </div>
@@ -2149,13 +2553,14 @@
       </div>
 
       <!-- ECONOMY SETTINGS -->
+      {% if is_developer %}
       <div id="economy-settings" class="tab-content">
         <h2>Economy <em>settings</em></h2>
         <p style="color:var(--text-muted); margin-bottom:20px;">Configure the server economy: currency, rewards, and shop.</p>
         <div class="glass-panel" style="margin-bottom:20px;">
           <h3 style="margin-bottom:10px;">General Economy</h3>
           <form onsubmit="saveSettings(event,'economy_general')">
-            <div style="display:flex; align-items:center; gap:15px; margin-bottom:15px;">
+            <div style="display:none; align-items:center; gap:15px; margin-bottom:15px;">
               <label class="switch" style="margin:0;"><input type="checkbox" id="economy_enabled" checked><span class="slider"></span></label>
               <span style="color:white;">Enable Economy System</span>
             </div>
@@ -2166,7 +2571,7 @@
             <button type="submit" class="btn btn-primary">Save Economy</button>
           </form>
         </div>
-        <div class="glass-panel">
+        <div class="glass-panel" style="margin-bottom:20px;">
           <h3 style="margin-bottom:10px;">Shop Manager</h3>
           <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:15px;">Add purchasable items. Use <code>/admineco additem</code> or the form below.</p>
           <form onsubmit="saveSettings(event,'economy_shop_add')">
@@ -2178,7 +2583,14 @@
             <button type="submit" class="btn btn-primary">Add Shop Item</button>
           </form>
         </div>
+        <div class="glass-panel">
+          <h3 style="margin-bottom:15px;">Current Shop Items</h3>
+          <div id="shop-items-list" style="display:flex; flex-direction:column; gap:10px;">
+            <div style="color:var(--text-muted); font-style:italic;">Loading shop items...</div>
+          </div>
+        </div>
       </div>
+      {% endif %}
 
       <!-- LIVE STATS SETTINGS -->
       <div id="stats-settings" class="tab-content">
@@ -3565,86 +3977,106 @@
     }
 
     function updateLiveEmbedPreview() {
-      const authorName = document.getElementById('embed_author_name').value;
-      const authorIcon = document.getElementById('embed_author_icon').value;
-      const title = document.getElementById('embed_title').value;
-      const desc = document.getElementById('embed_description').value;
-      const color = document.getElementById('embed_color_hex').value || '#0affe4';
-      const thumbnail = document.getElementById('embed_thumbnail_url').value;
-      const image = document.getElementById('embed_image_url').value;
-      const footerText = document.getElementById('embed_footer_text').value;
-      const footerIcon = document.getElementById('embed_footer_icon').value;
+      const authorName = document.getElementById('embed_author_name')?.value || '';
+      const authorIcon = document.getElementById('embed_author_icon')?.value || '';
+      const title = document.getElementById('embed_title')?.value || '';
+      const desc = document.getElementById('embed_description')?.value || '';
+      const color = document.getElementById('embed_color_hex')?.value || '#0affe4';
+      const thumbnail = document.getElementById('embed_thumbnail_url')?.value || '';
+      const image = document.getElementById('embed_image_url')?.value || '';
+      const footerText = document.getElementById('embed_footer_text')?.value || '';
+      const footerIcon = document.getElementById('embed_footer_icon')?.value || '';
       
       // Author
       const previewAuthor = document.getElementById('preview_embed_author');
       const previewAuthorIcon = document.getElementById('preview_embed_author_icon');
       const previewAuthorName = document.getElementById('preview_embed_author_name');
-      if (authorName) {
-         previewAuthor.style.display = 'flex';
-         previewAuthorName.innerText = authorName;
-         if (authorIcon) {
-            previewAuthorIcon.src = authorIcon;
-            previewAuthorIcon.style.display = 'block';
+      if (previewAuthor) {
+         if (authorName) {
+            previewAuthor.style.display = 'flex';
+            if (previewAuthorName) previewAuthorName.innerText = authorName;
+            if (previewAuthorIcon) {
+               if (authorIcon) {
+                  previewAuthorIcon.src = authorIcon;
+                  previewAuthorIcon.style.display = 'block';
+               } else {
+                  previewAuthorIcon.style.display = 'none';
+               }
+            }
          } else {
-            previewAuthorIcon.style.display = 'none';
+            previewAuthor.style.display = 'none';
          }
-      } else {
-         previewAuthor.style.display = 'none';
       }
       
       // Title
       const previewTitle = document.getElementById('preview_embed_title');
-      if (title) {
-         previewTitle.style.display = 'block';
-         previewTitle.innerText = title;
-      } else {
-         previewTitle.style.display = 'none';
+      if (previewTitle) {
+         if (title) {
+            previewTitle.style.display = 'block';
+            previewTitle.innerText = title;
+         } else {
+            previewTitle.style.display = 'none';
+         }
       }
       
       // Description
-      document.getElementById('preview_embed_description').innerText = desc || 'Click the buttons below to assign roles to yourself!';
+      const previewDesc = document.getElementById('preview_embed_description');
+      if (previewDesc) {
+         previewDesc.innerText = desc || 'Click the buttons below to assign roles to yourself!';
+      }
       
       // Color
-      document.getElementById('preview_embed_wrapper').style.borderLeftColor = color;
+      const previewWrapper = document.getElementById('preview_embed_wrapper');
+      if (previewWrapper) {
+         previewWrapper.style.borderLeftColor = color;
+      }
       
       // Thumbnail
       const previewThumbnail = document.getElementById('preview_embed_thumbnail');
-      if (thumbnail) {
-         previewThumbnail.src = thumbnail;
-         previewThumbnail.style.display = 'block';
-      } else {
-         previewThumbnail.style.display = 'none';
+      if (previewThumbnail) {
+         if (thumbnail) {
+            previewThumbnail.src = thumbnail;
+            previewThumbnail.style.display = 'block';
+         } else {
+            previewThumbnail.style.display = 'none';
+         }
       }
       
       // Large Image
       const previewImage = document.getElementById('preview_embed_image');
-      if (image) {
-         previewImage.src = image.startsWith('/') ? window.location.origin + image : image;
-         previewImage.style.display = 'block';
-      } else {
-         previewImage.style.display = 'none';
+      if (previewImage) {
+         if (image) {
+            previewImage.src = image.startsWith('/') ? window.location.origin + image : image;
+            previewImage.style.display = 'block';
+         } else {
+            previewImage.style.display = 'none';
+         }
       }
       
       // Footer
       const previewFooter = document.getElementById('preview_embed_footer');
       const previewFooterIcon = document.getElementById('preview_embed_footer_icon');
       const previewFooterText = document.getElementById('preview_embed_footer_text');
-      if (footerText) {
-         previewFooter.style.display = 'flex';
-         previewFooterText.innerText = footerText;
-         if (footerIcon) {
-            previewFooterIcon.src = footerIcon;
-            previewFooterIcon.style.display = 'block';
+      if (previewFooter) {
+         if (footerText) {
+            previewFooter.style.display = 'flex';
+            if (previewFooterText) previewFooterText.innerText = footerText;
+            if (previewFooterIcon) {
+               if (footerIcon) {
+                  previewFooterIcon.src = footerIcon;
+                  previewFooterIcon.style.display = 'block';
+               } else {
+                  previewFooterIcon.style.display = 'none';
+               }
+            }
          } else {
-            previewFooterIcon.style.display = 'none';
+            previewFooter.style.display = 'none';
          }
-      } else {
-         previewFooter.style.display = 'none';
       }
       
       // Render Buttons
       const previewButtonsWrapper = document.getElementById('preview_buttons_wrapper');
-      const enableSelfRoles = document.getElementById('enable_self_roles').checked;
+      const enableSelfRoles = document.getElementById('enable_self_roles')?.checked;
       
       if (previewButtonsWrapper) {
          previewButtonsWrapper.innerHTML = '';
@@ -3829,7 +4261,9 @@
           
           // Populate target select dropdowns for Decorator and Embed target channel
           const targetSelect = document.getElementById('font_target_channel');
-          targetSelect.innerHTML = '<option value="all">-- RENAME ALL CHANNELS IN SERVER --</option>';
+          if (targetSelect) {
+             targetSelect.innerHTML = '<option value="all">-- RENAME ALL CHANNELS IN SERVER --</option>';
+          }
           
           const embedChannelSelect = document.getElementById('embed_channel_id');
           if (embedChannelSelect) {
@@ -3837,8 +4271,12 @@
           }
           const welcomeChannelSelect = document.getElementById('welcome_channel');
           const goodbyeChannelSelect = document.getElementById('goodbye_channel');
+          const gwChannelSelect = document.getElementById('gw_channel_id');
+          const logChannelSelect = document.getElementById('log_channel');
           if (welcomeChannelSelect) welcomeChannelSelect.innerHTML = '<option value="">-- Select Channel --</option>';
           if (goodbyeChannelSelect) goodbyeChannelSelect.innerHTML = '<option value="">-- Select Channel --</option>';
+          if (gwChannelSelect) gwChannelSelect.innerHTML = '<option value="">-- Select Channel --</option>';
+          if (logChannelSelect) logChannelSelect.innerHTML = '<option value="">-- Choose Log Channel --</option>';
           
           activeLayoutData.categories.forEach(cat => {
             html += `<div style="margin-bottom:15px;">
@@ -3849,10 +4287,12 @@
               const icon = chan.type === 'voice' ? '☊' : '#';
               
               // Add to Target Channel Select
-              const opt = document.createElement('option');
-              opt.value = chan.id;
-              opt.innerText = `[${cat.name}] ${chan.name}`;
-              targetSelect.appendChild(opt);
+              if (targetSelect) {
+                 const opt = document.createElement('option');
+                 opt.value = chan.id;
+                 opt.innerText = `[${cat.name}] ${chan.name}`;
+                 targetSelect.appendChild(opt);
+              }
               
               // Add text channels to Embed, Welcome, and Goodbye target channel dropdowns
               if (chan.type === 'text') {
@@ -3873,6 +4313,18 @@
                     gbOpt.value = chan.id;
                     gbOpt.innerText = `# ${chan.name} (${cat.name})`;
                     goodbyeChannelSelect.appendChild(gbOpt);
+                 }
+                 if (gwChannelSelect) {
+                    const gwOpt = document.createElement('option');
+                    gwOpt.value = chan.id;
+                    gwOpt.innerText = `# ${chan.name} (${cat.name})`;
+                    gwChannelSelect.appendChild(gwOpt);
+                 }
+                 if (logChannelSelect) {
+                    const logOpt = document.createElement('option');
+                    logOpt.value = chan.id;
+                    logOpt.innerText = `# ${chan.name} (${cat.name})`;
+                    logChannelSelect.appendChild(logOpt);
                  }
               }
               
@@ -3895,6 +4347,13 @@
           // Re-trigger live preview so role options populate inside card buttons
           updateLiveEmbedPreview();
           handleTargetChannelChange();
+          populateLevelingRolesDropdowns(roles);
+          populateTicketsDropdowns(roles);
+          populateCustomCommandsRoles(roles);
+          populateGiveawayRolesSelect(roles);
+          populateModerationDropdowns(roles);
+          populateBotSettingsRoles(roles);
+          loadCustomCommands();
           loadGuildSettings();
         } else {
           resContainer.innerHTML = 'Failed to fetch layout.';
@@ -4346,6 +4805,558 @@
         }
       } catch (e) {
         container.innerHTML = 'Failed to load active temp VCs.';
+      }
+    }
+
+    let gwSelectedRoles = [];
+
+    function populateGiveawayRolesSelect(roles) {
+      const selectEl = document.getElementById('gw_roles_select');
+      if (!selectEl) return;
+      selectEl.innerHTML = '<option value="">-- Select Role --</option>';
+      roles.forEach(role => {
+        const opt = document.createElement('option');
+        opt.value = role.id;
+        opt.innerText = role.name;
+        selectEl.appendChild(opt);
+      });
+      gwSelectedRoles = [];
+      renderGiveawaySelectedRoles();
+    }
+
+    function toggleGiveawayTimingStyle() {
+      const useDates = document.getElementById('gw_use_dates').checked;
+      const durationPanel = document.getElementById('gw_duration_panel');
+      const datesPanel = document.getElementById('gw_dates_panel');
+      if (useDates) {
+        durationPanel.style.display = 'none';
+        datesPanel.style.display = 'flex';
+      } else {
+        durationPanel.style.display = 'block';
+        datesPanel.style.display = 'none';
+      }
+    }
+
+    function toggleGiveawayRoleRestrictions() {
+      const enabled = document.getElementById('gw_restrict_roles_enabled').checked;
+      const panel = document.getElementById('gw_role_restrictions_panel');
+      panel.style.display = enabled ? 'block' : 'none';
+    }
+
+    function addGiveawayRole() {
+      const selectEl = document.getElementById('gw_roles_select');
+      const roleId = selectEl.value;
+      if (!roleId) return;
+      
+      const roleName = selectEl.options[selectEl.selectedIndex].text;
+      
+      if (gwSelectedRoles.some(r => r.id === roleId)) {
+        showToast("Role already added.", "error");
+        return;
+      }
+      
+      gwSelectedRoles.push({ id: roleId, name: roleName });
+      renderGiveawaySelectedRoles();
+      selectEl.value = '';
+    }
+
+    function removeGiveawayRole(roleId) {
+      gwSelectedRoles = gwSelectedRoles.filter(r => r.id !== roleId);
+      renderGiveawaySelectedRoles();
+    }
+
+    function renderGiveawaySelectedRoles() {
+      const container = document.getElementById('gw_allowed_roles_list');
+      const hiddenInput = document.getElementById('gw_allowed_roles');
+      if (!container || !hiddenInput) return;
+      
+      container.innerHTML = '';
+      const ids = gwSelectedRoles.map(r => r.id);
+      hiddenInput.value = JSON.stringify(ids);
+      
+      gwSelectedRoles.forEach(role => {
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.style.background = 'rgba(10, 255, 228, 0.15)';
+        badge.style.color = 'var(--c2)';
+        badge.style.padding = '5px 10px';
+        badge.style.borderRadius = '4px';
+        badge.style.fontSize = '0.8rem';
+        badge.style.display = 'inline-flex';
+        badge.style.alignItems = 'center';
+        badge.style.gap = '6px';
+        
+        badge.innerHTML = `
+          <span>${role.name}</span>
+          <span onclick="removeGiveawayRole('${role.id}')" style="cursor:pointer; color:#ef4444; font-weight:bold; font-size:0.9rem;">&times;</span>
+        `;
+        container.appendChild(badge);
+      });
+    }
+
+    function toggleGiveawayEmbedEditor() {
+      const enabledEl = document.getElementById('gw_use_custom_embed');
+      if (!enabledEl) return;
+      const enabled = enabledEl.checked;
+      const makerPanel = document.getElementById('gw_embed_maker_panel');
+      const previewCard = document.getElementById('gw_embed_preview_card');
+      
+      if (makerPanel) makerPanel.style.display = enabled ? 'block' : 'none';
+      if (previewCard) previewCard.style.display = enabled ? 'block' : 'none';
+      updateGiveawayEmbedPreview();
+    }
+
+    function syncGiveawayEmbedColorPicker(val) {
+      const hexEl = document.getElementById('gw_embed_color_hex');
+      if (hexEl) hexEl.value = val;
+      updateGiveawayEmbedPreview();
+    }
+
+    function syncGiveawayEmbedColorHex(val) {
+      if (/^#[0-9A-F]{6}$/i.test(val)) {
+        const pickerEl = document.getElementById('gw_embed_color');
+        if (pickerEl) pickerEl.value = val;
+        updateGiveawayEmbedPreview();
+      }
+    }
+
+    function updateGiveawayEmbedPreview() {
+      const enabledEl = document.getElementById('gw_use_custom_embed');
+      const enabled = enabledEl ? enabledEl.checked : false;
+      const hiddenInput = document.getElementById('gw_embed_config');
+      if (!hiddenInput) return;
+      
+      if (!enabled) {
+        hiddenInput.value = '{}';
+        return;
+      }
+      
+      const title = document.getElementById('gw_embed_title')?.value || "🎉 GIVEAWAY 🎉";
+      const desc = document.getElementById('gw_embed_desc')?.value || "Click the button below to enter!";
+      const color = document.getElementById('gw_embed_color_hex')?.value || '#9b59b6';
+      const thumbnail = document.getElementById('gw_embed_thumbnail')?.value || '';
+      const image = document.getElementById('gw_embed_image')?.value || '';
+      const footer = document.getElementById('gw_embed_footer')?.value || '';
+      const footerIcon = document.getElementById('gw_embed_footer_icon')?.value || '';
+      
+      const configObj = {
+        title: title,
+        description: desc,
+        color: color,
+        thumbnail: thumbnail,
+        image: image,
+        footer: footer,
+        footer_icon: footerIcon
+      };
+      
+      hiddenInput.value = JSON.stringify(configObj);
+      
+      const previewBox = document.getElementById('gw_embed_preview_box');
+      if (previewBox) previewBox.style.borderColor = color;
+      
+      const previewTitle = document.getElementById('gw_preview_title');
+      if (previewTitle) previewTitle.innerText = title;
+      
+      const previewDesc = document.getElementById('gw_preview_desc');
+      if (previewDesc) previewDesc.innerText = desc;
+      
+      const imgEl = document.getElementById('gw_preview_image');
+      if (imgEl) {
+        if (image) {
+          imgEl.src = image;
+          imgEl.style.display = 'block';
+        } else {
+          imgEl.style.display = 'none';
+        }
+      }
+      
+      const footerEl = document.getElementById('gw_preview_footer');
+      const footerIconEl = document.getElementById('gw_preview_footer_icon');
+      const footerTextEl = document.getElementById('gw_preview_footer_text');
+      
+      if (footerEl) {
+        if (footer) {
+          if (footerTextEl) footerTextEl.innerText = footer;
+          if (footerIconEl) {
+            if (footerIcon) {
+              footerIconEl.src = footerIcon;
+              footerIconEl.style.display = 'block';
+            } else {
+              footerIconEl.style.display = 'none';
+            }
+          }
+          footerEl.style.display = 'flex';
+        } else {
+          footerEl.style.display = 'none';
+        }
+      }
+    }
+
+    function updateGiveawayAnimationPreview() {
+      const container = document.getElementById('gw_animation_preview_canvas');
+      if (container) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-style: italic;">Animation style changed. Click below to test drawing simulation!</div>';
+      }
+    }
+
+    let gwAnimInterval = null;
+
+    function triggerGiveawayAnimationDemo() {
+      const container = document.getElementById('gw_animation_preview_canvas');
+      if (!container) return;
+      
+      if (gwAnimInterval) {
+        clearInterval(gwAnimInterval);
+        cancelAnimationFrame(gwAnimInterval);
+        gwAnimInterval = null;
+      }
+      
+      const style = document.getElementById('gw_animation_style').value;
+      container.innerHTML = '';
+      
+      const names = ["Shadow_Core", "Kaizer_Fan", "Matrix_X", "Neon_Glow", "Alpha_Byte", "Cyber_Rex", "Omega_Zero", "Pulse_Wave", "Delta_V", "Echo_1"];
+      
+      if (style === 'scrolling_wheel') {
+        container.innerHTML = `
+          <div style="width: 100%; text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 8px;">Draw Animation: Scrolling Wheel</div>
+          <div style="width: 100%; overflow: hidden; position: relative; height: 50px; background: rgba(0,0,0,0.3); border-radius: 6px; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.05);">
+            <div id="wheel_pointer" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; background: var(--c2); z-index: 10; box-shadow: 0 0 8px var(--c2); transform: translateX(-50%);"></div>
+            <div id="wheel_list" style="display: flex; gap: 15px; position: absolute; left: 0; transition: transform 3.5s cubic-bezier(0.1, 0.8, 0.1, 1); padding-left: 50%;">
+            </div>
+          </div>
+          <div id="wheel_winner" style="margin-top: 10px; font-weight: bold; font-size: 1.1rem; color: #fff;">...</div>
+        `;
+        
+        const list = document.getElementById('wheel_list');
+        const wheelNames = [...names, ...names, ...names, ...names];
+        wheelNames.forEach(n => {
+          const el = document.createElement('div');
+          el.style.padding = '6px 15px';
+          el.style.background = 'rgba(255,255,255,0.06)';
+          el.style.border = '1px solid rgba(255,255,255,0.1)';
+          el.style.borderRadius = '4px';
+          el.style.whiteSpace = 'nowrap';
+          el.style.fontSize = '0.9rem';
+          el.style.color = '#fff';
+          el.innerText = n;
+          list.appendChild(el);
+        });
+        
+        setTimeout(() => {
+          const listWidth = list.offsetWidth;
+          const targetOffset = -(listWidth * 0.7) + (Math.random() * 100 - 50);
+          list.style.transform = `translateX(${targetOffset}px)`;
+        }, 100);
+        
+        setTimeout(() => {
+          document.getElementById('wheel_winner').innerHTML = `Winner: <span style="color: var(--c2); font-weight: bold;">Pulse_Wave 🎉</span>`;
+        }, 3600);
+        
+      } else if (style === 'confetti') {
+        container.innerHTML = `
+          <canvas id="confetti_canvas" style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:5;"></canvas>
+          <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 8px; z-index: 2;">Draw Animation: Confetti Burst</div>
+          <div id="confetti_name" style="font-size: 1.8rem; font-weight: bold; color: var(--c2); text-shadow: 0 0 10px rgba(10,255,228,0.3); z-index: 2;">...</div>
+        `;
+        
+        const nameEl = document.getElementById('confetti_name');
+        let idx = 0;
+        gwAnimInterval = setInterval(() => {
+          nameEl.innerText = names[idx % names.length];
+          idx++;
+        }, 80);
+        
+        setTimeout(() => {
+          clearInterval(gwAnimInterval);
+          const winner = names[Math.floor(Math.random() * names.length)];
+          nameEl.innerHTML = `<span style="color: #fbbf24; text-shadow: 0 0 15px rgba(251,191,36,0.6);">${winner} 🎉</span>`;
+          
+          const canvas = document.getElementById('confetti_canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = container.offsetWidth;
+          canvas.height = container.offsetHeight;
+          
+          let particles = [];
+          for (let i = 0; i < 80; i++) {
+            particles.push({
+              x: canvas.width / 2,
+              y: canvas.height / 2,
+              vx: (Math.random() - 0.5) * 8,
+              vy: (Math.random() - 0.5) * 8 - 3,
+              color: `hsl(${Math.random() * 360}, 90%, 60%)`,
+              r: Math.random() * 4 + 3,
+              alpha: 1
+            });
+          }
+          
+          function drawConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let active = false;
+            particles.forEach(p => {
+              if (p.alpha > 0) {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.alpha;
+                ctx.fill();
+                
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.15;
+                p.alpha -= 0.015;
+                active = true;
+              }
+            });
+            if (active) {
+              gwAnimInterval = requestAnimationFrame(drawConfetti);
+            }
+          }
+          drawConfetti();
+        }, 2000);
+        
+      } else if (style === 'slot_machine') {
+        container.innerHTML = `
+          <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 8px;">Draw Animation: Slot Machine</div>
+          <div style="display: flex; gap: 10px; justify-content: center; height: 50px; overflow: hidden; border: 2px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 5px; background: rgba(0,0,0,0.4); width: 80%;">
+            <div class="slot-reel" id="reel1" style="flex:1; display:flex; flex-direction:column; gap:5px; transition: transform 2s cubic-bezier(0.1, 0.8, 0.1, 1);"></div>
+            <div class="slot-reel" id="reel2" style="flex:1; display:flex; flex-direction:column; gap:5px; transition: transform 2.5s cubic-bezier(0.1, 0.8, 0.1, 1);"></div>
+            <div class="slot-reel" id="reel3" style="flex:1; display:flex; flex-direction:column; gap:5px; transition: transform 3s cubic-bezier(0.1, 0.8, 0.1, 1);"></div>
+          </div>
+          <div id="slot_winner" style="margin-top: 10px; font-weight: bold; font-size: 1.1rem; color: #fff;">...</div>
+        `;
+        
+        const populateReel = (id) => {
+          const el = document.getElementById(id);
+          const reelNames = [...names, ...names, ...names];
+          reelNames.forEach(n => {
+            const item = document.createElement('div');
+            item.style.height = '30px';
+            item.style.display = 'flex';
+            item.style.alignItems = 'center';
+            item.style.justifyContent = 'center';
+            item.style.color = '#fff';
+            item.style.fontSize = '0.85rem';
+            item.style.background = 'rgba(255,255,255,0.04)';
+            item.style.borderRadius = '3px';
+            item.innerText = n;
+            el.appendChild(item);
+          });
+        };
+        populateReel('reel1');
+        populateReel('reel2');
+        populateReel('reel3');
+        
+        setTimeout(() => {
+          document.getElementById('reel1').style.transform = `translateY(${-30 * 18}px)`;
+          document.getElementById('reel2').style.transform = `translateY(${-30 * 18}px)`;
+          document.getElementById('reel3').style.transform = `translateY(${-30 * 18}px)`;
+        }, 100);
+        
+        setTimeout(() => {
+          document.getElementById('slot_winner').innerHTML = `Winner: <span style="color: var(--c2); font-weight: bold;">Neon_Glow 🎉</span>`;
+        }, 3200);
+        
+      } else if (style === 'radar_ping') {
+        container.innerHTML = `
+          <canvas id="radar_canvas" style="position: absolute; top:0; left:0; width:100%; height:100%; border-radius: 8px;"></canvas>
+          <div id="radar_winner" style="position: absolute; bottom: 10px; font-weight: bold; font-size: 1.1rem; color: #fff; z-index: 10;">...</div>
+        `;
+        
+        const canvas = document.getElementById('radar_canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = container.offsetWidth;
+        canvas.height = container.offsetHeight;
+        
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const maxRadius = Math.min(cx, cy) - 10;
+        
+        let dots = [];
+        for (let i = 0; i < 8; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const r = Math.random() * (maxRadius - 30) + 15;
+          dots.push({
+            x: cx + Math.cos(angle) * r,
+            y: cy + Math.sin(angle) * r,
+            name: names[i],
+            intensity: 0,
+            isWinner: i === 4
+          });
+        }
+        
+        let angle = 0;
+        let winnerFound = false;
+        let winnerPulse = 0;
+        
+        function drawRadar() {
+          ctx.fillStyle = 'rgba(10, 15, 25, 0.2)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          ctx.strokeStyle = 'rgba(10, 255, 228, 0.08)';
+          ctx.lineWidth = 1;
+          for (let r = 30; r < maxRadius; r += 30) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          
+          ctx.strokeStyle = 'rgba(10, 255, 228, 0.25)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(angle) * maxRadius, cy + Math.sin(angle) * maxRadius);
+          ctx.stroke();
+          
+          dots.forEach(d => {
+            const dotAngle = Math.atan2(d.y - cy, d.x - cx);
+            let diff = angle - dotAngle;
+            while (diff < 0) diff += Math.PI * 2;
+            diff = diff % (Math.PI * 2);
+            
+            if (diff < 0.2) {
+              d.intensity = 1.0;
+            } else {
+              d.intensity -= 0.015;
+            }
+            d.intensity = Math.max(0, d.intensity);
+            
+            if (d.intensity > 0) {
+              ctx.beginPath();
+              ctx.arc(d.x, d.y, 4, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(10, 255, 228, ${d.intensity})`;
+              ctx.shadowBlur = 8;
+              ctx.shadowColor = 'var(--c2)';
+              ctx.fill();
+              ctx.shadowBlur = 0;
+            }
+            
+            if (winnerFound && d.isWinner) {
+              ctx.beginPath();
+              ctx.arc(d.x, d.y, 4 + Math.sin(winnerPulse) * 4, 0, Math.PI * 2);
+              ctx.strokeStyle = '#fbbf24';
+              ctx.lineWidth = 2;
+              ctx.stroke();
+              
+              ctx.beginPath();
+              ctx.arc(d.x, d.y, 3, 0, Math.PI * 2);
+              ctx.fillStyle = '#fbbf24';
+              ctx.fill();
+            }
+          });
+          
+          angle += 0.04;
+          winnerPulse += 0.15;
+          
+          if (!winnerFound && angle > Math.PI * 4) {
+            winnerFound = true;
+            document.getElementById('radar_winner').innerHTML = `Winner: <span style="color: #fbbf24; font-weight: bold;">Alpha_Byte 🎉</span>`;
+          }
+          
+          if (angle < Math.PI * 6) {
+            gwAnimInterval = requestAnimationFrame(drawRadar);
+          }
+        }
+        drawRadar();
+      }
+    }
+
+    function populateCustomCommandsRoles(roles) {
+      const selectEl = document.getElementById('cc_permission');
+      if (!selectEl) return;
+      selectEl.innerHTML = '<option value="Everyone">Everyone</option>';
+      roles.forEach(role => {
+        const opt = document.createElement('option');
+        opt.value = role.id;
+        opt.innerText = role.name;
+        selectEl.appendChild(opt);
+      });
+    }
+
+    async function loadCustomCommands() {
+      const container = document.getElementById('custom_commands_list');
+      if (!container) return;
+      container.innerHTML = '<div style="color: var(--text-muted); font-style: italic;">Loading custom commands...</div>';
+      try {
+        const res = await fetch(`/api/guild/${guildId}/custom_commands`);
+        const data = await res.json();
+        if (data.success && data.commands) {
+          renderCustomCommandsList(data.commands);
+        } else {
+          container.innerHTML = '<div style="color: #ef4444; font-style: italic;">Failed to load custom commands.</div>';
+        }
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = '<div style="color: #ef4444; font-style: italic;">Error fetching custom commands.</div>';
+      }
+    }
+
+    function renderCustomCommandsList(commands) {
+      const container = document.getElementById('custom_commands_list');
+      if (!container) return;
+      if (!commands || commands.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-style: italic; margin: 0;">No custom commands created yet.</p>';
+        return;
+      }
+      
+      let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
+      commands.forEach(cmd => {
+        let roleName = 'Everyone';
+        if (cmd.permission_level !== 'Everyone') {
+          const role = (activeLayoutData && activeLayoutData.roles) ? activeLayoutData.roles.find(r => r.id === cmd.permission_level) : null;
+          roleName = role ? role.name : (cmd.permission_level || 'Everyone');
+        }
+        
+        let mediaHtml = '';
+        if (cmd.image_url) {
+          mediaHtml += `<div style="margin-top: 6px; font-size: 0.82rem; color: var(--c2);"><strong>Image:</strong> <a href="${cmd.image_url}" target="_blank" style="color: var(--c2); text-decoration: underline;">${cmd.image_url}</a></div>`;
+        }
+        if (cmd.gif_url) {
+          mediaHtml += `<div style="margin-top: 6px; font-size: 0.82rem; color: var(--c2);"><strong>GIF:</strong> <a href="${cmd.gif_url}" target="_blank" style="color: var(--c2); text-decoration: underline;">${cmd.gif_url}</a></div>`;
+        }
+        
+        html += `
+          <div style="padding: 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
+            <div style="flex: 1; min-width: 0; padding-right: 20px;">
+              <div style="font-size: 1.05rem; font-weight: bold; color: #fff; margin-bottom: 6px;">
+                Trigger: <span style="color: var(--c2); font-style: italic;">${cmd.trigger_word}</span>
+              </div>
+              <div style="font-size: 0.92rem; color: var(--text-muted); word-break: break-word; white-space: pre-wrap;">${cmd.response_text || ''}</div>
+              <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                <span style="background: rgba(10, 255, 228, 0.12); color: var(--c2); border: 1px solid rgba(10, 255, 228, 0.25); padding: 3px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 600;">
+                  Role: ${roleName}
+                </span>
+              </div>
+              ${mediaHtml}
+            </div>
+            <div>
+              <button class="btn" onclick="deleteCustomCommand('${cmd.trigger_word}')" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-size: 0.85rem;" onmouseover="this.style.background='rgba(239, 68, 68, 0.35)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.2)'">
+                Remove
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    async function deleteCustomCommand(trigger_word) {
+      if (!confirm(`Are you sure you want to delete the custom command "${trigger_word}"?`)) return;
+      try {
+        showToast("Deleting command...", "info");
+        const res = await fetch(`/api/guild/${guildId}/custom_commands/${encodeURIComponent(trigger_word)}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message || "Command deleted successfully!", "success");
+          loadCustomCommands();
+        } else {
+          showToast(data.error || "Failed to delete custom command.", "error");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Error deleting custom command.", "error");
       }
     }
 
@@ -5253,6 +6264,818 @@
       }
     }
     
+    // ── TICKET SYSTEM MANAGEMENT ─────────────────────────────────────────────
+    function populateTicketsDropdowns(roles) {
+      const ticketRoleSelect = document.getElementById('ticket_support_role');
+      if (ticketRoleSelect) {
+        const oldVal = ticketRoleSelect.value;
+        ticketRoleSelect.innerHTML = '<option value="">-- Choose Support Role --</option>';
+        roles.forEach(role => {
+          const opt = document.createElement('option');
+          opt.value = role.id;
+          opt.innerText = role.name;
+          ticketRoleSelect.appendChild(opt);
+        });
+        if (oldVal) ticketRoleSelect.value = oldVal;
+      }
+
+      const ticketCategorySelect = document.getElementById('ticket_category');
+      if (ticketCategorySelect) {
+        const oldVal = ticketCategorySelect.value;
+        ticketCategorySelect.innerHTML = '<option value="">-- Choose Category --</option>';
+        if (activeLayoutData && activeLayoutData.categories) {
+          activeLayoutData.categories.forEach(cat => {
+            if (cat.id !== 'none') {
+              const opt = document.createElement('option');
+              opt.value = cat.id;
+              opt.innerText = cat.name;
+              ticketCategorySelect.appendChild(opt);
+            }
+          });
+        }
+        if (oldVal) ticketCategorySelect.value = oldVal;
+      }
+
+      const ticketLogSelect = document.getElementById('ticket_log_channel');
+      if (ticketLogSelect) {
+        const oldVal = ticketLogSelect.value;
+        ticketLogSelect.innerHTML = '<option value="">-- Choose Log Channel --</option>';
+        if (activeLayoutData && activeLayoutData.categories) {
+          activeLayoutData.categories.forEach(cat => {
+            cat.channels.forEach(chan => {
+              if (chan.type === 'text') {
+                const opt = document.createElement('option');
+                opt.value = chan.id;
+                opt.innerText = `# ${chan.name} (${cat.name})`;
+                ticketLogSelect.appendChild(opt);
+              }
+            });
+          });
+        }
+        if (oldVal) ticketLogSelect.value = oldVal;
+      }
+    }
+
+    async function createRoleForTicketsPrompt() {
+      const name = window.prompt("Enter the name of the support role to create (if it exists, its color will be overwritten):");
+      if (!name) return;
+      
+      try {
+         showToast("Creating/Overwriting support role...", "info");
+         const res = await fetch(`/api/guild/${guildId}/server-action`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'create_role', role_name: name, role_color: '#0affe4' })
+         });
+         const data = await res.json().catch(() => ({}));
+         if (data.success && data.role) {
+            showToast(`Support role "${data.role.name}" loaded successfully!`, 'success');
+            
+            // Check if role already exists in activeLayoutData.roles
+            if (activeLayoutData) {
+               if (!activeLayoutData.roles) activeLayoutData.roles = [];
+               const existingIdx = activeLayoutData.roles.findIndex(r => r.id === data.role.id || r.name.toLowerCase() === data.role.name.toLowerCase());
+               if (existingIdx > -1) {
+                  activeLayoutData.roles[existingIdx] = data.role; // Update
+               } else {
+                  activeLayoutData.roles.push(data.role); // Append
+               }
+            }
+            
+            // Refresh all dropdowns
+            populateTicketsDropdowns(activeLayoutData.roles);
+            populateLevelingRolesDropdowns(activeLayoutData.roles);
+            
+            const bulkRoleSelect = document.getElementById('bulk_role_id');
+            if (bulkRoleSelect) {
+               // Rebuild bulk role options
+               bulkRoleSelect.innerHTML = '<option value="">-- Select Role --</option>';
+               activeLayoutData.roles.forEach(role => {
+                  const opt = document.createElement('option');
+                  opt.value = role.id;
+                  opt.innerText = role.name;
+                  opt.dataset.color = role.color;
+                  bulkRoleSelect.appendChild(opt);
+               });
+            }
+            
+            // Select this role in the support role dropdown
+            const ticketRoleSelect = document.getElementById('ticket_support_role');
+            if (ticketRoleSelect) {
+               ticketRoleSelect.value = data.role.id;
+            }
+         } else {
+            showToast(data.error || 'Failed to create/load support role.', 'error');
+         }
+      } catch (e) {
+         showToast('Network error occurred.', 'error');
+      }
+    }
+
+    // ── LEVELING SYSTEM MANAGEMENT ──────────────────────────────────────────
+    let currentLevelRoles = {};
+    let currentLevelPermissions = [];
+
+    function populateLevelingRolesDropdowns(roles) {
+      const rewardRoleSelect = document.getElementById('level_reward_role');
+      if (rewardRoleSelect) {
+        rewardRoleSelect.innerHTML = '<option value="">-- Choose Role --</option>';
+        roles.forEach(role => {
+          const opt = document.createElement('option');
+          opt.value = role.id;
+          opt.innerText = role.name;
+          rewardRoleSelect.appendChild(opt);
+        });
+      }
+    }
+
+    function toggleCustomLevelInput(selectEl, wrapperId) {
+      const wrapper = document.getElementById(wrapperId);
+      if (wrapper) {
+        wrapper.style.display = selectEl.value === 'custom' ? 'block' : 'none';
+      }
+    }
+
+    function renderLevelRolesList() {
+      const hiddenInput = document.getElementById('level_roles');
+      if (hiddenInput && hiddenInput.value) {
+        try {
+          currentLevelRoles = typeof hiddenInput.value === 'string' ? JSON.parse(hiddenInput.value) : hiddenInput.value;
+        } catch (e) {
+          currentLevelRoles = {};
+        }
+      } else {
+        currentLevelRoles = {};
+      }
+
+      const container = document.getElementById('level_roles_list');
+      if (!container) return;
+
+      container.innerHTML = '';
+      const levels = Object.keys(currentLevelRoles).map(Number).sort((a, b) => a - b);
+
+      if (levels.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 0.9rem; font-style: italic; padding: 10px 0;">No level role rewards configured yet.</div>';
+        return;
+      }
+
+      levels.forEach(lvl => {
+        const roleId = currentLevelRoles[lvl];
+        const roleObj = activeLayoutData && activeLayoutData.roles ? activeLayoutData.roles.find(r => r.id === roleId) : null;
+        const roleName = roleObj ? roleObj.name : `Unknown Role (ID: ${roleId})`;
+        let roleColor = roleObj && roleObj.color && roleObj.color !== '#000000' ? roleObj.color : '#0affe4';
+        
+        // If color format is integer, convert it
+        if (roleObj && typeof roleObj.color === 'string' && !roleObj.color.startsWith('#')) {
+          const cInt = parseInt(roleObj.color);
+          if (!isNaN(cInt)) {
+            roleColor = '#' + cInt.toString(16).padStart(6, '0');
+          }
+        }
+
+        const card = document.createElement('div');
+        card.style.display = 'flex';
+        card.style.justifyContent = 'space-between';
+        card.style.alignItems = 'center';
+        card.style.background = 'rgba(255, 255, 255, 0.02)';
+        card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+        card.style.padding = '10px 15px';
+        card.style.marginBottom = '8px';
+        card.style.borderRadius = '0px';
+        card.style.borderLeft = `3px solid ${roleColor}`;
+
+        card.innerHTML = `
+          <div>
+            <span style="font-weight: bold; color: var(--c2); font-family: monospace;">Level ${lvl}</span>
+            <span style="color: var(--text-muted); margin: 0 8px;">➜</span>
+            <span style="color: ${roleColor}; font-weight: 500;">${roleName}</span>
+          </div>
+          <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 10px; border-color: var(--c1) !important; color: var(--c1) !important; line-height: 1;" onclick="removeLevelRoleReward(${lvl})">Remove</button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function addLevelRoleReward() {
+      const levelSelect = document.getElementById('level_reward_level');
+      const customLevelInput = document.getElementById('level_reward_level_custom');
+      const roleSelect = document.getElementById('level_reward_role');
+
+      let level = parseInt(levelSelect.value);
+      if (levelSelect.value === 'custom' && customLevelInput) {
+        level = parseInt(customLevelInput.value);
+      }
+
+      const roleId = roleSelect.value;
+
+      if (isNaN(level) || level <= 0) {
+        showToast('Please enter/select a valid level (greater than 0).', 'error');
+        return;
+      }
+      if (!roleId) {
+        showToast('Please select a role reward.', 'error');
+        return;
+      }
+
+      currentLevelRoles[level] = roleId;
+
+      // Update hidden input
+      document.getElementById('level_roles').value = JSON.stringify(currentLevelRoles);
+
+      // Re-render
+      renderLevelRolesList();
+      showToast(`Added role reward for Level ${level}!`, 'success');
+    }
+
+    function removeLevelRoleReward(level) {
+      delete currentLevelRoles[level];
+      document.getElementById('level_roles').value = JSON.stringify(currentLevelRoles);
+      renderLevelRolesList();
+      showToast(`Removed role reward for Level ${level}`, 'success');
+    }
+
+    function renderLevelPermissionsList() {
+      const hiddenInput = document.getElementById('level_permissions');
+      if (hiddenInput && hiddenInput.value) {
+        try {
+          currentLevelPermissions = typeof hiddenInput.value === 'string' ? JSON.parse(hiddenInput.value) : hiddenInput.value;
+          if (!Array.isArray(currentLevelPermissions)) currentLevelPermissions = [];
+        } catch (e) {
+          currentLevelPermissions = [];
+        }
+      } else {
+        currentLevelPermissions = [];
+      }
+
+      const container = document.getElementById('level_permissions_list');
+      if (!container) return;
+
+      container.innerHTML = '';
+      const sortedRules = [...currentLevelPermissions].sort((a, b) => a.level - b.level);
+
+      if (sortedRules.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 0.9rem; font-style: italic; padding: 10px 0;">No level permission rules configured yet.</div>';
+        return;
+      }
+
+      sortedRules.forEach(rule => {
+        const lvl = rule.level;
+        const allowText = rule.allow_text !== false;
+        const allowImage = rule.allow_image !== false;
+        const allowGif = rule.allow_gif !== false;
+
+        const card = document.createElement('div');
+        card.style.display = 'flex';
+        card.style.justifyContent = 'space-between';
+        card.style.alignItems = 'center';
+        card.style.background = 'rgba(255, 255, 255, 0.02)';
+        card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+        card.style.padding = '10px 15px';
+        card.style.marginBottom = '8px';
+        card.style.borderRadius = '0px';
+        card.style.borderLeft = `3px solid var(--c2)`;
+
+        card.innerHTML = `
+          <div>
+            <span style="font-weight: bold; color: var(--c2); font-family: monospace;">Level ${lvl}+</span>
+            <span style="color: var(--text-muted); margin: 0 8px;">➜</span>
+            <span style="font-size: 0.85rem; font-family: monospace;">
+              Text: ${allowText ? '<span style="color:#10b981; font-weight:bold;">YES</span>' : '<span style="color:#ef4444; font-weight:bold;">NO</span>'} | 
+              Images: ${allowImage ? '<span style="color:#10b981; font-weight:bold;">YES</span>' : '<span style="color:#ef4444; font-weight:bold;">NO</span>'} | 
+              GIFs: ${allowGif ? '<span style="color:#10b981; font-weight:bold;">YES</span>' : '<span style="color:#ef4444; font-weight:bold;">NO</span>'}
+            </span>
+          </div>
+          <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 10px; border-color: var(--c1) !important; color: var(--c1) !important; line-height: 1;" onclick="removeLevelPermissionRule(${lvl})">Remove</button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function addLevelPermissionRule() {
+      const levelSelect = document.getElementById('level_perm_level');
+      const customLevelInput = document.getElementById('level_perm_level_custom');
+
+      let level = parseInt(levelSelect.value);
+      if (levelSelect.value === 'custom' && customLevelInput) {
+        level = parseInt(customLevelInput.value);
+      }
+
+      if (isNaN(level) || level < 0) {
+        showToast('Please enter/select a valid level threshold.', 'error');
+        return;
+      }
+      const allowText = document.getElementById('level_perm_allow_text').checked;
+      const allowImage = document.getElementById('level_perm_allow_image').checked;
+      const allowGif = document.getElementById('level_perm_allow_gif').checked;
+
+      const existingIdx = currentLevelPermissions.findIndex(r => r.level === level);
+      const newRule = {
+        level: level,
+        allow_text: allowText,
+        allow_image: allowImage,
+        allow_gif: allowGif
+      };
+
+      if (existingIdx > -1) {
+        currentLevelPermissions[existingIdx] = newRule;
+      } else {
+        currentLevelPermissions.push(newRule);
+      }
+
+      // Update hidden input
+      document.getElementById('level_permissions').value = JSON.stringify(currentLevelPermissions);
+
+      // Re-render
+      renderLevelPermissionsList();
+      showToast(`Added permission override for Level ${level}!`, 'success');
+    }
+
+    function removeLevelPermissionRule(level) {
+      currentLevelPermissions = currentLevelPermissions.filter(r => r.level !== level);
+      document.getElementById('level_permissions').value = JSON.stringify(currentLevelPermissions);
+      renderLevelPermissionsList();
+      showToast(`Removed permission override for Level ${level}`, 'success');
+    }
+
+    async function createRoleFromLeveling() {
+      const nameInput = document.getElementById('new_role_name');
+      const colorInput = document.getElementById('new_role_color');
+
+      const roleName = nameInput.value.trim();
+      const roleColor = colorInput.value; // e.g. #0affe4
+
+      if (!roleName) {
+        showToast('Please enter a role name.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btn-create-leveling-role');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span>Creating...</span>';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create_role', role_name: roleName, role_color: roleColor })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success && data.role) {
+          showToast(`Role "${data.role.name}" created successfully in Discord!`, 'success');
+          
+          nameInput.value = '';
+
+          // Append new role to activeLayoutData
+          if (activeLayoutData) {
+            if (!activeLayoutData.roles) activeLayoutData.roles = [];
+            activeLayoutData.roles.push(data.role);
+          }
+
+          // Re-populate all dropdowns on the page
+          populateLevelingRolesDropdowns(activeLayoutData.roles);
+
+          // Update other role dropdowns (like bulk role select)
+          const bulkRoleSelect = document.getElementById('bulk_role_id');
+          if (bulkRoleSelect) {
+             const opt = document.createElement('option');
+             opt.value = data.role.id;
+             opt.innerText = data.role.name;
+             opt.dataset.color = data.role.color;
+             bulkRoleSelect.appendChild(opt);
+          }
+        } else {
+          showToast(data.error || 'Failed to create role.', 'error');
+        }
+      } catch (e) {
+        showToast('Network error occurred.', 'error');
+    }
+
+    // ── BOT SETTINGS CONFIGURATION HANDLERS ──────────────────────────────────
+    let currentPrefixes = [];
+    let currentAdminRoles = [];
+    let currentModRoles = [];
+
+    function populateBotSettingsRoles(roles) {
+      const adminSelect = document.getElementById('admin_roles_select');
+      const modSelect = document.getElementById('mod_roles_select');
+      if (adminSelect) adminSelect.innerHTML = '<option value="">-- Select Role --</option>';
+      if (modSelect) modSelect.innerHTML = '<option value="">-- Select Role --</option>';
+      
+      roles.forEach(role => {
+        const opt = document.createElement('option');
+        opt.value = role.id;
+        opt.innerText = role.name;
+        if (adminSelect) adminSelect.appendChild(opt.cloneNode(true));
+        if (modSelect) modSelect.appendChild(opt.cloneNode(true));
+      });
+    }
+
+    // Prefix list builders
+    function addBotPrefix() {
+      const inputEl = document.getElementById('new_prefix_input');
+      if (!inputEl) return;
+      const prefixVal = inputEl.value.trim();
+      if (!prefixVal) return;
+      
+      if (prefixVal.length > 10) {
+        showToast("Prefix must be 10 characters or less.", "error");
+        return;
+      }
+      if (currentPrefixes.includes(prefixVal)) {
+        showToast("Prefix already added.", "error");
+        return;
+      }
+      currentPrefixes.push(prefixVal);
+      renderPrefixesList();
+      inputEl.value = '';
+    }
+
+    function removeBotPrefix(prefix) {
+      currentPrefixes = currentPrefixes.filter(p => p !== prefix);
+      renderPrefixesList();
+    }
+
+    function renderPrefixesList() {
+      const container = document.getElementById('bot_prefixes_list');
+      const hiddenInput = document.getElementById('prefix');
+      if (!container || !hiddenInput) return;
+      
+      const val = hiddenInput.value;
+      if (val && currentPrefixes.length === 0) {
+        currentPrefixes = val.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      
+      hiddenInput.value = currentPrefixes.join(', ');
+      container.innerHTML = '';
+      
+      currentPrefixes.forEach(prefix => {
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.style.background = 'rgba(255, 255, 255, 0.1)';
+        badge.style.color = '#fff';
+        badge.style.padding = '5px 10px';
+        badge.style.borderRadius = '4px';
+        badge.style.fontSize = '0.8rem';
+        badge.style.display = 'inline-flex';
+        badge.style.alignItems = 'center';
+        badge.style.gap = '8px';
+        badge.innerHTML = `
+          <span><code>${prefix}</code></span>
+          <span onclick="removeBotPrefix('${prefix}')" style="cursor:pointer; color:#ef4444; font-weight:bold; font-size:0.9rem;">&times;</span>
+        `;
+        container.appendChild(badge);
+      });
+    }
+
+    // Admin roles list builders
+    function addAdminRole() {
+      const selectEl = document.getElementById('admin_roles_select');
+      if (!selectEl) return;
+      const roleId = selectEl.value;
+      if (!roleId) return;
+      
+      const roleName = selectEl.options[selectEl.selectedIndex].text;
+      if (currentAdminRoles.includes(roleId)) {
+        showToast("Role already added.", "error");
+        return;
+      }
+      currentAdminRoles.push(roleId);
+      renderAdminRolesList();
+      selectEl.value = '';
+    }
+
+    function removeAdminRole(roleId) {
+      currentAdminRoles = currentAdminRoles.filter(id => id !== roleId);
+      renderAdminRolesList();
+    }
+
+    function renderAdminRolesList() {
+      const container = document.getElementById('admin_roles_list');
+      const hiddenInput = document.getElementById('admin_roles');
+      if (!container || !hiddenInput) return;
+      
+      const val = hiddenInput.value;
+      if (val && currentAdminRoles.length === 0) {
+        try {
+          currentAdminRoles = typeof val === 'string' ? JSON.parse(val) : val;
+        } catch(e) {
+          currentAdminRoles = val.split(',').map(s => s.trim()).filter(Boolean);
+        }
+      }
+      if (!Array.isArray(currentAdminRoles)) {
+        currentAdminRoles = [];
+      }
+      
+      hiddenInput.value = JSON.stringify(currentAdminRoles);
+      container.innerHTML = '';
+      
+      currentAdminRoles.forEach(roleId => {
+        let roleName = roleId;
+        if (activeLayoutData && activeLayoutData.roles) {
+          const r = activeLayoutData.roles.find(x => x.id === roleId);
+          if (r) roleName = r.name;
+        }
+        
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.style.background = 'rgba(10, 255, 228, 0.15)';
+        badge.style.color = 'var(--c2)';
+        badge.style.padding = '5px 10px';
+        badge.style.borderRadius = '4px';
+        badge.style.fontSize = '0.8rem';
+        badge.style.display = 'inline-flex';
+        badge.style.alignItems = 'center';
+        badge.style.gap = '8px';
+        badge.innerHTML = `
+          <span>${roleName}</span>
+          <span onclick="removeAdminRole('${roleId}')" style="cursor:pointer; color:#ef4444; font-weight:bold; font-size:0.9rem;">&times;</span>
+        `;
+        container.appendChild(badge);
+      });
+    }
+
+    // Mod roles list builders
+    function addModRole() {
+      const selectEl = document.getElementById('mod_roles_select');
+      if (!selectEl) return;
+      const roleId = selectEl.value;
+      if (!roleId) return;
+      
+      const roleName = selectEl.options[selectEl.selectedIndex].text;
+      if (currentModRoles.includes(roleId)) {
+        showToast("Role already added.", "error");
+        return;
+      }
+      currentModRoles.push(roleId);
+      renderModRolesList();
+      selectEl.value = '';
+    }
+
+    function removeModRole(roleId) {
+      currentModRoles = currentModRoles.filter(id => id !== roleId);
+      renderModRolesList();
+    }
+
+    function renderModRolesList() {
+      const container = document.getElementById('mod_roles_list');
+      const hiddenInput = document.getElementById('mod_roles');
+      if (!container || !hiddenInput) return;
+      
+      const val = hiddenInput.value;
+      if (val && currentModRoles.length === 0) {
+        try {
+          currentModRoles = typeof val === 'string' ? JSON.parse(val) : val;
+        } catch(e) {
+          currentModRoles = val.split(',').map(s => s.trim()).filter(Boolean);
+        }
+      }
+      if (!Array.isArray(currentModRoles)) {
+        currentModRoles = [];
+      }
+      
+      hiddenInput.value = JSON.stringify(currentModRoles);
+      container.innerHTML = '';
+      
+      currentModRoles.forEach(roleId => {
+        let roleName = roleId;
+        if (activeLayoutData && activeLayoutData.roles) {
+          const r = activeLayoutData.roles.find(x => x.id === roleId);
+          if (r) roleName = r.name;
+        }
+        
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.style.background = 'rgba(10, 255, 228, 0.15)';
+        badge.style.color = 'var(--c2)';
+        badge.style.padding = '5px 10px';
+        badge.style.borderRadius = '4px';
+        badge.style.fontSize = '0.8rem';
+        badge.style.display = 'inline-flex';
+        badge.style.alignItems = 'center';
+        badge.style.gap = '8px';
+        badge.innerHTML = `
+          <span>${roleName}</span>
+          <span onclick="removeModRole('${roleId}')" style="cursor:pointer; color:#ef4444; font-weight:bold; font-size:0.9rem;">&times;</span>
+        `;
+        container.appendChild(badge);
+      });
+    }
+
+    // Color picker synchronizers
+    function syncBotEmbedColorPicker(val) {
+      const hexEl = document.getElementById('embed_color');
+      if (hexEl) hexEl.value = val;
+    }
+
+    function syncBotEmbedColorHex(val) {
+      if (/^#[0-9A-F]{6}$/i.test(val)) {
+        const pickerEl = document.getElementById('bot_embed_color_picker');
+        if (pickerEl) pickerEl.value = val;
+      }
+    }
+
+// ── MODERATION DROPDOWNS & AUTOMOD CREATOR STUDIO ───────────────────────
+    let currentAutomodRules = [];
+
+    function populateModerationDropdowns(roles) {
+      const muteRoleSelect = document.getElementById('mod_mute_role');
+      if (muteRoleSelect) {
+        const oldVal = muteRoleSelect.value;
+        muteRoleSelect.innerHTML = '<option value="">-- Select Mute Role --</option>';
+        roles.forEach(role => {
+          const opt = document.createElement('option');
+          opt.value = role.id;
+          opt.innerText = role.name;
+          muteRoleSelect.appendChild(opt);
+        });
+        if (oldVal) muteRoleSelect.value = oldVal;
+      }
+
+      const logChannelSelect = document.getElementById('mod_log_channel');
+      if (logChannelSelect) {
+        const oldVal = logChannelSelect.value;
+        logChannelSelect.innerHTML = '<option value="">-- Select Log Channel --</option>';
+        const textChans = getTextChannels();
+        textChans.forEach(chan => {
+          const opt = document.createElement('option');
+          opt.value = chan.id;
+          opt.innerText = `# ${chan.name}`;
+          logChannelSelect.appendChild(opt);
+        });
+        if (oldVal) logChannelSelect.value = oldVal;
+      }
+    }
+
+    async function createMuteRole() {
+      const btn = document.getElementById('btn-create-mute-role');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span>Creating...</span>';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create_mute_role' })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success && data.role) {
+          showToast(`Mute role "${data.role.name}" created and configured in Discord!`, 'success');
+
+          if (activeLayoutData) {
+            if (!activeLayoutData.roles) activeLayoutData.roles = [];
+            if (!activeLayoutData.roles.some(r => r.id === data.role.id)) {
+              activeLayoutData.roles.push(data.role);
+            }
+          }
+
+          populateModerationDropdowns(activeLayoutData.roles);
+          const muteRoleSelect = document.getElementById('mod_mute_role');
+          if (muteRoleSelect) muteRoleSelect.value = data.role.id;
+        } else {
+          showToast(data.error || 'Failed to create mute role.', 'error');
+        }
+      } catch (e) {
+        showToast('Network error occurred.', 'error');
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    async function createModLogChannel() {
+      const btn = document.getElementById('btn-create-mod-log-channel');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span>Creating...</span>';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create_mod_log_channel' })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success && data.channel) {
+          showToast(`Log channel #${data.channel.name} created successfully!`, 'success');
+
+          if (activeLayoutData) {
+            let cat = activeLayoutData.categories.find(c => c.name.toLowerCase().includes('information') || c.name.toLowerCase().includes('welcome') || c.name.toLowerCase().includes('chat'));
+            if (!cat && activeLayoutData.categories.length > 0) {
+              cat = activeLayoutData.categories[0];
+            }
+            if (cat) {
+              cat.channels.push({ id: data.channel.id, name: data.channel.name, type: 'text' });
+            }
+          }
+
+          populateModerationDropdowns(activeLayoutData.roles);
+          const logChannelSelect = document.getElementById('mod_log_channel');
+          if (logChannelSelect) logChannelSelect.value = data.channel.id;
+        } else {
+          showToast(data.error || 'Failed to create log channel.', 'error');
+        }
+      } catch (e) {
+        showToast('Network error occurred.', 'error');
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    function addAutomodRule() {
+      const trigger = document.getElementById('studio_trigger').value;
+      const count = parseInt(document.getElementById('studio_count').value);
+      const seconds = parseInt(document.getElementById('studio_seconds').value);
+      const action = document.getElementById('studio_action').value;
+
+      if (isNaN(count) || count <= 0 || isNaN(seconds) || seconds <= 0) {
+        showToast('Please enter valid positive numbers for limit and seconds.', 'error');
+        return;
+      }
+
+      const newRule = {
+        id: 'rule_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+        trigger: trigger,
+        count: count,
+        seconds: seconds,
+        action: action
+      };
+
+      currentAutomodRules.push(newRule);
+      document.getElementById('automod_rules').value = JSON.stringify(currentAutomodRules);
+      renderAutomodRulesList();
+      showToast('Rule added! Remember to save settings.', 'success');
+    }
+
+    function removeAutomodRule(ruleId) {
+      currentAutomodRules = currentAutomodRules.filter(r => r.id !== ruleId);
+      document.getElementById('automod_rules').value = JSON.stringify(currentAutomodRules);
+      renderAutomodRulesList();
+      showToast('Rule removed! Remember to save settings.', 'success');
+    }
+
+    function renderAutomodRulesList() {
+      const container = document.getElementById('automod-rules-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (currentAutomodRules.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 0.9rem; font-style: italic; padding: 10px 0;">No custom rules built yet.</div>';
+        return;
+      }
+
+      currentAutomodRules.forEach(rule => {
+        let triggerName = 'Spamming Messages';
+        if (rule.trigger === 'spam_attachments') triggerName = 'Spamming Images/Videos/Files';
+        if (rule.trigger === 'spam_mentions') triggerName = 'Spamming Mentions/Pings';
+
+        let actionName = 'Mute permanently';
+        if (rule.action === 'warn') actionName = 'Delete & Warn';
+        if (rule.action === 'kick') actionName = 'Kick Member';
+        if (rule.action === 'ban') actionName = 'Ban Member';
+
+        const card = document.createElement('div');
+        card.style.display = 'flex';
+        card.style.justifyContent = 'space-between';
+        card.style.alignItems = 'center';
+        card.style.background = 'rgba(255, 255, 255, 0.02)';
+        card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+        card.style.padding = '10px 15px';
+        card.style.marginBottom = '8px';
+        card.style.borderRadius = '4px';
+        card.style.borderLeft = `3px solid var(--c1)`;
+
+        card.innerHTML = `
+          <div>
+            <span style="font-weight: bold; color: var(--c1); font-family: monospace;">${triggerName}</span>
+            <span style="color: var(--text-muted); margin: 0 8px;">(${rule.count} in ${rule.seconds}s)</span>
+            <span style="color: var(--text-muted); margin: 0 8px;">➜</span>
+            <span style="font-size: 0.85rem; font-family: monospace; font-weight: bold; color: #ef4444;">
+              [Action: ${actionName}]
+            </span>
+          </div>
+          <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 10px; border-color: var(--c1) !important; color: var(--c1) !important; line-height: 1;" onclick="removeAutomodRule('${rule.id}')">Remove</button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function getTextChannels() {
+      const list = [];
+      if (activeLayoutData && activeLayoutData.categories) {
+        activeLayoutData.categories.forEach(cat => {
+          cat.channels.forEach(chan => {
+            if (chan.type === 'text') {
+              list.push(chan);
+            }
+          });
+        });
+      }
+      return list;
+    }
+
     // ── DATA SYNC LOADERS ───────────────────────────────────────────────────
     async function loadGuildSettings() {
       try {
@@ -5268,7 +7091,7 @@
             el.checked = !!data[key];
             el.dispatchEvent(new Event('change'));
           } else {
-            el.value = data[key] || '';
+            el.value = (typeof data[key] === 'object') ? JSON.stringify(data[key]) : (data[key] || '');
           }
         });
 
@@ -5279,6 +7102,42 @@
         // Explicitly initialize parent container toggles
         toggleWelcomeFields();
         toggleGoodbyeFields();
+
+        // Parse and render automod_rules
+        if (data.automod_rules) {
+          try {
+            currentAutomodRules = typeof data.automod_rules === 'string' ? JSON.parse(data.automod_rules) : data.automod_rules;
+            if (!Array.isArray(currentAutomodRules)) {
+              currentAutomodRules = Object.values(currentAutomodRules);
+            }
+          } catch (e) {
+            console.error("Failed to parse automod_rules:", e);
+            currentAutomodRules = [];
+          }
+        } else {
+          currentAutomodRules = [];
+        }
+        document.getElementById('automod_rules').value = JSON.stringify(currentAutomodRules);
+        renderAutomodRulesList();
+
+        // Render leveling advanced lists
+        renderLevelRolesList();
+        renderLevelPermissionsList();
+
+        // Render bot settings dynamic inputs
+        currentPrefixes = [];
+        renderPrefixesList();
+        
+        currentAdminRoles = [];
+        renderAdminRolesList();
+        
+        currentModRoles = [];
+        renderModRolesList();
+        
+        // Sync color picker
+        const colorVal = data.embed_color || '#0affe4';
+        const pickerEl = document.getElementById('bot_embed_color_picker');
+        if (pickerEl) pickerEl.value = colorVal;
       } catch (e) {
         console.error("Failed to load guild settings:", e);
       }
@@ -5484,6 +7343,109 @@
       });
     }
 
+    // ── ECONOMY SHOP MANAGEMENT ─────────────────────────────────────────────
+    async function loadShopItems() {
+      const container = document.getElementById('shop-items-list');
+      if (!container) return;
+      container.innerHTML = '<div style="color: var(--text-muted); font-style: italic;">Loading shop items...</div>';
+      try {
+        const res = await fetch(`/api/guild/${guildId}/shop_items`);
+        const items = await res.json();
+        if (Array.isArray(items)) {
+          renderShopItemsList(items);
+        } else {
+          container.innerHTML = '<div style="color: #ef4444; font-style: italic;">Failed to load shop items.</div>';
+        }
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = '<div style="color: #ef4444; font-style: italic;">Error fetching shop items.</div>';
+      }
+    }
+
+    function renderShopItemsList(items) {
+      const container = document.getElementById('shop-items-list');
+      if (!container) return;
+      if (!items || items.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-style: italic; margin: 0;">No shop items created yet.</p>';
+        return;
+      }
+      
+      let html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+      items.forEach(item => {
+        const emojiStr = item.emoji ? `<span style="margin-right: 5px;">${item.emoji}</span>` : '';
+        const descStr = item.description ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">${item.description}</div>` : '';
+        const roleLabel = item.role_id ? `<span style="background: rgba(10, 255, 228, 0.12); color: var(--c2); border: 1px solid rgba(10, 255, 228, 0.25); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 8px;">Role linked</span>` : '';
+        
+        html += `
+          <div style="padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02); border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.06);">
+            <div>
+              <div style="font-weight: bold; color: #fff; font-size: 0.95rem; display: flex; align-items: center;">
+                ${emojiStr}${item.name}
+                <span style="color: var(--c2); margin-left: 10px; font-size: 0.85rem;">(${item.price} coins)</span>
+                <span style="background: rgba(255, 255, 255, 0.06); color: var(--text-muted); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 8px; text-transform: uppercase;">${item.type || 'item'}</span>
+                ${roleLabel}
+              </div>
+              ${descStr}
+            </div>
+            <button class="btn" onclick="deleteShopItem('${item.name}')" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; padding: 5px 10px; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-size: 0.8rem;" onmouseover="this.style.background='rgba(239, 68, 68, 0.35)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.2)'">
+              Remove
+            </button>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    async function deleteShopItem(itemName) {
+      if (!confirm(`Are you sure you want to delete the shop item "${itemName}"?`)) return;
+      try {
+        showToast("Deleting shop item...", "info");
+        const res = await fetch(`/api/guild/${guildId}/shop_items/${encodeURIComponent(itemName)}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message || "Shop item deleted successfully!", "success");
+          loadShopItems();
+        } else {
+          showToast(data.error || "Failed to delete shop item.", "error");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Error deleting shop item.", "error");
+      }
+    }
+
+    // Intercept saveSettings to refresh shop list when a new item is added
+    if (typeof window.saveSettings === 'function') {
+      const originalSaveSettings = window.saveSettings;
+      window.saveSettings = async function(event, category) {
+        await originalSaveSettings(event, category);
+        if (category === 'economy_shop_add') {
+          const nameInput = document.getElementById('shop_item_name');
+          if (nameInput) nameInput.value = '';
+          loadShopItems();
+        }
+      };
+    } else {
+      // In case window.saveSettings isn't defined yet at execution time, hook it dynamically
+      const timer = setInterval(() => {
+        if (typeof window.saveSettings === 'function') {
+          clearInterval(timer);
+          const originalSaveSettings = window.saveSettings;
+          window.saveSettings = async function(event, category) {
+            await originalSaveSettings(event, category);
+            if (category === 'economy_shop_add') {
+              const nameInput = document.getElementById('shop_item_name');
+              if (nameInput) nameInput.value = '';
+              loadShopItems();
+            }
+          };
+        }
+      }, 50);
+    }
+
     // Dom Load
     document.addEventListener('DOMContentLoaded', () => { 
       initFontSelectorOptions();
@@ -5497,6 +7459,10 @@
       // Render preset card selectors
       renderPresetsGrid('welcome');
       renderPresetsGrid('goodbye');
+
+      {% if is_developer %}
+      loadShopItems();
+      {% endif %}
     });
   </script>
 </body>
