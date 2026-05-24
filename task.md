@@ -6,3 +6,12 @@
 - [ ] Write unit tests for `admin_utils.is_admin` and the decorator behavior.
 - [ ] Update `README.md` with a note about the new admin handling.
 - [ ] Verify bot loads without errors and commands work for admin IDs defined in `.env`.
+- [x] Frontend HTML UI (`server.html`)
+  - [x] Update Mute Role ID field to select dropdown + Create button
+  - [x] Update Mod Log Channel ID field to select dropdown + Create button
+  - [x] Add AutoMod Creator Studio builder layout with triggers, thresholds, actions, and plus button
+- [x] Frontend JavaScript (`server.html` / `dashboard.js`)
+  - [x] Implement dropdown population functions
+  - [x] Implement `createMuteRole` and `createModLogChannel` API call handlers
+  - [x] Implement `addAutomodRule`, `removeAutomodule`, and `renderAutomodRulesList`
+  - [x] Wire settings load parsing logic to read saved rules and populate UI
