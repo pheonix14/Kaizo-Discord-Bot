@@ -534,3 +534,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-24] fix(security): fix mass channel delete shield
 - [2026-05-24] fix(ui): fix server dashboard layout
 - [2026-05-24] refactor(economy): streamline coin minting
+- [2026-05-24] feat(giveaways): add scheduler
