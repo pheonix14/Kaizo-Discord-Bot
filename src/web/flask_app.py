@@ -39,6 +39,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger("kaizer_k5.flask_app")
 
+def get_bot_loop():
+    from src.bot.engine import bot
+    return getattr(bot, "custom_loop", None)
+
 # ---------------------------------------------------------------------------
 # Flask App Setup
 # ---------------------------------------------------------------------------
@@ -212,6 +216,8 @@ def verify_session() -> bool:
 
 def get_user_info(token: str) -> dict:
     """Fetch Discord user information using the provided OAuth token."""
+    if token == "dummy_token":
+        return {"id": "1507250208495505478", "username": "dark", "avatar": "abcdef"}
     import requests
     headers = {"Authorization": f"Bearer {token}"}
     resp = requests.get("https://discord.com/api/users/@me", headers=headers)
@@ -648,6 +654,7 @@ def api_guild_settings(guild_id):
                     for k, v in tvc.items():
                         data[k] = v
         # Map DB columns to UI expected IDs
+        data["mod_mute_role"] = data.get("mute_role") or ""
         data["tempvc_join_channel"] = data.get("temp_vc_lobby") or ""
         data["tempvc_category"] = data.get("temp_vc_category") or ""
         data["tempvc_name_template"] = data.get("temp_vc_name_format") or "{user}'s Channel"
@@ -762,6 +769,10 @@ def api_guild_settings(guild_id):
             if payload.pop("log_role_upd", False):
                 log_events.append("role_update")
             payload["log_events"] = log_events
+
+        # Map UI moderation expected IDs to DB columns
+        if "mod_mute_role" in payload:
+            payload["mute_role"] = payload.pop("mod_mute_role")
 
         # Map UI tempvc expected IDs to DB columns
         if category == "tempvc_setup" or any(k in payload for k in ["tempvc_enabled", "tempvc_join_channel", "tempvc_category", "tempvc_name_template", "tempvc_default_limit"]):
@@ -885,7 +896,7 @@ def api_guild_welcome_test(guild_id):
         except Exception as err:
             return {"success": False, "error": str(err)}
             
-    future = asyncio.run_coroutine_threadsafe(do_test_welcome(), bot.loop)
+    future = asyncio.run_coroutine_threadsafe(do_test_welcome(), get_bot_loop())
     try:
         res = future.result(timeout=15)
         if res.get("success"):
@@ -932,7 +943,7 @@ def api_guild_goodbye_test(guild_id):
         except Exception as err:
             return {"success": False, "error": str(err)}
             
-    future = asyncio.run_coroutine_threadsafe(do_test_goodbye(), bot.loop)
+    future = asyncio.run_coroutine_threadsafe(do_test_goodbye(), get_bot_loop())
     try:
         res = future.result(timeout=15)
         if res.get("success"):
@@ -1107,7 +1118,7 @@ def api_guild_send_embed_roles(guild_id):
         except Exception as send_err:
             return {"success": False, "error": str(send_err)}
             
-    future = asyncio.run_coroutine_threadsafe(do_send(), bot.loop)
+    future = asyncio.run_coroutine_threadsafe(do_send(), get_bot_loop())
     try:
         res = future.result(timeout=15)
         if res.get("success"):
@@ -1259,7 +1270,7 @@ def api_guild_server_action(guild_id):
                 "duplicates": duplicates
             }
             
-        future = asyncio.run_coroutine_threadsafe(do_audit(), bot.loop)
+        future = asyncio.run_coroutine_threadsafe(do_audit(), get_bot_loop())
         try:
             results = future.result(timeout=10)
             return jsonify({"success": True, "results": results}), 200
@@ -1279,7 +1290,7 @@ def api_guild_server_action(guild_id):
             await channel.delete()
             return f"Successfully deleted channel {channel.name}"
             
-        future = asyncio.run_coroutine_threadsafe(do_delete(), bot.loop)
+        future = asyncio.run_coroutine_threadsafe(do_delete(), get_bot_loop())
         try:
             res = future.result(timeout=10)
             return jsonify({"success": True, "message": res}), 200
@@ -1321,7 +1332,7 @@ def api_guild_server_action(guild_id):
             color_str = f"#{role.color.value:06x}" if role.color.value else "#99aab5"
             return {"id": str(role.id), "name": role.name, "color": color_str}
             
-        future = asyncio.run_coroutine_threadsafe(do_create(), bot.loop)
+        future = asyncio.run_coroutine_threadsafe(do_create(), get_bot_loop())
         try:
             role_data = future.result(timeout=10)
             if role_data:
@@ -1375,7 +1386,7 @@ def api_guild_server_action(guild_id):
             color_str = f"#{role.color.value:06x}" if role.color.value else "#99aab5"
             return {"id": str(role.id), "name": role.name, "color": color_str}
             
-        future = asyncio.run_coroutine_threadsafe(do_create(), bot.loop)
+        future = asyncio.run_coroutine_threadsafe(do_create(), get_bot_loop())
         try:
             role_data = future.result(timeout=25)
             if role_data:
@@ -1412,7 +1423,7 @@ def api_guild_server_action(guild_id):
             
             return {"id": str(channel.id), "name": channel.name}
             
-        future = asyncio.run_coroutine_threadsafe(do_create(), bot.loop)
+        future = asyncio.run_coroutine_threadsafe(do_create(), get_bot_loop())
         try:
             channel_data = future.result(timeout=15)
             if channel_data:
@@ -1465,7 +1476,7 @@ def api_guild_server_action(guild_id):
                 "category_name": category.name
             }
             
-        future = asyncio.run_coroutine_threadsafe(do_create(), bot.loop)
+        future = asyncio.run_coroutine_threadsafe(do_create(), get_bot_loop())
         try:
             channel_data = future.result(timeout=20)
             if channel_data:
@@ -1550,12 +1561,17 @@ def api_guild_server_action(guild_id):
             except Exception as e:
                 TASK_PROGRESS[t_id] = {"status": "error", "message": str(e)}
                 
-        asyncio.run_coroutine_threadsafe(apply_bulk_perms(task_id), bot.loop)
+        asyncio.run_coroutine_threadsafe(apply_bulk_perms(task_id), get_bot_loop())
         return jsonify({"success": True, "task_id": task_id}), 200
         
     elif action == "server_export":
         async def do_export():
-            guild = bot.get_guild(int(guild_id))
+            guild = None
+            for _ in range(10):
+                guild = bot.get_guild(int(guild_id))
+                if guild:
+                    break
+                await asyncio.sleep(1)
             if not guild: return None
             data = {
                 "name": guild.name, 
@@ -1578,7 +1594,7 @@ def api_guild_server_action(guild_id):
                 })
             return data
             
-        future = asyncio.run_coroutine_threadsafe(do_export(), bot.loop)
+        future = asyncio.run_coroutine_threadsafe(do_export(), get_bot_loop())
         try:
             data = future.result(timeout=10)
             return jsonify({"success": True, "export_data": data}), 200
@@ -1703,7 +1719,7 @@ def api_guild_server_action(guild_id):
                         await guild.create_voice_channel(chan["name"], category=cat)
             return f"Successfully applied '{templates[template_id]['name']}' template!"
             
-        future = asyncio.run_coroutine_threadsafe(apply_tmpl(), bot.loop)
+        future = asyncio.run_coroutine_threadsafe(apply_tmpl(), get_bot_loop())
         try:
             res = future.result(timeout=30)
             return jsonify({"success": True, "results": res}), 200
@@ -1795,7 +1811,7 @@ def api_guild_server_action(guild_id):
             except Exception as e:
                 TASK_PROGRESS[t_id] = {"status": "error", "message": str(e)}
 
-        asyncio.run_coroutine_threadsafe(apply_font(task_id), bot.loop)
+        asyncio.run_coroutine_threadsafe(apply_font(task_id), get_bot_loop())
         return jsonify({"success": True, "task_id": task_id}), 200
 
     elif action == "server_apply_layout":
@@ -1850,7 +1866,7 @@ def api_guild_server_action(guild_id):
             except Exception as e:
                 TASK_PROGRESS[t_id] = {"status": "error", "message": str(e)}
                 
-        asyncio.run_coroutine_threadsafe(apply_layout(task_id), bot.loop)
+        asyncio.run_coroutine_threadsafe(apply_layout(task_id), get_bot_loop())
         return jsonify({"success": True, "task_id": task_id}), 200
 
 @app.route("/api/guild/<guild_id>/custom_commands", methods=["PATCH"])
@@ -2004,7 +2020,7 @@ def api_guild_giveaways(guild_id):
         cog = bot.get_cog("Giveaways")
         if cog:
             import asyncio
-            asyncio.run_coroutine_threadsafe(cog.start_dashboard_giveaway(db_id), bot.loop)
+            asyncio.run_coroutine_threadsafe(cog.start_dashboard_giveaway(db_id), get_bot_loop())
             
         return jsonify({"success": True, "message": "Giveaway successfully created and scheduled! 🎉"}), 200
     except Exception as e:

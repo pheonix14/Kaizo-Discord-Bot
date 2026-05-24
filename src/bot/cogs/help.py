@@ -6,6 +6,75 @@ import platform
 import time
 from src import config
 
+class HelpPaginationView(discord.ui.View):
+    def __init__(self, ctx: commands.Context, cog_name: str, commands_list: list, per_page: int = 8):
+        super().__init__(timeout=60.0)
+        self.ctx = ctx
+        self.cog_name = cog_name
+        self.commands_list = commands_list
+        self.per_page = per_page
+        self.current_page = 0
+        self.total_pages = (len(commands_list) + per_page - 1) // per_page
+        self.message = None
+
+        self.update_buttons()
+
+    def update_buttons(self):
+        self.prev_btn.disabled = self.current_page == 0
+        self.next_btn.disabled = self.current_page == self.total_pages - 1
+
+    def get_embed(self) -> discord.Embed:
+        start = self.current_page * self.per_page
+        end = start + self.per_page
+        page_cmds = self.commands_list[start:end]
+
+        embed = discord.Embed(
+            title=f"Category: {self.cog_name}",
+            description=f"Commands sorted alphabetically (A-Z). Use `{self.ctx.prefix}help <command>` for usage details.",
+            color=0x3498DB
+        )
+
+        for cmd in page_cmds:
+            desc = cmd.description or cmd.help or "No description provided."
+            if len(desc) > 100:
+                desc = desc[:97] + "..."
+            
+            usage = f"`{self.ctx.prefix}{cmd.qualified_name}`"
+            embed.add_field(
+                name=usage,
+                value=desc,
+                inline=False
+            )
+
+        embed.set_footer(text=f"Page {self.current_page + 1} of {self.total_pages} • Total Commands: {len(self.commands_list)}")
+        return embed
+
+    @discord.ui.button(label="◀ Previous", style=discord.ButtonStyle.secondary, custom_id="help_prev")
+    async def prev_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            return await interaction.response.send_message("This help menu is not yours!", ephemeral=True)
+            
+        self.current_page -= 1
+        self.update_buttons()
+        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+
+    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.primary, custom_id="help_next")
+    async def next_btn(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if interaction.user != self.ctx.author:
+            return await interaction.response.send_message("This help menu is not yours!", ephemeral=True)
+            
+        self.current_page += 1
+        self.update_buttons()
+        await interaction.response.edit_message(embed=self.get_embed(), view=self)
+
+    async def on_timeout(self):
+        for child in self.children:
+            child.disabled = True
+        try:
+            await self.message.edit(view=self)
+        except Exception:
+            pass
+
 class HelpCog(commands.Cog, name="Help"):
     """Help, bot info, and documentation commands."""
 
@@ -17,7 +86,7 @@ class HelpCog(commands.Cog, name="Help"):
     
     @commands.hybrid_command(name="help", description="View the main help menu or info about a specific command.")
     @app_commands.describe(command="Specific command or category to get help for")
-    async def help_cmd(self, ctx: commands.Context, command: str = None):
+    async def help_cmd(self, ctx: commands.Context, *, command: str = None):
         if command:
             # Try to find command
             cmd = self.bot.get_command(command)
@@ -29,15 +98,33 @@ class HelpCog(commands.Cog, name="Help"):
                     embed.add_field(name="Aliases", value=", ".join(cmd.aliases), inline=False)
                 return await ctx.send(embed=embed)
                 
-            # Try to find cog/category
-            cog = self.bot.get_cog(command.title())
+            # Try to find cog/category case-insensitively and handle variations
+            cog = None
+            norm_command = command.lower().replace(" ", "").replace("_", "").replace("-", "")
+            for c_name, c_obj in self.bot.cogs.items():
+                norm_cog = c_name.lower().replace(" ", "").replace("_", "").replace("-", "")
+                if norm_cog == norm_command:
+                    cog = c_obj
+                    break
+
             if cog:
-                embed = discord.Embed(title=f"Category: {cog.qualified_name}", description=cog.description, color=0x3498DB)
-                cmds = cog.get_commands()
-                if cmds:
-                    cmd_list = ", ".join(f"`{c.name}`" for c in cmds if not c.hidden)
-                    embed.add_field(name="Commands", value=cmd_list or "None", inline=False)
-                return await ctx.send(embed=embed)
+                # Filter out hidden commands and sort alphabetically A-Z by name
+                cmds = sorted([c for c in cog.get_commands() if not c.hidden], key=lambda c: c.name)
+                if not cmds:
+                    return await ctx.send(f"No active commands found in the {cog.qualified_name} category.")
+                
+                if len(cmds) <= 8:
+                    embed = discord.Embed(title=f"Category: {cog.qualified_name}", description=cog.description or "No description.", color=0x3498DB)
+                    for cmd in cmds:
+                        desc = cmd.description or cmd.help or "No description provided."
+                        embed.add_field(name=f"`{ctx.prefix}{cmd.qualified_name}`", value=desc, inline=False)
+                    embed.set_footer(text=f"Total Commands: {len(cmds)}")
+                    return await ctx.send(embed=embed)
+                
+                view = HelpPaginationView(ctx, cog.qualified_name, cmds)
+                msg = await ctx.send(embed=view.get_embed(), view=view)
+                view.message = msg
+                return
                 
             return await ctx.send("Command or category not found.")
             

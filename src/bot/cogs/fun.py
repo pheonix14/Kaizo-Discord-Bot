@@ -543,5 +543,18 @@ class FunCog(commands.Cog, name="Fun"):
                 
             await ctx.send(f"{stages[6-lives]}\nWord: `{disp}`\nGuessed: {', '.join(sorted(guessed))}")
 
+    async def cog_load(self):
+        # Dynamically register top-level prefix commands for all subcommands of the 'fun' group
+        # Using standard commands.command to avoid exceeding Discord's 100 slash command limit
+        for cmd in list(self.fun.commands):
+            top_cmd = commands.command(
+                name=cmd.name,
+                description=cmd.description,
+                help=cmd.help
+            )(cmd.callback)
+            top_cmd.cog = self
+            top_cmd.checks = cmd.checks.copy()
+            self.bot.add_command(top_cmd)
+
 async def setup(bot: commands.Bot):
     await bot.add_cog(FunCog(bot))
