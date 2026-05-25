@@ -57,6 +57,25 @@ app = Flask(
 # Use a secret key for secure signed cookies
 app.secret_key = os.getenv("FLASK_SECRET_KEY", secrets.token_hex(16))
 
+# Setup Mode Interceptor
+@app.before_request
+def check_configuration():
+    if not getattr(config, "IS_CONFIGURED", False):
+        # Allow static files to be served so the setup page looks premium
+        if request.path.startswith('/static/'):
+            return None
+        
+        # Otherwise, render setup_error page
+        missing_vars = []
+        if not getattr(config, "SUPABASE_URL", None):
+            missing_vars.append("SUPABASE_URL")
+        if not getattr(config, "SUPABASE_SERVICE_ROLE_KEY", None):
+            missing_vars.append("SUPABASE_SERVICE_ROLE_KEY")
+        if not getattr(config, "DISCORD_BOT_TOKEN", None):
+            missing_vars.append("DISCORD_BOT_TOKEN")
+            
+        return render_template("setup_error.html", missing_vars=missing_vars)
+
 # Register template helper for Discord invite URL
 @app.context_processor
 def inject_globals():
@@ -69,7 +88,17 @@ def inject_globals():
 # Supabase client
 # ---------------------------------------------------------------------------
 
-supabase:Client = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY)
+supabase = None
+if getattr(config, "IS_CONFIGURED", False):
+    try:
+        supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY)
+    except Exception as e:
+        logger.critical(f"Failed to initialize Supabase client in flask_app: {e}")
+        from src.db.client import DummySupabaseClient
+        supabase = DummySupabaseClient()
+else:
+    from src.db.client import DummySupabaseClient
+    supabase = DummySupabaseClient()
 
 import datetime
 
@@ -196,7 +225,15 @@ def get_redirect_uri() -> str:
     env_redirect = os.getenv("DISCORD_REDIRECT_URI")
     if env_redirect:
         return env_redirect
-    return request.host_url.rstrip("/") + "/callback"
+    
+    # Check if behind proxy (Render SSL termination)
+    scheme = request.headers.get("X-Forwarded-Proto", "http")
+    if request.is_secure or scheme == "https":
+        base_url = "https://" + request.host
+    else:
+        base_url = request.host_url.rstrip("/")
+        
+    return base_url.rstrip("/") + "/callback"
 
 def verify_session() -> bool:
     """Validate the signed session cookie.
