@@ -13,7 +13,7 @@ TEST_URIS = [
 ]
 
 def test_uri(uri):
-    url = f"https://discord.com/api/oauth2/authorize?client_id={CLIENT_ID}&redirect_uri={uri}&response_type=code&scope=identify%20guilds"
+    url = f"https://discord.com/oauth2/authorize?client_id={CLIENT_ID}&redirect_uri={uri}&response_type=code&scope=identify%20guilds"
     print(f"Testing: {uri}")
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
