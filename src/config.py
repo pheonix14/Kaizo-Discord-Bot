@@ -58,3 +58,55 @@ if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY or not DISCORD_BOT_TOKEN:
     )
     IS_CONFIGURED = False
 
+
+def check_and_reload():
+    global SUPABASE_URL, SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_SECRET_KEY, SUPABASE_PUBLISHABLE_KEY
+    global DISCORD_APP_ID, DISCORD_BOT_TOKEN, DISCORD_CLIENT_SECRET, DEVELOPER_ID, IS_CONFIGURED
+    if not IS_CONFIGURED:
+        from dotenv import load_dotenv
+        from supabase import create_client
+        
+        load_dotenv(dotenv_path=env_path, override=True)
+        
+        url = os.getenv("SUPABASE_URL")
+        key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        token = os.getenv("DISCORD_BOT_TOKEN")
+        
+        if url and key and token:
+            SUPABASE_URL = url
+            SUPABASE_SERVICE_ROLE_KEY = key
+            DISCORD_BOT_TOKEN = token
+            SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+            SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY")
+            SUPABASE_PUBLISHABLE_KEY = os.getenv("SUPABASE_PUBLISHABLE_KEY")
+            DISCORD_APP_ID = os.getenv("DISCORD_APP_ID")
+            DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
+            DEVELOPER_ID = str(os.getenv("DEVELOPER_ID", "")).strip()
+            
+            if not DISCORD_APP_ID and DISCORD_BOT_TOKEN:
+                try:
+                    import base64
+                    token_parts = DISCORD_BOT_TOKEN.split('.')
+                    if len(token_parts) > 0:
+                        client_id_b64 = token_parts[0]
+                        padding = len(client_id_b64) % 4
+                        if padding:
+                            client_id_b64 += '=' * (4 - padding)
+                        decoded_bytes = base64.b64decode(client_id_b64)
+                        decoded_id = decoded_bytes.decode('utf-8').strip()
+                        if decoded_id.isdigit():
+                            DISCORD_APP_ID = decoded_id
+                except Exception:
+                    pass
+            
+            IS_CONFIGURED = True
+            
+            # Re-initialize Supabase client in db_client
+            from src.db import client as db_client
+            try:
+                db_client.supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+                db_client.logger.info("Successfully re-initialized Supabase client dynamically.")
+            except Exception as e:
+                db_client.logger.critical(f"Failed to initialize Supabase client: {e}")
+
+

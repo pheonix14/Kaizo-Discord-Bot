@@ -60,6 +60,9 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", secrets.token_hex(16))
 # Setup Mode Interceptor
 @app.before_request
 def check_configuration():
+    if hasattr(config, "check_and_reload"):
+        config.check_and_reload()
+        
     if not getattr(config, "IS_CONFIGURED", False):
         # Allow static files to be served so the setup page looks premium
         if request.path.startswith('/static/'):
@@ -75,6 +78,16 @@ def check_configuration():
             missing_vars.append("DISCORD_BOT_TOKEN")
             
         return render_template("setup_error.html", missing_vars=missing_vars)
+    else:
+        # Re-initialize the local flask_app.py supabase client if it's currently None or a Dummy client
+        global supabase
+        from src.db.client import DummySupabaseClient
+        if supabase is None or isinstance(supabase, DummySupabaseClient):
+            try:
+                supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY)
+                logger.info("Successfully re-initialized local Supabase client in flask_app dynamically.")
+            except Exception as e:
+                logger.critical(f"Failed to initialize local Supabase client in flask_app on reload: {e}")
 
 # Register template helper for Discord invite URL
 @app.context_processor
