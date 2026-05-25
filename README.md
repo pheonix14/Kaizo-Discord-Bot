@@ -118,3 +118,17 @@ This project contains a [`render.yaml`](file:///c:/Users/acer/Desktop/kaizer%20k
 2. Link your GitHub account to [Render](https://render.com).
 3. Click **New +** -> **Blueprint Route** and select your repository.
 4. Input your environment credentials under Render's environment section and deploy.
+
+### ⚙️ Graceful Setup Mode (Render Support)
+To prevent deployment failure due to missing configuration during the initial deploy, Kaizer K5 boots in a visual **Setup Mode** if required variables are absent:
+- The Flask web server will run and bind to the target port, satisfying Render's health checks.
+- Visiting your app URL will show a premium **Setup Required** dashboard indicating which configuration variables are missing.
+- Once the variables are added in your Render environment settings, the system will automatically reload and boot the Discord Bot along with the full security dashboard.
+
+### 🔑 Required Environment Variables
+Specify these variables in the **Environment** settings tab of your Render Web Service:
+- `SUPABASE_URL`: Your Supabase Project API URL.
+- `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase Service Role JWT key (bypasses RLS).
+- `DISCORD_BOT_TOKEN`: The authorization token for your Discord bot application.
+- `DISCORD_APP_ID`: (Optional) Your Discord Application Client ID.
+- `DEVELOPER_ID`: (Optional) Your Discord User ID for developer commands restriction.
