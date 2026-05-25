@@ -543,3 +543,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-25] refactor(fun): streamline text scrambler
 - [2026-05-25] feat(ui): harden settings forms
 - [2026-05-25] refactor(engine): streamline event loop dispatcher
+- [2026-05-25] refactor(docs): refactor commands guide
