@@ -239,12 +239,17 @@ def get_redirect_uri() -> str:
     if env_redirect:
         return env_redirect
     
-    # Check if behind proxy (Render SSL termination)
-    scheme = request.headers.get("X-Forwarded-Proto", "http")
-    if request.is_secure or scheme == "https":
-        base_url = "https://" + request.host
+    host = request.host
+    # Force HTTPS in production (non-localhost environments) to prevent scheme mismatches behind proxies
+    if "localhost" not in host and "127.0.0.1" not in host:
+        base_url = "https://" + host
     else:
-        base_url = request.host_url.rstrip("/")
+        # Check if behind proxy (Render SSL termination)
+        scheme = request.headers.get("X-Forwarded-Proto", "http")
+        if request.is_secure or scheme == "https":
+            base_url = "https://" + host
+        else:
+            base_url = request.host_url.rstrip("/")
         
     return base_url.rstrip("/") + "/callback"
 
