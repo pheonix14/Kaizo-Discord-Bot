@@ -6,24 +6,16 @@ from dotenv import load_dotenv
 env_path = Path(__file__).parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
 
-def clean_env_var(val):
-    if val is None:
-        return None
-    val_str = str(val).strip()
-    if (val_str.startswith('"') and val_str.endswith('"')) or (val_str.startswith("'") and val_str.endswith("'")):
-        return val_str[1:-1].strip()
-    return val_str
-
 # Supabase Configurations
-SUPABASE_URL = clean_env_var(os.getenv("SUPABASE_URL"))
-SUPABASE_ANON_KEY = clean_env_var(os.getenv("SUPABASE_ANON_KEY"))
-SUPABASE_SERVICE_ROLE_KEY = clean_env_var(os.getenv("SUPABASE_SERVICE_ROLE_KEY"))
-SUPABASE_SECRET_KEY = clean_env_var(os.getenv("SUPABASE_SECRET_KEY"))
-SUPABASE_PUBLISHABLE_KEY = clean_env_var(os.getenv("SUPABASE_PUBLISHABLE_KEY"))
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY")
+SUPABASE_PUBLISHABLE_KEY = os.getenv("SUPABASE_PUBLISHABLE_KEY")
 
-DISCORD_APP_ID = clean_env_var(os.getenv("DISCORD_APP_ID"))
-DISCORD_BOT_TOKEN = clean_env_var(os.getenv("DISCORD_BOT_TOKEN"))
-DISCORD_CLIENT_SECRET = clean_env_var(os.getenv("DISCORD_CLIENT_SECRET"))
+DISCORD_APP_ID = os.getenv("DISCORD_APP_ID")
+DISCORD_BOT_TOKEN = os.getenv("DISCORD_BOT_TOKEN")
+DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
 
 # Extract Client/App ID from Bot Token if not explicitly set
 if not DISCORD_APP_ID and DISCORD_BOT_TOKEN:
@@ -76,20 +68,20 @@ def check_and_reload():
         
         load_dotenv(dotenv_path=env_path, override=True)
         
-        url = clean_env_var(os.getenv("SUPABASE_URL"))
-        key = clean_env_var(os.getenv("SUPABASE_SERVICE_ROLE_KEY"))
-        token = clean_env_var(os.getenv("DISCORD_BOT_TOKEN"))
+        url = os.getenv("SUPABASE_URL")
+        key = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        token = os.getenv("DISCORD_BOT_TOKEN")
         
         if url and key and token:
             SUPABASE_URL = url
             SUPABASE_SERVICE_ROLE_KEY = key
             DISCORD_BOT_TOKEN = token
-            SUPABASE_ANON_KEY = clean_env_var(os.getenv("SUPABASE_ANON_KEY"))
-            SUPABASE_SECRET_KEY = clean_env_var(os.getenv("SUPABASE_SECRET_KEY"))
-            SUPABASE_PUBLISHABLE_KEY = clean_env_var(os.getenv("SUPABASE_PUBLISHABLE_KEY"))
-            DISCORD_APP_ID = clean_env_var(os.getenv("DISCORD_APP_ID"))
-            DISCORD_CLIENT_SECRET = clean_env_var(os.getenv("DISCORD_CLIENT_SECRET"))
-            DEVELOPER_ID = clean_env_var(os.getenv("DEVELOPER_ID", ""))
+            SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
+            SUPABASE_SECRET_KEY = os.getenv("SUPABASE_SECRET_KEY")
+            SUPABASE_PUBLISHABLE_KEY = os.getenv("SUPABASE_PUBLISHABLE_KEY")
+            DISCORD_APP_ID = os.getenv("DISCORD_APP_ID")
+            DISCORD_CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
+            DEVELOPER_ID = str(os.getenv("DEVELOPER_ID", "")).strip()
             
             if not DISCORD_APP_ID and DISCORD_BOT_TOKEN:
                 try:

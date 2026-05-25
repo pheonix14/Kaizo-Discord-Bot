@@ -180,7 +180,7 @@ class HelpCog(commands.Cog, name="Help"):
         
         client_id = config.DISCORD_APP_ID or "1507250208495505478"
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="Invite Me", url=f"https://discord.com/api/oauth2/authorize?client_id={client_id}&permissions=8&scope=bot%20applications.commands"))
+        view.add_item(discord.ui.Button(label="Invite Me", url=f"https://discord.com/oauth2/authorize?client_id={client_id}&permissions=8&scope=bot%20applications.commands"))
         view.add_item(discord.ui.Button(label="Support Server", url="https://discord.gg/kaizer"))
         view.add_item(discord.ui.Button(label="Dashboard", url=config.HOST_URL))
         
@@ -223,7 +223,7 @@ class HelpCog(commands.Cog, name="Help"):
         client_id = config.DISCORD_APP_ID or "1507250208495505478"
         embed = discord.Embed(title="Invite KAIZER K5", description="Click the button below to invite me to your server!", color=0x3498DB)
         view = discord.ui.View()
-        view.add_item(discord.ui.Button(label="Invite Link", url=f"https://discord.com/api/oauth2/authorize?client_id={client_id}&permissions=8&scope=bot%20applications.commands"))
+        view.add_item(discord.ui.Button(label="Invite Link", url=f"https://discord.com/oauth2/authorize?client_id={client_id}&permissions=8&scope=bot%20applications.commands"))
         await ctx.send(embed=embed, view=view)
 
     @commands.hybrid_command(name="support", description="Get the support server link.")

@@ -63,22 +63,7 @@ def check_configuration():
     if hasattr(config, "check_and_reload"):
         config.check_and_reload()
         
-    if not getattr(config, "IS_CONFIGURED", False):
-        # Allow static files to be served so the setup page looks premium
-        if request.path.startswith('/static/'):
-            return None
-        
-        # Otherwise, render setup_error page
-        missing_vars = []
-        if not getattr(config, "SUPABASE_URL", None):
-            missing_vars.append("SUPABASE_URL")
-        if not getattr(config, "SUPABASE_SERVICE_ROLE_KEY", None):
-            missing_vars.append("SUPABASE_SERVICE_ROLE_KEY")
-        if not getattr(config, "DISCORD_BOT_TOKEN", None):
-            missing_vars.append("DISCORD_BOT_TOKEN")
-            
-        return f"<h1>Setup Required</h1><p>Missing environment variables: {', '.join(missing_vars)}</p><p>Please make sure they are defined in your <code>.env</code> file at the root folder.</p>", 500
-    else:
+    if getattr(config, "IS_CONFIGURED", False):
         # Re-initialize the local flask_app.py supabase client if it's currently None or a Dummy client
         global supabase
         from src.db.client import DummySupabaseClient
@@ -237,13 +222,9 @@ def get_redirect_uri() -> str:
     """Build the OAuth2 callback redirect URL dynamically based on the current request domain."""
     env_redirect = os.getenv("DISCORD_REDIRECT_URI")
     if env_redirect:
-        # Strip quotes if present
-        env_redirect = env_redirect.strip()
-        if (env_redirect.startswith('"') and env_redirect.endswith('"')) or (env_redirect.startswith("'") and env_redirect.endswith("'")):
-            env_redirect = env_redirect[1:-1].strip()
         return env_redirect
     
-    host = request.host.split(":")[0]  # Strip any port number
+    host = request.host
     # Force HTTPS in production (non-localhost environments) to prevent scheme mismatches behind proxies
     if "localhost" not in host and "127.0.0.1" not in host:
         base_url = "https://" + host
@@ -337,7 +318,7 @@ def login():
         "scope": "identify guilds",
         "state": state,
     }
-    url = f"https://discord.com/api/oauth2/authorize?{urlencode(params)}"
+    url = f"https://discord.com/oauth2/authorize?{urlencode(params)}"
     resp = make_response(redirect(url))
     # Store state in a temporary signed cookie (expires in 10 min)
     payload = json.dumps({"state": state, "expires": time.time() + 600})

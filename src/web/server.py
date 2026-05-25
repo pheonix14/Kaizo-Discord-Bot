@@ -36,7 +36,7 @@ def get_invite_url(request: Request) -> str:
     encoded_redirect = quote_plus(redirect_uri)
     # Use appropriate OAuth2 scopes for login (identify and email). Exclude bot permissions.
     scope = "identify%20email"
-    return f"https://discord.com/api/oauth2/authorize?client_id={client_id}&redirect_uri={encoded_redirect}&response_type=code&scope={scope}"
+    return f"https://discord.com/oauth2/authorize?client_id={client_id}&redirect_uri={encoded_redirect}&response_type=code&scope={scope}"
 
 templates.env.globals["get_invite_url"] = get_invite_url
 
