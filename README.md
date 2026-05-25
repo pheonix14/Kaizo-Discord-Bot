@@ -112,23 +112,21 @@ All administration commands require **Administrator** permissions:
 
 ---
 
-## 📦 Deployment to Render
-This project contains a [`render.yaml`](file:///c:/Users/acer/Desktop/kaizer%20k5/render.yaml) file for blueprint deployments:
-1. Push this workspace to your GitHub repository.
-2. Link your GitHub account to [Render](https://render.com).
-3. Click **New +** -> **Blueprint Route** and select your repository.
-4. Input your environment credentials under Render's environment section and deploy.
+## 📦 One-Click Deployment to Render & Replit
+This project supports zero-friction, one-click deployments by utilizing your local `.env` file containing all configuration values.
 
-### ⚙️ Graceful Setup Mode (Render Support)
-To prevent deployment failure due to missing configuration during the initial deploy, Kaizer K5 boots in a visual **Setup Mode** if required variables are absent:
-- The Flask web server will run and bind to the target port, satisfying Render's health checks.
-- Visiting your app URL will show a premium **Setup Required** dashboard indicating which configuration variables are missing.
-- Once the variables are added in your Render environment settings, the system will automatically reload and boot the Discord Bot along with the full security dashboard.
+### How to Deploy:
+1. Make sure your root directory contains a `.env` file with all the correct credentials (e.g. `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DISCORD_BOT_TOKEN`, etc.).
+2. **Render**:
+   - Link your GitHub repository to [Render](https://render.com). Since your `.env` contains sensitive variables, ensure your repository is **private**.
+   - Create a new **Blueprint** service, select your repository, and click **Apply**.
+   - Render will deploy the application directly in one click. No manual environment variable entry is required.
+3. **Replit**:
+   - Upload the workspace files directly to Replit (ensure `.env` is included).
+   - Replit automatically loads `.env` files into the execution environment. Simply click the **Run** button to deploy.
 
-### 🔑 Required Environment Variables
-Specify these variables in the **Environment** settings tab of your Render Web Service:
-- `SUPABASE_URL`: Your Supabase Project API URL.
-- `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase Service Role JWT key (bypasses RLS).
-- `DISCORD_BOT_TOKEN`: The authorization token for your Discord bot application.
-- `DISCORD_APP_ID`: (Optional) Your Discord Application Client ID.
-- `DEVELOPER_ID`: (Optional) Your Discord User ID for developer commands restriction.
+### ⚙️ Graceful Setup Mode
+If you boot the project without the required environment variables in `.env` (or in the system environment):
+- The Flask web server will still run and bind to the target port, satisfying deployment health checks.
+- Visiting the app URL will show a **Setup Required** dashboard indicating which variables are missing.
+- As soon as the `.env` file is uploaded or environment variables are configured, the system will automatically load them and boot the Discord Bot and admin dashboard.

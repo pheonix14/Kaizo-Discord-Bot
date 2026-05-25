@@ -66,9 +66,12 @@ async def run_bot():
     """Start the Discord Bot client with automatic reconnect/retry logic."""
     if not getattr(config, "IS_CONFIGURED", False):
         logger.warning("Bot is running in setup mode. Discord connection disabled.")
-        # Sleep forever to keep the task alive so it doesn't trigger FIRST_COMPLETED and stop the web server
-        while True:
-            await asyncio.sleep(3600)
+        # Poll config.check_and_reload() until config.IS_CONFIGURED is True
+        while not getattr(config, "IS_CONFIGURED", False):
+            if hasattr(config, "check_and_reload"):
+                config.check_and_reload()
+            await asyncio.sleep(2)
+        logger.info("Configuration detected! Exiting setup mode for Bot.")
 
     logger.info("Initializing Discord Bot Client...")
     retry_delay = 5

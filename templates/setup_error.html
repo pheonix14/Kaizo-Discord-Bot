@@ -247,7 +247,7 @@
                 <h1 class="setup-title display">SETUP REQUIRED</h1>
                 <p class="setup-subtitle">
                     Project Kaizer K5 has successfully booted in <strong>Setup Mode</strong>. 
-                    Please define the missing environment variables in your deployment dashboard to unlock full functionality.
+                    Please ensure that your <strong>.env</strong> file containing all required credentials is uploaded at the root directory of your project, or define them in your environment settings to unlock full functionality.
                 </p>
             </div>
 
@@ -283,30 +283,24 @@
 
             <!-- Instruction Steps -->
             <div class="instruction-section">
-                <h2 class="instruction-title">Instructions for Render</h2>
+                <h2 class="instruction-title">Instructions for Zero-Configuration Deployment</h2>
                 <ul class="instruction-steps">
                     <li class="step-item">
                         <div class="step-number">1</div>
                         <div class="step-content">
-                            Go to your <strong>Render Dashboard</strong> and select this web service.
+                            Ensure a <strong>.env</strong> file exists at the root of your project directory containing the missing variables.
                         </div>
                     </li>
                     <li class="step-item">
                         <div class="step-number">2</div>
                         <div class="step-content">
-                            Click on the <strong>Environment</strong> tab in the sidebar menu.
+                            Upload or push all files (including the <strong>.env</strong> file) to your Replit workspace or GitHub repository.
                         </div>
                     </li>
                     <li class="step-item">
                         <div class="step-number">3</div>
                         <div class="step-content">
-                            Add the environment variables listed above as <strong>Missing</strong> with their correct values.
-                        </div>
-                    </li>
-                    <li class="step-item">
-                        <div class="step-number">4</div>
-                        <div class="step-content">
-                            Click <strong>Save Changes</strong>. Render will automatically build and restart your service.
+                            Click <strong>Deploy</strong> or trigger a commit-push. The system will automatically read your <strong>.env</strong> file and start up instantly without any manual configuration!
                         </div>
                     </li>
                 </ul>
