@@ -95,7 +95,7 @@ def inject_globals():
     def get_invite_url(req=None):
         client_id = config.DISCORD_APP_ID or "1507250208495505478"
         return f"https://discord.com/oauth2/authorize?client_id={client_id}&permissions=8&scope=bot%20applications.commands"
-    return dict(get_invite_url=get_invite_url)
+    return dict(get_invite_url=get_invite_url, get_redirect_uri=get_redirect_uri)
 
 # ---------------------------------------------------------------------------
 # Supabase client
