@@ -117,10 +117,10 @@ This project supports zero-friction, one-click deployments by utilizing your loc
 
 ### How to Deploy:
 1. Make sure your root directory contains a `.env` file with all the correct credentials (e.g. `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `DISCORD_BOT_TOKEN`, etc.).
-2. **Render**:
+2. **Render (Docker Deployment)**:
    - Link your GitHub repository to [Render](https://render.com). Since your `.env` contains sensitive variables, ensure your repository is **private**.
    - Create a new **Blueprint** service, select your repository, and click **Apply**.
-   - Render will deploy the application directly in one click. No manual environment variable entry is required.
+   - Render will automatically build the `Dockerfile` and deploy the application directly in one click. No manual environment variable entry or setup commands are required.
 3. **Replit**:
    - Upload the workspace files directly to Replit (ensure `.env` is included).
    - Replit automatically loads `.env` files into the execution environment. Simply click the **Run** button to deploy.
