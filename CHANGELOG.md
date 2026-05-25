@@ -548,3 +548,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-25] refactor(perf): refactor asyncio task pooling
 - [2026-05-25] feat(giveaways): implement reaction entrant collector
 - [2026-05-25] refactor(automod): streamline action triggers
+- [2026-05-25] feat(temp-vc): add auto channel deletion on empty
