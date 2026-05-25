@@ -158,6 +158,10 @@
                                 <a href="/dashboard" class="portal-btn portal-btn-secondary">Manage Servers</a>
                                 <a href="{{ get_invite_url() | safe }}" target="_blank" class="portal-btn portal-btn-secondary">Invite Bot</a>
                             </div>
+                            <div style="font-size: 11px; color: rgba(255, 255, 255, 0.4); margin-top: 20px; line-height: 1.4; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+                                💡 <strong>Getting "Invalid Redirect"?</strong> Add this to your Discord Developer Portal -> OAuth2 -> Redirects:<br>
+                                <code style="background: rgba(255,255,255,0.08); padding: 2px 6px; border-radius: 4px; color: var(--gold); display: inline-block; margin-top: 5px; font-family: monospace;">{{ get_redirect_uri() }}</code>
+                            </div>
                         </div>
                     {% endif %}
                 </div>
