@@ -2627,21 +2627,8 @@
           <h3 style="margin-bottom:10px;">Setup</h3>
           <form onsubmit="saveSettings(event,'tempvc_setup')">
             <label class="switch" style="margin-bottom:15px;"><input type="checkbox" id="tempvc_enabled" checked><span class="slider"></span><span style="margin-left:55px;color:white;">Enable Temp VC System</span></label>
-            <div class="form-group">
-              <label class="form-label">Join-to-Create Voice Channel</label>
-              <div style="display: flex; gap: 10px;">
-                <select class="form-select" id="tempvc_join_channel" style="flex: 1;">
-                  <option value="">-- Choose Voice Channel --</option>
-                </select>
-                <button type="button" class="btn btn-secondary" onclick="createTempVCLobbyPrompt()" style="padding: 8px 16px; font-size: 10px; border-color: var(--c2) !important; color: var(--c2) !important; text-transform: uppercase;">Create Lobby VC</button>
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="form-label">Creation Category</label>
-              <select class="form-select" id="tempvc_category">
-                <option value="">-- Choose Category --</option>
-              </select>
-            </div>
+            <div class="form-group"><label class="form-label">Join-to-Create Channel ID</label><input type="text" class="form-control" id="tempvc_join_channel" placeholder="Users join this VC to create their own"></div>
+            <div class="form-group"><label class="form-label">Creation Category ID</label><input type="text" class="form-control" id="tempvc_category" placeholder="Where new temp VCs appear"></div>
             <div class="form-group"><label class="form-label">Default Name Template (use {user}, {count})</label><input type="text" class="form-control" id="tempvc_name_template" value="{user}'s Channel"></div>
             <div class="form-group"><label class="form-label">Default User Limit (0 = unlimited)</label><input type="number" class="form-control" id="tempvc_default_limit" value="0" min="0" max="99"></div>
             <button type="submit" class="btn btn-primary">Save Temp VC</button>
@@ -4235,7 +4222,6 @@
     }
 
     let activeLayoutData = null;
-    let fetchRetries = 0;
 
     async function fetchServerLayout() {
       const resContainer = document.getElementById('layout-results');
@@ -4292,30 +4278,13 @@
           if (gwChannelSelect) gwChannelSelect.innerHTML = '<option value="">-- Select Channel --</option>';
           if (logChannelSelect) logChannelSelect.innerHTML = '<option value="">-- Choose Log Channel --</option>';
           
-          const tempvcJoinSelect = document.getElementById('tempvc_join_channel');
-          const tempvcCatSelect = document.getElementById('tempvc_category');
-          if (tempvcJoinSelect) tempvcJoinSelect.innerHTML = '<option value="">-- Choose Voice Channel --</option>';
-          if (tempvcCatSelect) tempvcCatSelect.innerHTML = '<option value="">-- Choose Category --</option>';
-          
-           activeLayoutData.categories.forEach(cat => {
-            if (tempvcCatSelect && cat.id !== 'none') {
-               const catOpt = document.createElement('option');
-               catOpt.value = cat.id;
-               catOpt.innerText = cat.name;
-               tempvcCatSelect.appendChild(catOpt);
-            }
+          activeLayoutData.categories.forEach(cat => {
             html += `<div style="margin-bottom:15px;">
               <h4 style="color:var(--c2); margin-bottom:10px; font-weight:bold;">${cat.name}</h4>
               <div style="margin-left:15px;">`;
             
             cat.channels.forEach(chan => {
               const icon = chan.type === 'voice' ? '☊' : '#';
-              if (chan.type === 'voice' && tempvcJoinSelect) {
-                 const tvcOpt = document.createElement('option');
-                 tvcOpt.value = chan.id;
-                 tvcOpt.innerText = `☊ ${chan.name} (${cat.name})`;
-                 tempvcJoinSelect.appendChild(tvcOpt);
-              }
               
               // Add to Target Channel Select
               if (targetSelect) {
@@ -4378,26 +4347,19 @@
           // Re-trigger live preview so role options populate inside card buttons
           updateLiveEmbedPreview();
           handleTargetChannelChange();
-          repopulateAllRoleDropdowns(roles);
+          populateLevelingRolesDropdowns(roles);
+          populateTicketsDropdowns(roles);
+          populateCustomCommandsRoles(roles);
+          populateGiveawayRolesSelect(roles);
+          populateModerationDropdowns(roles);
+          populateBotSettingsRoles(roles);
           loadCustomCommands();
           loadGuildSettings();
-          // Reset retries on success
-          fetchRetries = 0;
         } else {
           resContainer.innerHTML = 'Failed to fetch layout.';
-          if (fetchRetries < 5) {
-             fetchRetries++;
-             resContainer.innerHTML = `Bot is starting up/connecting to Discord... Retrying in 3 seconds (Attempt ${fetchRetries}/5)...`;
-             setTimeout(fetchServerLayout, 3000);
-          }
         }
       } catch (e) {
         resContainer.innerHTML = 'Network error.';
-        if (fetchRetries < 5) {
-           fetchRetries++;
-           resContainer.innerHTML = `Network error. Retrying in 3s (Attempt ${fetchRetries}/5)...`;
-           setTimeout(fetchServerLayout, 3000);
-        }
       }
     }
 
@@ -4843,44 +4805,6 @@
         }
       } catch (e) {
         container.innerHTML = 'Failed to load active temp VCs.';
-      }
-    }
-
-    async function createTempVCLobbyPrompt() {
-      const lobbyName = window.prompt("Enter Voice Channel Lobby Name:", "Join to Create");
-      if (lobbyName === null) return;
-      const name = lobbyName.trim() || "Join to Create";
-      
-      const isPrivate = window.confirm("Make this a private Voice Channel (only accessible by members who are invited or have overrides)?");
-      
-      try {
-        showToast("Creating Lobby Voice Channel...", "info");
-        const res = await fetch(`/api/guild/${guildId}/server-action`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            action: 'create_temp_vc_lobby', 
-            lobby_name: name,
-            is_private: isPrivate 
-          })
-        });
-        const data = await res.json().catch(() => ({}));
-        if (data.success && data.channel) {
-          showToast(`Lobby Voice Channel "${data.channel.name}" created successfully!`, 'success');
-          
-          // Re-fetch layout to populate the dropdowns with the new channel/category
-          await fetchServerLayout();
-          
-          // Select the newly created lobby voice channel and category
-          const tempvcJoinSelect = document.getElementById('tempvc_join_channel');
-          const tempvcCatSelect = document.getElementById('tempvc_category');
-          if (tempvcJoinSelect) tempvcJoinSelect.value = data.channel.id;
-          if (tempvcCatSelect) tempvcCatSelect.value = data.channel.category_id;
-        } else {
-          showToast(data.error || 'Failed to create lobby VC.', 'error');
-        }
-      } catch (e) {
-        showToast('Network error occurred.', 'error');
       }
     }
 
@@ -5435,6 +5359,16 @@
         showToast("Error deleting custom command.", "error");
       }
     }
+
+    document.addEventListener('DOMContentLoaded', () => { 
+      initFontSelectorOptions(); // Initialize selector options
+      renderDecoratorPresets(); // Initialize visual grid
+      loadCommandsForCategory('moderation'); 
+      loadActiveTempVCs();
+      fetchServerLayout(); // Pre-fetch layout so the channel dropdown populates
+      previewFont(); // Initialize preview
+      handleTargetChannelChange(); // Setup initial toggle dim state
+    });
   </script>
   <script src="/static/js/dashboard.js?v=2"></script>
   <script>
@@ -6442,43 +6376,20 @@
     let currentLevelRoles = {};
     let currentLevelPermissions = [];
 
-    function repopulateAllRoleDropdowns(roles) {
-      console.log("[DEBUG] repopulateAllRoleDropdowns called with roles:", roles);
-      populateLevelingRolesDropdowns(roles);
-      populateTicketsDropdowns(roles);
-      populateCustomCommandsRoles(roles);
-      populateGiveawayRolesSelect(roles);
-      populateModerationDropdowns(roles);
-      populateBotSettingsRoles(roles);
-      
-      const bulkRoleSelect = document.getElementById('bulk_role_id');
-      if (bulkRoleSelect) {
-         const oldVal = bulkRoleSelect.value;
-         bulkRoleSelect.innerHTML = '<option value="">-- Select Role --</option>';
-         roles.forEach(role => {
+    function populateLevelingRolesDropdowns(roles) {
+      const rewardRoleSelect = document.getElementById('level_reward_role');
+      if (rewardRoleSelect) {
+        if (!roles || roles.length === 0) {
+          rewardRoleSelect.innerHTML = '<option value="">-- No Custom Roles Found --</option>';
+        } else {
+          rewardRoleSelect.innerHTML = '<option value="">-- Choose Role --</option>';
+          roles.forEach(role => {
             const opt = document.createElement('option');
             opt.value = role.id;
             opt.innerText = role.name;
-            opt.dataset.color = role.color;
-            bulkRoleSelect.appendChild(opt);
-         });
-         if (oldVal) bulkRoleSelect.value = oldVal;
-      }
-    }
-
-    function populateLevelingRolesDropdowns(roles) {
-      console.log("[DEBUG] populateLevelingRolesDropdowns called with roles:", roles);
-      const rewardRoleSelect = document.getElementById('level_reward_role');
-      console.log("[DEBUG] rewardRoleSelect element:", rewardRoleSelect);
-      if (rewardRoleSelect) {
-        rewardRoleSelect.innerHTML = '<option value="">-- Choose Role --</option>';
-        roles.forEach(role => {
-          const opt = document.createElement('option');
-          opt.value = role.id;
-          opt.innerText = role.name;
-          rewardRoleSelect.appendChild(opt);
-        });
-        console.log("[DEBUG] rewardRoleSelect options length after population:", rewardRoleSelect.options.length);
+            rewardRoleSelect.appendChild(opt);
+          });
+        }
       }
     }
 
@@ -6726,19 +6637,22 @@
           }
 
           // Re-populate all dropdowns on the page
-          repopulateAllRoleDropdowns(activeLayoutData.roles);
-          
-          // Select this role in the reward role dropdown
-          const rewardRoleSelect = document.getElementById('level_reward_role');
-          if (rewardRoleSelect) {
-             rewardRoleSelect.value = data.role.id;
+          populateLevelingRolesDropdowns(activeLayoutData.roles);
+
+          // Update other role dropdowns (like bulk role select)
+          const bulkRoleSelect = document.getElementById('bulk_role_id');
+          if (bulkRoleSelect) {
+             const opt = document.createElement('option');
+             opt.value = data.role.id;
+             opt.innerText = data.role.name;
+             opt.dataset.color = data.role.color;
+             bulkRoleSelect.appendChild(opt);
           }
         } else {
           showToast(data.error || 'Failed to create role.', 'error');
         }
       } catch (e) {
         showToast('Network error occurred.', 'error');
-      }
     }
 
     // ── BOT SETTINGS CONFIGURATION HANDLERS ──────────────────────────────────
@@ -6969,9 +6883,7 @@
     let currentAutomodRules = [];
 
     function populateModerationDropdowns(roles) {
-      console.log("[DEBUG] populateModerationDropdowns called with roles:", roles);
       const muteRoleSelect = document.getElementById('mod_mute_role');
-      console.log("[DEBUG] muteRoleSelect element:", muteRoleSelect);
       if (muteRoleSelect) {
         const oldVal = muteRoleSelect.value;
         muteRoleSelect.innerHTML = '<option value="">-- Select Mute Role --</option>';
@@ -6982,16 +6894,13 @@
           muteRoleSelect.appendChild(opt);
         });
         if (oldVal) muteRoleSelect.value = oldVal;
-        console.log("[DEBUG] muteRoleSelect options length after population:", muteRoleSelect.options.length);
       }
 
       const logChannelSelect = document.getElementById('mod_log_channel');
-      console.log("[DEBUG] logChannelSelect element:", logChannelSelect);
       if (logChannelSelect) {
         const oldVal = logChannelSelect.value;
         logChannelSelect.innerHTML = '<option value="">-- Select Log Channel --</option>';
         const textChans = getTextChannels();
-        console.log("[DEBUG] getTextChannels returned:", textChans);
         textChans.forEach(chan => {
           const opt = document.createElement('option');
           opt.value = chan.id;
@@ -6999,7 +6908,6 @@
           logChannelSelect.appendChild(opt);
         });
         if (oldVal) logChannelSelect.value = oldVal;
-        console.log("[DEBUG] logChannelSelect options length after population:", logChannelSelect.options.length);
       }
     }
 
@@ -7027,7 +6935,6 @@
           }
 
           populateModerationDropdowns(activeLayoutData.roles);
-          repopulateAllRoleDropdowns(activeLayoutData.roles);
           const muteRoleSelect = document.getElementById('mod_mute_role');
           if (muteRoleSelect) muteRoleSelect.value = data.role.id;
         } else {
@@ -7175,15 +7082,10 @@
 
     // ── DATA SYNC LOADERS ───────────────────────────────────────────────────
     async function loadGuildSettings() {
-      console.log("[DEBUG] loadGuildSettings started");
       try {
         const res = await fetch(`/api/guild/${guildId}/settings`);
-        if (!res.ok) {
-          console.error("[DEBUG] Settings res not OK:", res.status);
-          return;
-        }
+        if (!res.ok) return;
         const data = await res.json();
-        console.log("[DEBUG] Settings data fetched:", data);
         
         // Populate standard settings fields (e.g. anti-nuke switches)
         Object.keys(data).forEach(key => {
@@ -7193,13 +7095,7 @@
             el.checked = !!data[key];
             el.dispatchEvent(new Event('change'));
           } else {
-            if (data[key] === null || data[key] === undefined) {
-              el.value = '';
-            } else if (typeof data[key] === 'object') {
-              el.value = JSON.stringify(data[key]);
-            } else {
-              el.value = data[key];
-            }
+            el.value = (typeof data[key] === 'object') ? JSON.stringify(data[key]) : (data[key] || '');
           }
         });
 

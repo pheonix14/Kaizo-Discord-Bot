@@ -1,11 +1,11 @@
-- [x] Create `src/bot/admin_utils.py` with `is_admin(user_id: int) -> bool` reading `config.ADMIN_USER_IDS` and a `admin_only` decorator for discord commands.
-- [x] Refactor existing admin-restricted commands (`dashboard_command`, `status_command`, etc.) to use `@admin_only` instead of `@commands.has_permissions(administrator=True)`.
-- [x] Ensure `admin_only` returns a friendly error message when a non‑admin invokes the command.
+- [ ] Create `src/bot/admin_utils.py` with `is_admin(user_id: int) -> bool` reading `config.ADMIN_USER_IDS` and a `admin_only` decorator for discord commands.
+- [ ] Refactor existing admin-restricted commands (`dashboard_command`, `status_command`, etc.) to use `@admin_only` instead of `@commands.has_permissions(administrator=True)`.
+- [ ] Ensure `admin_only` returns a friendly error message when a non‑admin invokes the command.
 - [x] Update `clean_styled_string` in `src/web/fonts.py` to trim outer spacing, hyphens, and underscores.
-- [x] Add import of `admin_utils` in `src/bot/engine.py` and update command definitions accordingly.
-- [x] Write unit tests for `admin_utils.is_admin` and the decorator behavior.
-- [x] Update `README.md` with a note about the new admin handling.
-- [x] Verify bot loads without errors and commands work for admin IDs defined in `.env`.
+- [ ] Add import of `admin_utils` in `src/bot/engine.py` and update command definitions accordingly.
+- [ ] Write unit tests for `admin_utils.is_admin` and the decorator behavior.
+- [ ] Update `README.md` with a note about the new admin handling.
+- [ ] Verify bot loads without errors and commands work for admin IDs defined in `.env`.
 - [x] Frontend HTML UI (`server.html`)
   - [x] Update Mute Role ID field to select dropdown + Create button
   - [x] Update Mod Log Channel ID field to select dropdown + Create button
@@ -15,21 +15,3 @@
   - [x] Implement `createMuteRole` and `createModLogChannel` API call handlers
   - [x] Implement `addAutomodRule`, `removeAutomodule`, and `renderAutomodRulesList`
   - [x] Wire settings load parsing logic to read saved rules and populate UI
-- [x] Database Client Updates (`src/db/client.py`)
-  - [x] Update `get_guild_settings` to unpack `"tempvc"` settings from `warn_thresholds`
-- [x] Web Backend API Updates (`src/web/flask_app.py`)
-  - [x] Add mappings for `tempvc_` keys in settings GET and PATCH routes
-  - [x] Implement `create_temp_vc_lobby` server action in `api_guild_server_action()`
-- [x] Frontend HTML Template Updates (`templates/server.html`)
-  - [x] Change inputs to dropdown selectors for Join-to-Create channel and Category channel
-  - [x] Populate selectors with voice channels and category channels in `fetchServerLayout()`
-  - [x] Add "Create Lobby VC" button and prompt implementation `createTempVCLobbyPrompt()`
-- [x] Discord Bot Cog Updates (`src/bot/cogs/temp_vc.py`)
-  - [x] Initialize active roles tracking dictionary
-  - [x] Dynamically create `{creator} vc` and `{creator}'s vc` roles on temp voice channel creation
-  - [x] Assign owner role to creator and joiner role to other users on join
-  - [x] Remove roles on leave, and delete roles on temp VC deletion
-- [x] Verification and Testing
-  - [x] Run syntax validation checks
-  - [x] Write integration test script and execute to verify GET/PATCH mappings
-  - [x] Verify browser dropdown population success via real HTTP test calls

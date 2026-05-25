@@ -21,4 +21,4 @@ PORT = "8080"
 DASHBOARD_SECRET_KEY = "KAIZER_X_WASM_KEY"
 
 [command.run.args]
-args = ["dashboard/app.py"]
+args = ["main.py"]
