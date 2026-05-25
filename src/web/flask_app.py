@@ -237,9 +237,13 @@ def get_redirect_uri() -> str:
     """Build the OAuth2 callback redirect URL dynamically based on the current request domain."""
     env_redirect = os.getenv("DISCORD_REDIRECT_URI")
     if env_redirect:
+        # Strip quotes if present
+        env_redirect = env_redirect.strip()
+        if (env_redirect.startswith('"') and env_redirect.endswith('"')) or (env_redirect.startswith("'") and env_redirect.endswith("'")):
+            env_redirect = env_redirect[1:-1].strip()
         return env_redirect
     
-    host = request.host
+    host = request.host.split(":")[0]  # Strip any port number
     # Force HTTPS in production (non-localhost environments) to prevent scheme mismatches behind proxies
     if "localhost" not in host and "127.0.0.1" not in host:
         base_url = "https://" + host
