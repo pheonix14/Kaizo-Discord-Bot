@@ -77,7 +77,7 @@ def check_configuration():
         if not getattr(config, "DISCORD_BOT_TOKEN", None):
             missing_vars.append("DISCORD_BOT_TOKEN")
             
-        return render_template("setup_error.html", missing_vars=missing_vars)
+        return f"<h1>Setup Required</h1><p>Missing environment variables: {', '.join(missing_vars)}</p><p>Please make sure they are defined in your <code>.env</code> file at the root folder.</p>", 500
     else:
         # Re-initialize the local flask_app.py supabase client if it's currently None or a Dummy client
         global supabase
