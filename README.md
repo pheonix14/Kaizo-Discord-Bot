@@ -126,7 +126,4 @@ This project supports zero-friction, one-click deployments by utilizing your loc
    - Replit automatically loads `.env` files into the execution environment. Simply click the **Run** button to deploy.
 
 ### ⚙️ Graceful Setup Mode
-If you boot the project without the required environment variables in `.env` (or in the system environment):
-- The Flask web server will still run and bind to the target port, satisfying deployment health checks.
-- Visiting the app URL will show a **Setup Required** dashboard indicating which variables are missing.
-- As soon as the `.env` file is uploaded or environment variables are configured, the system will automatically load them and boot the Discord Bot and admin dashboard.
+If you boot the project without the required environment variables in `.env` (or in the system environment), a plain text error listing the missing variables will be shown when visiting the app URL. As soon as the `.env` file is uploaded or environment variables are configured, the system will automatically reload them and boot the Discord Bot and admin dashboard.
