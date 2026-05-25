@@ -541,3 +541,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-24] feat(giveaways): add random winner picker
 - [2026-05-24] feat(help): enhance slash command sync
 - [2026-05-25] refactor(fun): streamline text scrambler
+- [2026-05-25] feat(ui): harden settings forms
