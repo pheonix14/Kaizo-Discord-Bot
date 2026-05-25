@@ -498,18 +498,5 @@ class UtilityCog(commands.Cog, name="Utility"):
         embed.add_field(name="Time", value=f"<t:{t}:R> (<t:{t}:F>)", inline=False)
         await ctx.send(embed=embed)
 
-    async def cog_load(self):
-        # Dynamically register top-level prefix commands for all subcommands of the 'util' group
-        # Using standard commands.command to avoid exceeding Discord's 100 slash command limit
-        for cmd in list(self.util.commands):
-            top_cmd = commands.command(
-                name=cmd.name,
-                description=cmd.description,
-                help=cmd.help
-            )(cmd.callback)
-            top_cmd.cog = self
-            top_cmd.checks = cmd.checks.copy()
-            self.bot.add_command(top_cmd)
-
 async def setup(bot: commands.Bot):
     await bot.add_cog(UtilityCog(bot))

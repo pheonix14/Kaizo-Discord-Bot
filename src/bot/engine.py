@@ -1,6 +1,5 @@
 import logging
 import os
-import asyncio
 import discord
 from discord.ext import commands
 from src import config
@@ -39,7 +38,6 @@ class KaizerBot(commands.Bot):
         self.global_blacklist = []
         
     async def setup_hook(self):
-        self.custom_loop = asyncio.get_running_loop()
         cogs_dir = os.path.join(os.path.dirname(__file__), 'cogs')
         
         # Ensure cogs directory exists
@@ -84,12 +82,6 @@ bot = KaizerBot()
 async def check_command_access(guild_id: int, command_name: str, author: discord.Member) -> bool:
     """Checks if a command is enabled and if the user has permission to use it."""
     config = db_client.get_command_config(str(guild_id), command_name)
-    if not config:
-        if not command_name.startswith("util ") and not command_name.startswith("fun "):
-            config = db_client.get_command_config(str(guild_id), f"util {command_name}")
-            if not config:
-                config = db_client.get_command_config(str(guild_id), f"fun {command_name}")
-            
     if not config:
         return True # Default to enabled if not found
 

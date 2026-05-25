@@ -39,10 +39,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger("kaizer_k5.flask_app")
 
-def get_bot_loop():
-    from src.bot.engine import bot
-    return getattr(bot, "custom_loop", None)
-
 # ---------------------------------------------------------------------------
 # Flask App Setup
 # ---------------------------------------------------------------------------
@@ -57,46 +53,19 @@ app = Flask(
 # Use a secret key for secure signed cookies
 app.secret_key = os.getenv("FLASK_SECRET_KEY", secrets.token_hex(16))
 
-# Setup Mode Interceptor
-@app.before_request
-def check_configuration():
-    if hasattr(config, "check_and_reload"):
-        config.check_and_reload()
-        
-    if getattr(config, "IS_CONFIGURED", False):
-        # Re-initialize the local flask_app.py supabase client if it's currently None or a Dummy client
-        global supabase
-        from src.db.client import DummySupabaseClient
-        if supabase is None or isinstance(supabase, DummySupabaseClient):
-            try:
-                supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY)
-                logger.info("Successfully re-initialized local Supabase client in flask_app dynamically.")
-            except Exception as e:
-                logger.critical(f"Failed to initialize local Supabase client in flask_app on reload: {e}")
-
 # Register template helper for Discord invite URL
 @app.context_processor
 def inject_globals():
     def get_invite_url(req=None):
         client_id = config.DISCORD_APP_ID or "1507250208495505478"
         return f"https://discord.com/oauth2/authorize?client_id={client_id}&permissions=8&scope=bot%20applications.commands"
-    return dict(get_invite_url=get_invite_url, get_redirect_uri=get_redirect_uri)
+    return dict(get_invite_url=get_invite_url)
 
 # ---------------------------------------------------------------------------
 # Supabase client
 # ---------------------------------------------------------------------------
 
-supabase = None
-if getattr(config, "IS_CONFIGURED", False):
-    try:
-        supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY)
-    except Exception as e:
-        logger.critical(f"Failed to initialize Supabase client in flask_app: {e}")
-        from src.db.client import DummySupabaseClient
-        supabase = DummySupabaseClient()
-else:
-    from src.db.client import DummySupabaseClient
-    supabase = DummySupabaseClient()
+supabase:Client = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY)
 
 import datetime
 
@@ -223,20 +192,7 @@ def get_redirect_uri() -> str:
     env_redirect = os.getenv("DISCORD_REDIRECT_URI")
     if env_redirect:
         return env_redirect
-    
-    host = request.host
-    # Force HTTPS in production (non-localhost environments) to prevent scheme mismatches behind proxies
-    if "localhost" not in host and "127.0.0.1" not in host:
-        base_url = "https://" + host
-    else:
-        # Check if behind proxy (Render SSL termination)
-        scheme = request.headers.get("X-Forwarded-Proto", "http")
-        if request.is_secure or scheme == "https":
-            base_url = "https://" + host
-        else:
-            base_url = request.host_url.rstrip("/")
-        
-    return base_url.rstrip("/") + "/callback"
+    return request.host_url.rstrip("/") + "/callback"
 
 def verify_session() -> bool:
     """Validate the signed session cookie.
@@ -256,8 +212,6 @@ def verify_session() -> bool:
 
 def get_user_info(token: str) -> dict:
     """Fetch Discord user information using the provided OAuth token."""
-    if token == "dummy_token":
-        return {"id": "1507250208495505478", "username": "dark", "avatar": "abcdef"}
     import requests
     headers = {"Authorization": f"Bearer {token}"}
     resp = requests.get("https://discord.com/api/users/@me", headers=headers)
@@ -318,7 +272,7 @@ def login():
         "scope": "identify guilds",
         "state": state,
     }
-    url = f"https://discord.com/oauth2/authorize?{urlencode(params)}"
+    url = f"https://discord.com/api/oauth2/authorize?{urlencode(params)}"
     resp = make_response(redirect(url))
     # Store state in a temporary signed cookie (expires in 10 min)
     payload = json.dumps({"state": state, "expires": time.time() + 600})
@@ -694,11 +648,11 @@ def api_guild_settings(guild_id):
                     for k, v in tvc.items():
                         data[k] = v
         # Map DB columns to UI expected IDs
-        data["mod_mute_role"] = data.get("mute_role") or ""
         data["tempvc_join_channel"] = data.get("temp_vc_lobby") or ""
         data["tempvc_category"] = data.get("temp_vc_category") or ""
         data["tempvc_name_template"] = data.get("temp_vc_name_format") or "{user}'s Channel"
         data["tempvc_default_limit"] = data.get("temp_vc_limit") or 0
+        data["mod_mute_role"] = data.get("mute_role") or ""
         if "warn_thresholds" in data and isinstance(data["warn_thresholds"], dict) and "tempvc" in data["warn_thresholds"]:
             data["tempvc_enabled"] = data["warn_thresholds"]["tempvc"].get("tempvc_enabled", data.get("temp_vc_lobby") is not None)
         else:
@@ -810,10 +764,6 @@ def api_guild_settings(guild_id):
                 log_events.append("role_update")
             payload["log_events"] = log_events
 
-        # Map UI moderation expected IDs to DB columns
-        if "mod_mute_role" in payload:
-            payload["mute_role"] = payload.pop("mod_mute_role")
-
         # Map UI tempvc expected IDs to DB columns
         if category == "tempvc_setup" or any(k in payload for k in ["tempvc_enabled", "tempvc_join_channel", "tempvc_category", "tempvc_name_template", "tempvc_default_limit"]):
             enabled = payload.pop("tempvc_enabled", True)
@@ -848,6 +798,10 @@ def api_guild_settings(guild_id):
                 existing_warn_th = {}
             existing_warn_th["tempvc"] = {"tempvc_enabled": enabled}
             payload["warn_thresholds"] = existing_warn_th
+
+        # Map UI mod_mute_role to DB mute_role
+        if "mod_mute_role" in payload:
+            payload["mute_role"] = payload.pop("mod_mute_role")
 
         # Safely deserialize JSON string fields from client to write properly to JSONB or array columns
         for key in ["level_roles", "level_permissions", "automod_rules", "admin_roles", "mod_roles"]:
@@ -936,7 +890,7 @@ def api_guild_welcome_test(guild_id):
         except Exception as err:
             return {"success": False, "error": str(err)}
             
-    future = asyncio.run_coroutine_threadsafe(do_test_welcome(), get_bot_loop())
+    future = asyncio.run_coroutine_threadsafe(do_test_welcome(), bot.loop)
     try:
         res = future.result(timeout=15)
         if res.get("success"):
@@ -983,7 +937,7 @@ def api_guild_goodbye_test(guild_id):
         except Exception as err:
             return {"success": False, "error": str(err)}
             
-    future = asyncio.run_coroutine_threadsafe(do_test_goodbye(), get_bot_loop())
+    future = asyncio.run_coroutine_threadsafe(do_test_goodbye(), bot.loop)
     try:
         res = future.result(timeout=15)
         if res.get("success"):
@@ -1158,7 +1112,7 @@ def api_guild_send_embed_roles(guild_id):
         except Exception as send_err:
             return {"success": False, "error": str(send_err)}
             
-    future = asyncio.run_coroutine_threadsafe(do_send(), get_bot_loop())
+    future = asyncio.run_coroutine_threadsafe(do_send(), bot.loop)
     try:
         res = future.result(timeout=15)
         if res.get("success"):
@@ -1310,7 +1264,7 @@ def api_guild_server_action(guild_id):
                 "duplicates": duplicates
             }
             
-        future = asyncio.run_coroutine_threadsafe(do_audit(), get_bot_loop())
+        future = asyncio.run_coroutine_threadsafe(do_audit(), bot.loop)
         try:
             results = future.result(timeout=10)
             return jsonify({"success": True, "results": results}), 200
@@ -1330,7 +1284,7 @@ def api_guild_server_action(guild_id):
             await channel.delete()
             return f"Successfully deleted channel {channel.name}"
             
-        future = asyncio.run_coroutine_threadsafe(do_delete(), get_bot_loop())
+        future = asyncio.run_coroutine_threadsafe(do_delete(), bot.loop)
         try:
             res = future.result(timeout=10)
             return jsonify({"success": True, "message": res}), 200
@@ -1372,7 +1326,7 @@ def api_guild_server_action(guild_id):
             color_str = f"#{role.color.value:06x}" if role.color.value else "#99aab5"
             return {"id": str(role.id), "name": role.name, "color": color_str}
             
-        future = asyncio.run_coroutine_threadsafe(do_create(), get_bot_loop())
+        future = asyncio.run_coroutine_threadsafe(do_create(), bot.loop)
         try:
             role_data = future.result(timeout=10)
             if role_data:
@@ -1426,7 +1380,7 @@ def api_guild_server_action(guild_id):
             color_str = f"#{role.color.value:06x}" if role.color.value else "#99aab5"
             return {"id": str(role.id), "name": role.name, "color": color_str}
             
-        future = asyncio.run_coroutine_threadsafe(do_create(), get_bot_loop())
+        future = asyncio.run_coroutine_threadsafe(do_create(), bot.loop)
         try:
             role_data = future.result(timeout=25)
             if role_data:
@@ -1463,7 +1417,7 @@ def api_guild_server_action(guild_id):
             
             return {"id": str(channel.id), "name": channel.name}
             
-        future = asyncio.run_coroutine_threadsafe(do_create(), get_bot_loop())
+        future = asyncio.run_coroutine_threadsafe(do_create(), bot.loop)
         try:
             channel_data = future.result(timeout=15)
             if channel_data:
@@ -1516,7 +1470,7 @@ def api_guild_server_action(guild_id):
                 "category_name": category.name
             }
             
-        future = asyncio.run_coroutine_threadsafe(do_create(), get_bot_loop())
+        future = asyncio.run_coroutine_threadsafe(do_create(), bot.loop)
         try:
             channel_data = future.result(timeout=20)
             if channel_data:
@@ -1601,17 +1555,12 @@ def api_guild_server_action(guild_id):
             except Exception as e:
                 TASK_PROGRESS[t_id] = {"status": "error", "message": str(e)}
                 
-        asyncio.run_coroutine_threadsafe(apply_bulk_perms(task_id), get_bot_loop())
+        asyncio.run_coroutine_threadsafe(apply_bulk_perms(task_id), bot.loop)
         return jsonify({"success": True, "task_id": task_id}), 200
         
     elif action == "server_export":
         async def do_export():
-            guild = None
-            for _ in range(10):
-                guild = bot.get_guild(int(guild_id))
-                if guild:
-                    break
-                await asyncio.sleep(1)
+            guild = bot.get_guild(int(guild_id))
             if not guild: return None
             data = {
                 "name": guild.name, 
@@ -1622,7 +1571,7 @@ def api_guild_server_action(guild_id):
             uncat = {"id": "none", "name": "Uncategorized", "channels": []}
             for chan in guild.channels:
                 if chan.category is None and not isinstance(chan, discord.CategoryChannel):
-                    uncat["channels"].append({"id": str(chan.id), "name": chan.name, "type": str(chan.type)})
+                    uncat["channels"].append({"id": str(chan.id), "name": chan.name, "type": chan.type.name})
             if uncat["channels"]:
                 data["categories"].append(uncat)
                 
@@ -1630,11 +1579,11 @@ def api_guild_server_action(guild_id):
                 data["categories"].append({
                     "id": str(cat.id),
                     "name": cat.name,
-                    "channels": [{"id": str(c.id), "name": c.name, "type": str(c.type)} for c in cat.channels]
+                    "channels": [{"id": str(c.id), "name": c.name, "type": c.type.name} for c in cat.channels]
                 })
             return data
             
-        future = asyncio.run_coroutine_threadsafe(do_export(), get_bot_loop())
+        future = asyncio.run_coroutine_threadsafe(do_export(), bot.loop)
         try:
             data = future.result(timeout=10)
             return jsonify({"success": True, "export_data": data}), 200
@@ -1759,7 +1708,7 @@ def api_guild_server_action(guild_id):
                         await guild.create_voice_channel(chan["name"], category=cat)
             return f"Successfully applied '{templates[template_id]['name']}' template!"
             
-        future = asyncio.run_coroutine_threadsafe(apply_tmpl(), get_bot_loop())
+        future = asyncio.run_coroutine_threadsafe(apply_tmpl(), bot.loop)
         try:
             res = future.result(timeout=30)
             return jsonify({"success": True, "results": res}), 200
@@ -1851,7 +1800,7 @@ def api_guild_server_action(guild_id):
             except Exception as e:
                 TASK_PROGRESS[t_id] = {"status": "error", "message": str(e)}
 
-        asyncio.run_coroutine_threadsafe(apply_font(task_id), get_bot_loop())
+        asyncio.run_coroutine_threadsafe(apply_font(task_id), bot.loop)
         return jsonify({"success": True, "task_id": task_id}), 200
 
     elif action == "server_apply_layout":
@@ -1906,7 +1855,7 @@ def api_guild_server_action(guild_id):
             except Exception as e:
                 TASK_PROGRESS[t_id] = {"status": "error", "message": str(e)}
                 
-        asyncio.run_coroutine_threadsafe(apply_layout(task_id), get_bot_loop())
+        asyncio.run_coroutine_threadsafe(apply_layout(task_id), bot.loop)
         return jsonify({"success": True, "task_id": task_id}), 200
 
 @app.route("/api/guild/<guild_id>/custom_commands", methods=["PATCH"])
@@ -2060,7 +2009,7 @@ def api_guild_giveaways(guild_id):
         cog = bot.get_cog("Giveaways")
         if cog:
             import asyncio
-            asyncio.run_coroutine_threadsafe(cog.start_dashboard_giveaway(db_id), get_bot_loop())
+            asyncio.run_coroutine_threadsafe(cog.start_dashboard_giveaway(db_id), bot.loop)
             
         return jsonify({"success": True, "message": "Giveaway successfully created and scheduled! 🎉"}), 200
     except Exception as e:

@@ -5,37 +5,12 @@ from src import config
 
 logger = logging.getLogger("kaizer_k5.db")
 
-class DummySupabaseTable:
-    def select(self, *args, **kwargs): return self
-    def insert(self, *args, **kwargs): return self
-    def update(self, *args, **kwargs): return self
-    def delete(self, *args, **kwargs): return self
-    def eq(self, *args, **kwargs): return self
-    def order(self, *args, **kwargs): return self
-    def limit(self, *args, **kwargs): return self
-    def upsert(self, *args, **kwargs): return self
-    def execute(self, *args, **kwargs):
-        class Result:
-            data = []
-        return Result()
-
-class DummySupabaseClient:
-    def table(self, name):
-        return DummySupabaseTable()
-    def from_(self, name):
-        return DummySupabaseTable()
-
 # Initialize Supabase client using the service role key (to bypass RLS for system operations)
-supabase = None
-if getattr(config, "IS_CONFIGURED", False):
-    try:
-        supabase = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY)
-    except Exception as e:
-        logger.critical(f"Failed to initialize Supabase client: {e}. Falling back to Dummy Client.")
-        supabase = DummySupabaseClient()
-else:
-    logger.warning("Supabase is not configured. Initializing Dummy Supabase Client for setup mode.")
-    supabase = DummySupabaseClient()
+try:
+    supabase: Client = create_client(config.SUPABASE_URL, config.SUPABASE_SERVICE_ROLE_KEY)
+except Exception as e:
+    logger.critical(f"Failed to initialize Supabase client: {e}")
+    raise e
 # In-memory Caching variables
 _settings_cache: Dict[str, Dict[str, Any]] = {}
 _whitelist_cache: Dict[str, List[str]] = {}
