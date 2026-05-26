@@ -1,50 +1,16 @@
-# Render Deployment Blueprint for Project Kaizer K5
 services:
   - type: web
-    name: kaizer-k5
-    env: docker
-    dockerfilePath: ./Dockerfile
+    name: fafnir-engine
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main_headless.py
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.0"
+      - key: RENDER
+        value: "true"
       - key: PORT
-        value: 8000
-      - key: HOST
-        value: 0.0.0.0
-      # ---------------------------------------------------------------
-      # Supabase
-      # ---------------------------------------------------------------
-      - key: SUPABASE_URL
-        sync: false
-      - key: SUPABASE_ANON_KEY
-        sync: false
-      - key: SUPABASE_SERVICE_ROLE_KEY
-        sync: false
-      # ---------------------------------------------------------------
-      # Discord OAuth2 – REQUIRED for login to work on Render
-      # ---------------------------------------------------------------
-      - key: DISCORD_BOT_TOKEN
-        sync: false
-      - key: DISCORD_APP_ID
-        sync: false
-      - key: DISCORD_PUBLIC_KEY
-        sync: false
-      - key: DISCORD_CLIENT_SECRET
-        sync: false
-      # Explicit redirect URI registered in Discord Developer Portal.
-      # Set to: https://kaizer-k5.onrender.com/callback
-      - key: DISCORD_REDIRECT_URI
-        sync: false
-      # Base URL of this deployment – used to build redirect URIs and absolute links.
-      # Set to: https://kaizer-k5.onrender.com
-      - key: HOST_URL
-        sync: false
-      # ---------------------------------------------------------------
-      # Flask – REQUIRED so sessions survive restarts / redeploys
-      # ---------------------------------------------------------------
-      # Generate with: python -c "import secrets; print(secrets.token_hex(32))"
-      - key: FLASK_SECRET_KEY
-        sync: false
-      # ---------------------------------------------------------------
-      # App configuration
-      # ---------------------------------------------------------------
-      - key: DEVELOPER_ID
-        sync: false
+        value: "10000"
+    healthCheckPath: /

@@ -1,80 +1,191 @@
-# 🛡️ Project Kaizer K5 - Discord Security Guard
+# 🌌 XTREME CORE
+### Ultimate Multi-Token Discord Orchestration Engine
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
-[![Run on Replit](https://replit.com/badge/github/username/repo)](https://replit.com/new/github/username/repo)
-[![Deploy to Wasmer](https://img.shields.io/badge/Deploy_to_Wasmer-black?logo=wasmer&logoColor=white)](https://wasmer.io)
-
-Project Kaizer K5 is a high-fidelity Discord server protection bot and administrative dashboard. It tracks and mitigates nuke attempts (mass bans, mass kicks, mass channel/role deletions, rogue bot invites) in real-time, backed by a secure Supabase database with Row Level Security (RLS) and a responsive glassmorphic web interface.
-
----
-
-## Features
-
-- **Mass Ban Protection**: Bans any administrator who exceeds a customizable ban limit within a specified timeframe, and automatically unbans the victims.
-- **Mass Kick Protection**: Bans rogue administrators who perform too many kicks.
-- **Mass Channel/Role Deletion Protection**: Restores channels/roles deleted by unauthorized administrators and removes their permissions.
-- **Anti-Bot Invitation**: Instantly bans unauthorized bots invited to the server and the administrator who invited them.
-- **Interactive Dashboard**: A gorgeous, glassmorphic dark-mode web console to configure thresholds and manage white-listed moderators.
-- **Zero-Friction Login**: Admins type `k!dashboard` on Discord to get a secure 5-minute login PIN to access the web panel without configuring complex OAuth credentials.
-- **Supabase Backed**: Fully persistent and secured by Row Level Security (RLS).
+[![Python](https://img.shields.io/badge/Python-3.13%2B-ff2d55?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-Backend-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-0affe4?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
+[![Engine](https://img.shields.io/badge/Engine-XTREME--X--25-8B5CF6?style=for-the-badge)](#)
+[![License](https://img.shields.io/badge/License-Proprietary-EF4444?style=for-the-badge)](License.md)
 
 ---
 
-## Quick Setup Guide
+<div align="center">
 
-### 1. Discord Bot Setup
-1. Go to the [Discord Developer Portal](https://discord.com/developers/applications).
-2. Open your application and navigate to the **Bot** tab:
-   - Enable **Privileged Gateway Intents** (Presence Intent, Server Members Intent, and Message Content Intent).
-3. Generate an invite link in **OAuth2 -> URL Generator**:
-   - Select Scopes: `bot`, `applications.commands` (optional, for future slash commands).
-   - Select Bot Permissions: `Administrator` (required to recreate channels/roles, adjust roles, and ban rogue admins).
-4. **Hierarchy warning**: The bot's role in your Discord server's role list **MUST** be placed above all other administrators' roles. The bot cannot manage or ban members with roles higher than its own.
+` ◈ XTREME ENGINE — THE ULTIMATE AUTOMATION MATRIX ◈ `
 
-### 2. Supabase Setup
-1. Create a new project in [Supabase](https://supabase.com).
-2. Go to the **SQL Editor** on the left menu.
-3. Paste the contents of the [schema.sql](file:///c:/Users/acer/Desktop/kaizer%20k5/database/schema.sql) file and run it. This will create the required tables and configure Row Level Security (RLS) so that normal public client keys cannot read or modify settings.
+*Powered by the stabilized **XTREME Core** · Built for elite-tier multi-token automation*
 
-### 3. Local Environment Variables
-The project contains a pre-filled `.env` file at the root folder containing the required database credentials:
-- `SUPABASE_URL`: Your Supabase project URL
-- `SUPABASE_ANON_KEY`: Your Supabase anonymous key
-- `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key (required to bypass RLS for bot system actions)
-- `DISCORD_BOT_TOKEN`: Your Discord bot token
-- `DISCORD_APP_ID`: Your Discord application ID
-- `DISCORD_PUBLIC_KEY`: Your Discord public key
+</div>
 
-### 4. Running the Application Locally
+---
 
-First, install the Python package dependencies:
+## 📖 Overview
+
+**XTREME CORE** is a high-performance, multi-token Discord automation suite engineered for premium bot interactions (Pokétwo, OwO, bump utilities). It features a local ONNX neural vision engine, full Supabase cloud database persistence, and a stunning glassmorphic web control center — all running from a single Python process.
+
+---
+
+## 🧬 System Architecture
+
+```
+                    ┌─────────────────────────────────────────┐
+                    │        GLASSMORPHIC WEB DASHBOARD        │
+                    │   Flask @ Port 8085 · Outfit + Glass UX  │
+                    └────────────────────┬────────────────────┘
+                                         │
+                           ┌─────────────▼─────────────┐
+                           │   SUPABASE CLOUD POSTGRES   │
+                           │  tokens · test · dex · logs │
+                           └─────────────┬─────────────┘
+                                         │
+                           ┌─────────────▼─────────────┐
+                           │    XTREME NODE MANAGER    │
+                           └────────┬──────────┬───────┘
+                                    │          │
+                ┌───────────────────┘          └───────────────────┐
+                ▼                                                   ▼
+    ┌─────────────────────┐                           ┌─────────────────────┐
+    │    WORKER NODE 1     │          ···              │    WORKER NODE N     │
+    │  discum · ONNX · DB  │                           │  discum · ONNX · DB  │
+    └─────────────────────┘                           └─────────────────────┘
+```
+
+---
+
+## ⚡ Core Engines
+
+### ⚔️ ◈ Pokétwo Neural Catcher
+* **ONNX Local Vision** — Deep-learning classification runs fully offline via `onnxruntime`, eliminating external API costs and latency.
+* **Hyphen-Agnostic Solver** — Matches hint patterns regardless of spacing, symbols, or hidden characters.
+* **Humanized Catch Delays** — Implements a randomized **10.0 to 16.0 seconds gap** between sequential guesses (if the previous guess was incorrect or triggered a speed warning) to mimic realistic human keystroke intervals.
+* **Double-Try Failover** — Automatically retries a catch attempt once after an **8.0s no-response timeout**; safely aborts and releases locks on a second consecutive failure to prevent bot lockups.
+* **Granular Telemetry** — Tracks caught/missed/shiny with level, IV, and rarity statistics.
+
+### 💎 ⬡ OwO Treasury Matrix
+* **Orchestration Loop** — Automatically runs `hunt`, `battle`, `daily`, `coinflip`, and `slots` commands under strict cooldown loops.
+* **Live Aggregates** — Real-time Cowoncy balance visualization showing individual node metrics and overall global sum.
+* **Intelligent Auto-Pause** — Instantly pauses loop operations upon captcha flag detection to protect the account from suspension.
+
+### 🛡️ ◎ Mimic Humanizer
+* **Activity Schedules** — Break scheduler with randomized idle frames simulating authentic human sleep/awake patterns.
+* **Delay Variance** — Dynamic delay variance curves and random keystroke timings to evade modern heuristic bot detectors.
+* **Gateway Watchdog** — Automatic gateway re-connection and heartbeat tracking on connectivity failures.
+
+### 📡 ◉ P2P Resiliency Mesh
+* **Mutual Watchdog** — Standalone WSGI keep-alive agent in `/awake` (Wasmer Edge / Render compatible).
+* **Cross-Ping Loop** — Multi-node keep-alive ping loop between active nodes and awake servers for mutual anti-hibernation.
+* **Auto-Discovery** — Zero-config peer list replication and URL auto-detection from `HTTP_HOST` headers.
+
+---
+
+## 🎛️ Dashboard Control Panels
+
+| Route | Panel Name | Function |
+|:---|:---|:---|
+| `/` | **◈ Command Center** | Real-time live log stream console, active node statuses, global metrics, and diagnostic counters. |
+| `/config` | **⬡ Identity Vault** | Safe token registration, assign guilds, define active channels, and check live Discord profiles. |
+| `/test` | **◎ Permission Tester** | Supabase-backed multi-token channel scanner. Tests write/embed settings, reloads every 30s, and groups results. |
+| `/captcha` | **◉ Captcha Monitor** | Live alert monitor, per-node flag status, direct solver linkage, and auto-pause settings. |
+| `/dex` | **◫ 3D Pokédex** | Pokédex database supporting shiny tallies, caught tallies, custom entry notes, and favorites. |
+| `/history` | **◎ Telemetry Logs** | Catch gallery with IV percentages, AI model classification details, and search filters. |
+| `/owo` | **◈ Treasury Manager** | OwO command toggles, micro cooldown adjustments, and Cowoncy aggregate tracking. |
+| `/spam` | **⬡ Level Booster** | Scheduled spammers with custom target channels and humanized delays. |
+| `/msg` | **◎ Msg Loop Engine** | Channel loop generator running custom payloads under random delays. |
+| `/hook` | **◉ Resiliency Mesh** | Heartbeat pings, Awake resilient mesh configs, and peer lists. |
+
+---
+
+## 🔬 Channel Tester & Captcha Monitor (New Features)
+
+> [!NOTE]
+> Major backend enhancements have been introduced to provide a robust, persistent scanner environment and real-time safety measures.
+
+### 📂 Supabase Test Scanner Table
+Scan results are now permanently saved to a dedicated table in Supabase, keeping scans available across page reloads and server restarts.
+
+```sql
+CREATE TABLE IF NOT EXISTS test (
+    id           TEXT PRIMARY KEY,
+    token_id     TEXT,
+    token_label  TEXT,
+    guild_id     TEXT,
+    guild_name   TEXT,
+    channel_id   TEXT,
+    channel_name TEXT,
+    writable     BOOLEAN,
+    text_allowed BOOLEAN,
+    link_allowed BOOLEAN,
+    last_scan    TIMESTAMPTZ DEFAULT NOW(),
+    scan_reason  TEXT
+);
+```
+
+### ✨ Advanced Capabilities
+
+* **Discord Profile Resolution** — The central engine now queries active node profiles on boot. Dashboard cards and scanner results group data by **authentic Discord usernames and avatars** instead of raw token hashes.
+* **Automated Polling** — The `/test` panel auto-polls `/api/test/results` every **30 seconds** during scans for hands-off tracking.
+* **Auto-Pause Captcha Flags** — Captcha warnings trigger visual overlays instantly, automatically freezing worker loops on the affected accounts and displaying immediate solve links.
+
+---
+
+## 🛠️ Setup Protocol
+
+### 01 ◈ 1. Clone Vault
+Clone the repository and enter the directory:
+```bash
+git clone https://github.com/xtreme/xtreme-project.git
+cd xtreme-project
+```
+
+### 02 ⬡ 2. Packages
+Install all required dependencies using `pip` or `uv` manager:
 ```bash
 pip install -r requirements.txt
 ```
 
-Launch the combined web dashboard and Discord bot runner:
+### 03 ◎ 3. Supabase Schema
+Run the Supabase setup script once to bootstrap cloud database schema structures:
+```bash
+python setup_supabase.py
+```
+
+### 04 ◉ 4. Boot System
+Fire up the local Flask server and launch the command center:
 ```bash
 python main.py
 ```
-The console will boot both the Discord Gateway client and the Uvicorn web server on `http://127.0.0.1:8000`.
 
 ---
 
-## Discord Commands
+## ☁️ Deployment
 
-All commands require **Administrator** permissions on the target server.
-- `k!dashboard` - Generates a 6-digit login PIN and DMs it to the admin to log in to the web panel.
-- `k!status` - Displays active protection limits and triggers.
-- `k!whitelist @User` - Adds a user to the security whitelist (immunity from anti-nuke triggers).
-- `k!unwhitelist @User` - Removes a user from the whitelist.
-- `k!logs` - Returns the last 5 security events caught by the bot.
+### Render
+XTREME is fully compatible with Render web service environments:
+```yaml
+# render.yaml
+buildCommand: pip install -r requirements.txt
+startCommand: gunicorn -w 1 -b 0.0.0.0:$PORT main:keep_alive
+```
+
+### Docker
+```bash
+docker build -t xtreme-core .
+docker run -p 8085:8085 xtreme-core
+```
 
 ---
 
-## Deployment to Render
+## 📜 License
 
-This project contains a [render.yaml](file:///c:/Users/acer/Desktop/kaizer%20k5/render.yaml) file, allowing you to deploy it in minutes:
-1. Push this workspace to your GitHub repository.
-2. Link your GitHub account to [Render](https://render.com).
-3. Click **New +** -> **Blueprint Route** and select this repository.
-4. Render will read your `render.yaml` and configure the Web Service automatically. Input your credentials under the Environment Variables section and deploy.
+**Closed Source · Proprietary Software**
+© 2026 XTREME CORE. All rights reserved.
+
+Unauthorized distribution, copying, modification, or commercial use is strictly prohibited.
+
+---
+
+<div align="center">
+
+*Developed and maintained by the **XTREME STUDIO***
+
+</div>

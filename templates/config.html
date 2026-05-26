@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>XTREME | Tokens Config</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --c1: #ff2d55;
+      --c2: #0affe4;
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-body: 'Space Grotesk', sans-serif;
+    }
+    body {
+      font-family: var(--font-body);
+      color: #ffffff;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-color: #000;
+      transition: background-image 1s ease-in-out;
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+
+    .glass {
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      position: relative;
+      overflow: hidden;
+      border-radius: 0 !important;
+    }
+    .glass::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; width: 100%; height: 2px;
+      background: var(--c1);
+      transform: scaleX(0); transform-origin: left;
+      transition: transform .4s cubic-bezier(.23,1,.32,1);
+    }
+    .glass:hover::before { transform: scaleX(1); }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    input {
+      background: rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      outline: none;
+      transition: 0.2s;
+      font-family: var(--font-body);
+      border-radius: 0 !important;
+    }
+
+    input:focus {
+      border-color: var(--c1);
+      background: rgba(255,45,85,0.05);
+    }
+
+    .btn-primary {
+      font-family: var(--font-body);
+      font-size: 13px; letter-spacing: .15em; text-transform: uppercase;
+      color: #000; background: #fff;
+      border: none; padding: 14px 32px;
+      position: relative; overflow: hidden;
+      transition: transform .3s;
+      display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+      border-radius: 0 !important;
+      cursor: pointer;
+    }
+    .btn-primary::before {
+      content: ''; position: absolute; inset: 0;
+      background: var(--c1); transform: translateX(-101%);
+      transition: transform .35s cubic-bezier(.23,1,.32,1);
+    }
+    .btn-primary:hover::before { transform: translateX(0); }
+    .btn-primary:hover { color: #fff; }
+    .btn-primary span { position: relative; z-index: 1; }
+
+    .btn-ghost {
+      font-family: var(--font-body);
+      font-size: 13px; letter-spacing: .15em; text-transform: uppercase;
+      color: rgba(255,255,255,.6);
+      background: none; border: 1px solid rgba(255,255,255,.2);
+      padding: 14px 32px; transition: color .2s, border-color .2s;
+      display: inline-flex; justify-content: center; align-items: center; gap: 8px;
+      border-radius: 0 !important;
+      cursor: pointer;
+    }
+    .btn-ghost:hover { color: #fff; border-color: #fff; }
+
+    .section-label {
+      font-family: var(--font-body);
+      font-size: 11px; letter-spacing: .3em; text-transform: uppercase;
+      color: var(--c1); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .section-label::after { content: ''; flex: 0 0 40px; height: 1px; background: var(--c1); }
+
+    .node-action {
+      font-family: var(--font-body);
+      font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
+      padding: 8px 16px; border: 1px solid rgba(255,255,255,.1);
+      color: rgba(255,255,255,.5); transition: all .2s;
+      display: flex; align-items: center; justify-content: center; gap: 6px;
+      background: transparent;
+      border-radius: 0 !important;
+      cursor: pointer;
+    }
+    .node-action:hover { color: #fff; border-color: rgba(255,255,255,.3); background: rgba(255,255,255,.05); }
+    .node-action.danger:hover { color: var(--c1); border-color: var(--c1); background: rgba(255,45,85,.1); }
+
+    ::-webkit-scrollbar {
+      width: 0px;
+    }
+  </style>
+</head>
+
+<body class="flex flex-col min-h-screen">
+
+  <!-- XTREME UI ENGINE handles nav, bg, watermark, etc. -->
+
+  <main class="flex-1 overflow-auto p-4 md:p-8 z-10 relative">
+    <div class="max-w-4xl mx-auto flex flex-col gap-8">
+
+      <!-- Add Token Form -->
+      <div>
+        <div class="section-label">◉ Node Configuration</div>
+        <div class="glass p-6 md:p-8 flex flex-col gap-6">
+          <div>
+            <label class="block text-[10px] uppercase text-white/50 mb-2 ml-1" style="letter-spacing: .2em;">Discord Token
+              *</label>
+            <input type="password" id="t" oninput="verifyToken()"
+              class="w-full px-5 py-3 mono text-sm transition-colors"
+              placeholder="Paste Discord Token Here">
+          </div>
+
+          <!-- Auto-fetched Profile Display -->
+          <div id="profile-card"
+            class="hidden glass rounded-none p-4 flex items-center gap-4 border border-white/10 transition-all bg-white/5">
+            <img id="p-avatar" src="" class="w-12 h-12 rounded-none border border-white/20 shadow-lg object-cover">
+            <div class="flex flex-col flex-1 min-w-0">
+              <span id="p-name" class="text-sm font-bold text-white tracking-wide truncate">Loading...</span>
+              <span id="p-bio" class="text-[10px] text-white/50 truncate italic"></span>
+            </div>
+            <div
+              class="text-[9px] uppercase font-bold tracking-widest text-[var(--c2)] border border-[var(--c2)]/30 px-2 py-1 rounded-none bg-[var(--c2)]/10">
+              Verified</div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+            <div>
+              <label class="block text-[10px] uppercase text-white/50 mb-2 ml-1" style="letter-spacing: .2em;">Label</label>
+              <input type="text" id="lb" class="w-full px-5 py-3 text-sm transition-colors"
+                placeholder="e.g. Main Account">
+            </div>
+            <div class="flex flex-col gap-2">
+              <label class="block text-[10px] uppercase text-white/50 mb-0 ml-1" style="letter-spacing: .2em;">Target
+                Guild(s)</label>
+              <div id="guild_container"
+                class="hidden w-full bg-black/60 border border-white/10 rounded-none px-2 py-2 text-xs text-white overflow-y-auto max-h-32 custom-scrollbar flex flex-col gap-1">
+                <div class="text-white/40 px-2 py-1">Paste Token First...</div>
+              </div>
+              <input type="text" id="gi" class="w-full px-5 py-3 mono text-sm transition-colors"
+                placeholder="Blank = All Guilds (Manual ID)">
+            </div>
+            <div class="flex flex-col gap-2">
+              <label class="block text-[10px] uppercase text-white/50 mb-0 ml-1" style="letter-spacing: .2em;">Target
+                Channel(s)</label>
+              <div id="channel_container"
+                class="hidden w-full bg-black/60 border border-white/10 rounded-none px-2 py-2 text-xs text-white overflow-y-auto max-h-32 custom-scrollbar flex flex-col gap-1">
+                <div class="text-white/40 px-2 py-1">Select Guild First...</div>
+              </div>
+              <input type="text" id="ch" class="w-full px-5 py-3 mono text-sm transition-colors"
+                placeholder="Blank = Global Listen (Manual ID)">
+            </div>
+          </div>
+          <div class="flex gap-4 mt-4">
+            <button onclick="add()" id="submit-btn" class="btn-primary w-full md:w-auto">
+              <span>◈ Add Node</span>
+            </button>
+            <button onclick="cancelEdit()" id="cancel-btn" class="hidden btn-ghost w-full md:w-auto">
+              ✕ Cancel Edit
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Tokens List -->
+      <div>
+        <div class="section-label">◈ Registered Nodes</div>
+        <div id="tlist" class="flex flex-col gap-4">
+          <div class="text-sm text-white/50 text-center py-8">Loading nodes...</div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <div id="toast"
+    class="fixed bottom-10 left-1/2 -translate-x-1/2 px-6 py-3 bg-white/90 backdrop-blur-md text-black text-sm font-bold rounded-none shadow-[0_10px_40px_rgba(0,0,0,0.5)] transition-all duration-300 transform translate-y-10 opacity-0 pointer-events-none z-50">
+  </div>
+
+  <script src="/static/xtreme_ui.js"></script>
+  <script>
+    function toast(m, err = false) {
+      const t = document.getElementById('toast');
+      t.textContent = m;
+      t.style.background = err ? 'var(--c1)' : '#fff';
+      t.style.color = err ? '#fff' : '#000';
+      t.classList.remove('translate-y-10', 'opacity-0');
+      setTimeout(() => t.classList.add('translate-y-10', 'opacity-0'), 2500);
+    }
+
+    let globalTokens = [];
+    let currentEditId = null;
+    let isEditing = false;
+
+    async function load() {
+      if (isEditing) return;
+      const list = await fetch('/api/tokens').then(r => r.json());
+      globalTokens = list;
+      const el = document.getElementById('tlist');
+      if (!list.length) {
+        el.innerHTML = '<div class="glass p-10 text-center text-sm font-medium text-white/50">No nodes registered. Provide a token to begin.</div>';
+        return;
+      }
+      el.innerHTML = list.map(t => `
+        <div class="glass p-6 flex flex-col gap-5 group cursor-pointer transition-all hover:bg-white/5" onclick="toggleDetails('${t.id}')">
+          <div class="flex items-center justify-between flex-wrap gap-4">
+            <div class="flex items-center gap-4">
+              <div class="w-3 h-3 ${t.active ? 'bg-[var(--c2)] shadow-[0_0_15px_rgba(10,255,228,0.4)]' : 'bg-white/20'}" style="transform: rotate(45deg);"></div>
+              <div>
+                <div class="text-xl font-['Bebas_Neue'] text-white tracking-widest uppercase" style="letter-spacing: .12em;">${t.label}</div>
+                <div class="text-[10px] mono text-white/40 uppercase tracking-widest mt-1">${t.channel_id ? 'CH: ' + t.channel_id : 'Global Listen'} &middot; ${t.guild_id ? 'GU: ' + t.guild_id : 'All Guilds'}</div>
+              </div>
+            </div>
+            <div class="flex gap-2 flex-wrap" onclick="event.stopPropagation()">
+              <button onclick="editNode('${t.id}')" class="node-action" title="Edit Node">
+                ◈ EDIT
+              </button>
+              <button onclick="tog('${t.id}')" class="node-action ${t.active ? '!border-white/30 !text-white !bg-white/10' : ''}">
+                ${t.active ? '◎ STANDBY' : '◉ ENABLE'}
+              </button>
+              <button onclick="removeNode('${t.id}')" class="node-action danger">
+                ✕ REMOVE
+              </button>
+            </div>
+          </div>
+          
+          <!-- Detailed profile drawer, shown on click -->
+          <div id="details_${t.id}" class="hidden mt-2 p-4 bg-black/40 rounded-none border border-white/5 flex flex-col md:flex-row gap-4 items-center justify-start transition-all">
+            <div class="flex items-center gap-4 w-full">
+              <img id="avatar_${t.id}" src="https://cdn.discordapp.com/embed/avatars/0.png" class="w-12 h-12 rounded-none border border-white/10 shadow-lg object-cover">
+              <div class="flex flex-col flex-1 min-w-0">
+                 <span id="name_${t.id}" class="text-sm font-bold text-white tracking-wide truncate">Fetching Discord Profile...</span>
+                 <span id="bio_${t.id}" class="text-[10px] text-white/50 truncate italic"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function add() {
+      const tok = document.getElementById('t').value.trim();
+      if (!tok) { toast('Discord Token is required', true); return; }
+
+      const payload = {
+        token:      tok,
+        label:      document.getElementById('lb').value.trim(),
+        channel_id: document.getElementById('ch').value.trim(),
+        guild_id:   document.getElementById('gi').value.trim()
+      };
+
+      // If editing, attach the existing id so the backend does an upsert
+      if (currentEditId) payload.id = currentEditId;
+
+      const r = await fetch('/api/tokens', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = r.ok ? await r.json() : null;
+      if (r.ok && data) {
+        toast(currentEditId ? `◈ Node "${data.label}" updated in Supabase` : `◈ Node "${data.label}" added to Supabase`);
+        cancelEdit();
+        await load();          // force immediate refresh from Supabase
+      } else {
+        const err = data?.error || 'Unknown error';
+        toast(`Failed: ${err}`, true);
+      }
+    }
+
+    async function tog(id) {
+      const r = await fetch('/api/tokens/' + id + '/toggle', { method: 'POST' });
+      if (r.ok) toast('◈ Status toggled — Supabase updated');
+      load();
+    }
+
+    async function removeNode(id) {
+      const token = globalTokens.find(x => x.id === id);
+      const name  = token ? token.label : id;
+      // Use a styled inline confirm instead of the default browser dialog
+      const confirmEl = document.createElement('div');
+      confirmEl.id = 'del-confirm';
+      confirmEl.style.cssText = `
+        position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);
+        display:flex;align-items:center;justify-content:center;
+      `;
+      confirmEl.innerHTML = `
+        <div style="background:#0a0a0a;border:1px solid rgba(255,45,85,.4);padding:40px;max-width:420px;width:90%;">
+          <div style="font-family:'Space Grotesk',sans-serif;font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:var(--c1);margin-bottom:12px;">◈ Confirm Removal</div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:32px;line-height:1;color:#fff;margin-bottom:16px;">${name}</div>
+          <p style="font-size:12px;color:rgba(255,255,255,.5);margin-bottom:28px;">This will permanently delete this node from Supabase. The bot will stop running for this account immediately.</p>
+          <div style="display:flex;gap:12px;">
+            <button id="del-yes" style="flex:1;background:var(--c1);color:#fff;border:none;padding:14px;font-family:'Space Grotesk',sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;">✕ Remove</button>
+            <button id="del-no"  style="flex:1;background:none;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.15);padding:14px;font-family:'Space Grotesk',sans-serif;font-size:11px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;">Cancel</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(confirmEl);
+      document.getElementById('del-no').onclick  = () => confirmEl.remove();
+      document.getElementById('del-yes').onclick = async () => {
+        confirmEl.remove();
+        const res = await fetch('/api/tokens/' + id, { method: 'DELETE' });
+        if (res.ok) {
+          toast(`◈ "${name}" removed from Supabase`);
+          // Also invalidate cache so the next load pulls fresh data
+          await fetch('/api/tokens/invalidate', { method: 'POST' }).catch(() => {});
+        } else {
+          toast('Delete failed — check server logs', true);
+        }
+        await load();
+      };
+    }
+
+    function editNode(id) {
+      const t = globalTokens.find(x => x.id === id);
+      if (!t) return;
+      currentEditId = id;
+      _loadLocked   = true;   // freeze poll while user edits
+      document.getElementById('t').value  = t.token || t.discord_token || '';
+      document.getElementById('lb').value = t.label || '';
+      document.getElementById('gi').value = t.guild_id || '';
+      document.getElementById('ch').value = t.channel_id || '';
+      document.getElementById('submit-btn').innerHTML = '<span>◈ Save Changes</span>';
+      document.getElementById('cancel-btn').classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      verifyToken();
+      toast('Editing ' + t.label);
+    }
+
+    function cancelEdit() {
+      ['t', 'lb', 'ch', 'gi'].forEach(i => document.getElementById(i).value = '');
+      currentEditId = null;
+      _loadLocked   = false;  // re-enable polling
+      document.getElementById('submit-btn').innerHTML = '<span>◈ Add Node</span>';
+      document.getElementById('cancel-btn').classList.add('hidden');
+      document.getElementById('profile-card').classList.add('hidden');
+      document.getElementById('guild_container').classList.add('hidden');
+      document.getElementById('channel_container').classList.add('hidden');
+    }
+
+    const fetchedProfiles = {};
+    async function toggleDetails(id) {
+      const detailsDiv = document.getElementById(`details_${id}`);
+      if (!detailsDiv) return;
+
+      const isHidden = detailsDiv.classList.contains('hidden');
+
+      // Hide all others
+      globalTokens.forEach(t => {
+        const d = document.getElementById(`details_${t.id}`);
+        if (d && t.id !== id) d.classList.add('hidden');
+      });
+
+      if (isHidden) {
+        detailsDiv.classList.remove('hidden');
+        const t = globalTokens.find(x => x.id === id);
+        if (!t || !t.token) return;
+
+        // If already cached, don't refetch
+        if (fetchedProfiles[id]) {
+          renderDetails(id, fetchedProfiles[id]);
+          return;
+        }
+
+        try {
+          const req = await fetch('https://discord.com/api/v9/users/@me', {
+            headers: { 'Authorization': t.token }
+          });
+          if (req.status === 200) {
+            const profile = await req.json();
+            fetchedProfiles[id] = profile;
+            renderDetails(id, profile);
+          } else {
+            document.getElementById(`name_${id}`).textContent = 'Invalid or expired token';
+            document.getElementById(`bio_${id}`).textContent = '';
+          }
+        } catch (e) {
+          document.getElementById(`name_${id}`).textContent = 'Error loading profile';
+        }
+      } else {
+        detailsDiv.classList.add('hidden');
+      }
+    }
+
+    function renderDetails(id, p) {
+      document.getElementById(`name_${id}`).textContent = `${p.username || 'Unknown'} (Name: ${p.global_name || p.username})`;
+      document.getElementById(`bio_${id}`).textContent = p.bio || 'No bio set';
+      document.getElementById(`avatar_${id}`).src = p.avatar ? `https://cdn.discordapp.com/avatars/${p.id}/${p.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png';
+    }
+
+    // --- Auto Configuration Logic ---
+    let verifyTimeout;
+    async function verifyToken() {
+      clearTimeout(verifyTimeout);
+      const tok = document.getElementById('t').value.trim();
+      const card = document.getElementById('profile-card');
+      const gCont = document.getElementById('guild_container');
+
+      if (!tok || tok.length < 20) {
+        card.classList.add('hidden');
+        gCont.classList.add('hidden');
+        return;
+      }
+
+      verifyTimeout = setTimeout(async () => {
+        try {
+          // Fetch Profile
+          const req = await fetch('https://discord.com/api/v9/users/@me', {
+            headers: { 'Authorization': tok }
+          });
+          if (req.status !== 200) return;
+          const me = await req.json();
+
+          // Show Profile
+          document.getElementById('p-name').textContent = me.username;
+          document.getElementById('p-bio').textContent = me.bio || 'No bio';
+          document.getElementById('p-avatar').src = me.avatar ? `https://cdn.discordapp.com/avatars/${me.id}/${me.avatar}.png` : 'https://cdn.discordapp.com/embed/avatars/0.png';
+          card.classList.remove('hidden');
+
+          // Auto-fill label
+          if (!document.getElementById('lb').value) document.getElementById('lb').value = me.username;
+
+          // Fetch Guilds
+          const greq = await fetch('https://discord.com/api/v9/users/@me/guilds', {
+            headers: { 'Authorization': tok }
+          });
+          if (greq.status !== 200) return;
+          const guilds = await greq.json();
+
+          gCont.innerHTML = guilds.map(g => `
+                  <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-white/10 rounded-none cursor-pointer transition-colors">
+                    <input type="checkbox" value="${g.id}" class="guild-cb w-4 h-4 rounded-none border-white/20 bg-black/40 text-blue-500 focus:ring-0 cursor-pointer" style="accent-color: var(--c1);" onchange="fetchChannels(); updateGuildInput();">
+                    <span class="truncate flex-1">${g.name}</span>
+                  </label>
+                `).join('');
+          gCont.classList.remove('hidden');
+
+        } catch (e) { console.error('Verification error', e); }
+      }, 800);
+    }
+
+    async function fetchChannels() {
+      const tok = document.getElementById('t').value.trim();
+      const gCbs = document.querySelectorAll('.guild-cb:checked');
+      const cCont = document.getElementById('channel_container');
+
+      if (gCbs.length !== 1) {
+        cCont.innerHTML = '<div class="text-white/40 px-2 py-1">Select exactly ONE guild above to load its channels.</div>';
+        cCont.classList.remove('hidden');
+        return;
+      }
+
+      const gid = gCbs[0].value;
+      cCont.innerHTML = '<div class="text-white/40 px-2 py-1 animate-pulse">Loading channels...</div>';
+      cCont.classList.remove('hidden');
+
+      try {
+        const req = await fetch(`https://discord.com/api/v9/guilds/${gid}/channels`, {
+          headers: { 'Authorization': tok }
+        });
+        if (req.status !== 200) {
+          cCont.innerHTML = '<div class="text-white/40 px-2 py-1">Failed to load channels (No Permission)</div>';
+          return;
+        }
+        const channels = await req.json();
+        const texts = channels.filter(c => c.type === 0 || c.type === 5);
+
+        cCont.innerHTML = texts.map(c => `
+              <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-white/10 rounded-none cursor-pointer transition-colors">
+                <input type="checkbox" value="${c.id}" class="channel-cb w-4 h-4 rounded-none border-white/20 bg-black/40 text-blue-500 focus:ring-0 cursor-pointer" style="accent-color: var(--c1);" onchange="updateChannelInput();">
+                <span class="truncate flex-1"># ${c.name}</span>
+              </label>
+            `).join('');
+      } catch (e) {
+        cCont.innerHTML = '<div class="text-white/40 px-2 py-1">Error loading channels</div>';
+      }
+    }
+
+    function updateGuildInput() {
+      const gi = document.getElementById('gi');
+      gi.value = Array.from(document.querySelectorAll('.guild-cb:checked')).map(cb => cb.value).join(',');
+    }
+
+    function updateChannelInput() {
+      const ch = document.getElementById('ch');
+      ch.value = Array.from(document.querySelectorAll('.channel-cb:checked')).map(cb => cb.value).join(',');
+    }
+
+    load(); setInterval(load, 5000);
+  </script>
+</body>
+
+</html>

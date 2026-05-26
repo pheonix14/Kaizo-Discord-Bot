@@ -1,0 +1,498 @@
+Copyright (c) 2025 Kryxtl
+All rights reserved.
+
+This software is proprietary and confidential.
+
+By downloading, installing, or using this software (â€œthe Codeâ€), you (â€œthe Licenseeâ€) agree to the following terms:
+
+---
+
+## 1. Grant of License
+- The Author grants the Licensee a non-exclusive, non-transferable license to use the Code for personal purposes only.
+- Any commercial use (including resale, redistribution, or use in paid services) requires a separate commercial license issued by the Author.
+
+--- ## ChatGPT
+You said:
+Copyright (c) 2025 Your Name
+
+All rights reserved.
+
+Unauthorized copying, distribution, or modification of this code is strictly prohibited without explicit written permission from the author.
+
+This code is proprietary and confidential. Use without a valid commercial license is not permitted.
+
+
+
+It's abt a discord selfbot , explain every terms and conditions too and risks and also about paid
+ChatGPT said:
+Got it â€” letâ€™s unpack this carefully.
+
+Youâ€™ve written a copyright notice for a Discord selfbot project. Hereâ€™s what each line means, and also some legal, ethical, and practical risks you should know, especially regarding paid/commercial use.
+
+ðŸ”– Breakdown of Your Copyright Notice
+1. Copyright (c) 2025 Your Name
+
+This declares that you are the copyright holder of the code, effective 2025.
+
+Copyright applies automatically when you create the code, but including a notice makes it explicit.
+
+2. All rights reserved.
+
+This means you (the author) keep all rights to the code â€” nobody can legally copy, distribute, or modify it without your permission.
+
+If you want others to use it, you must grant them a license.
+
+3. Unauthorized copying, distribution, or modification ... prohibited
+
+Explicitly forbids others from sharing, altering, or using the code without written approval.
+
+Violation = copyright infringement, enforceable under law.
+
+4. This code is proprietary and confidential.
+
+Youâ€™re labeling it not open source.
+
+Only those you authorize can access or use it.
+
+5. Use without a valid commercial license is not permitted.
+
+You are requiring anyone who wants to use it (especially for profit) to obtain a paid license from you.
+
+This allows you to monetize your work legally.
+
+âš–ï¸ Legal & Risk Considerations (Specific to Discord Selfbots)
+Discordâ€™s Terms of Service Violation
+
+Selfbots (automating a normal user account) are strictly against Discordâ€™s ToS.
+
+Risk: account termination, permanent bans, and potential blacklisting.
+
+Distribution Risk
+
+Selling or sharing selfbot code increases visibility, making it more likely Discordâ€™s Trust & Safety team will act against you or your customers.
+
+In extreme cases, if your tool is used for abuse (spam, harassment, phishing), you could face legal liability.
+
+Paid Licensing Complications
+
+If you charge money for selfbot software, youâ€™re not only violating Discordâ€™s ToS but also potentially enabling misuse at scale.
+
+Customers could demand refunds, report you, or resell your code illegally.
+
+Payment platforms (PayPal, Stripe, etc.) often ban accounts selling ToS-violating software.
+
+Security Concerns
+
+Selfbots require users to input their Discord token, which is equivalent to their account password.
+
+Handling othersâ€™ tokens is extremely risky â€” you could be accused of account theft or data misuse.
+
+ðŸ’° If You Still Want to Go
+You said:
+I mean make a licence for me 
+ChatGPT said:
+Understood ðŸ‘
+I can draft a custom license agreement for your code. But before that, I need to be clear with you:
+
+A Discord selfbot is against Discordâ€™s Terms of Service. Any distribution, especially for money, carries real risks (account bans, payment processor bans, and possible liability if someone misuses it).
+
+I can still create a proprietary license for your project (like an â€œEULAâ€ â€” End User License Agreement). It wonâ€™t protect you from Discord, but it will define your rules for users of your code.
+
+Hereâ€™s a license draft you can use/adapt:
+
+ðŸ“œ Custom Proprietary License (Draft)
+Copyright (c) 2025 [Your Name]
+All rights reserved.
+
+This software (â€œthe Codeâ€) is proprietary and confidential. By obtaining, installing, or using the Code, you (â€œthe Licenseeâ€) agree to the following terms:
+
+1. Grant of License
+The Author grants the Licensee a non-exclusive, non-transferable license to use the Code for personal purposes only, subject to compliance with these terms.
+
+Commercial use requires a separate paid license issued directly by the Author.
+
+2. Restrictions
+The Licensee shall not:
+
+Copy, share, or distribute the Code without prior written consent.
+
+Modify, decompile, reverse engineer, or create derivative works of the Code.
+
+Sell, rent, sublicense, or otherwise commercialize the Code without an explicit commercial license.
+
+3. Ownership
+The Code remains the sole property of the Author. No ownership rights are transferred to the Licensee.
+
+4. Confidentiality
+The Licensee agrees to treat the Code as confidential information and prevent unauthorized access.
+
+5. Termination
+This License will terminate automatically if the Licensee breaches any term. Upon termination, all use of the Code must cease, and the Licensee must delete all copies in their possession.
+
+6. Disclaimer of Warranty
+The Code is provided â€œas isâ€, without warranty of any kind.
+The Author makes no guarantees regarding performance, reliability, or fitness for any purpose.
+
+7. Limitation of Liability
+The Author shall not be liable for any damages (including account bans, data loss, or legal consequences) arising from the use of the Code. The Licensee assumes all responsibility for risks associated with its use.
+
+8. Governing Law
+This License shall be governed by and interpreted under the laws of [Your Country/State].
+
+By using this software, you acknowledge that you have read, understood, and agreed to these terms.
+
+ðŸ‘‰ I can also draft a commercial license add-on (for paid users) if you want to include pricing, scope of allowed use, and revocation rights.
+
+Do you want me to make a two-tier system (free personal-use license + paid commercial license), or just one strict paid license?
+
+You said:
+Yes that's right now make the license for github 
+ChatGPT said:
+Got it âœ…
+If youâ€™re putting this on GitHub, youâ€™ll want a LICENSE file in your repo. Since this is proprietary (not open-source), the file should clearly state that no rights are granted unless you approve them.
+
+Hereâ€™s a ready-to-use LICENSE file you can drop into your repo:
+
+LICENSE
+Copyright (c) 2025 [Your Name]
+All rights reserved.
+
+This software is proprietary and confidential.
+
+By downloading, installing, or using this software (â€œthe Codeâ€), you (â€œthe Licenseeâ€) agree to the following terms:
+
+1. Grant of License
+The Author grants the Licensee a non-exclusive, non-transferable license to use the Code for personal purposes only.
+
+Any commercial use (including resale, redistribution, or use in paid services) requires a separate commercial license issued by the Author.
+
+2. Restrictions
+The Licensee shall not:
+
+Copy, share, or distribute the Code without prior written consent.
+
+Modify, reverse engineer, or create derivative works of the Code.
+
+Sell, rent, sublicense, or otherwise commercialize the Code without an explicit license.
+
+3. Ownership
+The Code remains the exclusive property of the Author. No ownership rights are transferred.
+
+4. Confidentiality
+The Licensee agrees to treat the Code as confidential and prevent unauthorized access.
+
+5. Termination
+This License terminates automatically if the Licensee breaches any term. Upon termination, the Licensee must delete all copies of the Code.
+
+6. Disclaimer of Warranty
+The Code is provided â€œas isâ€, without warranty of any kind. The Author makes no guarantees regarding performance, reliability, or fitness for any purpose.
+
+7. Limitation of Liability
+The Author shall not be liable for any damages (including account bans, data loss, or legal consequences) arising from use of the Code.
+The Licensee assumes full responsibility for all risks.
+
+8. Governing Law
+This License shall be governed by the laws of [Your Country/State].
+
+By using this software, you acknowledge that you have read, understood, and agreed to these terms.
+
+âš ï¸ Quick note: GitHub normally expects open-source licenses (MIT, GPL, Apache, etc.). If you add this proprietary LICENSE, GitHub will mark your repo as â€œNo licenseâ€ (meaning others legally canâ€™t use it without permission). Thatâ€™s fine for your case.
+
+ðŸ‘‰ Do you want me to also make a COMMERCIAL_LICENSE.md file for GitHub that defines what paid users get (like terms of purchase, revocation, updates, etc.)?
+
+You said:
+Let me download the license
+ChatGPT said:
+Hereâ€™s your LICENSE file ready to download:
+
+ðŸ“¥ Download LICENSE
+
+You can place this in the root of your GitHub repository.
+
+Do you also want me to create a COMMERCIAL_LICENSE.md file for users who buy a license? 
+
+You said:
+Tell about discord selfbot rules and if we use for license
+ChatGPT said:
+Good question â€” letâ€™s clear this up properly.
+
+ðŸ“Œ Discordâ€™s Rules on Selfbots
+Discord has very strict rules on automation and selfbots. From their Terms of Service and Developer Policy:
+
+Selfbots are prohibited
+
+A selfbot = using a normal user account with automated code (instead of a bot account created via the official API).
+
+Discord explicitly bans them because they can automate spam, scraping, and account abuse.
+
+Enforcement: account termination (permanent ban).
+
+User tokens must not be shared or used in 3rd-party apps
+
+Asking someone to input their account token into your selfbot is a major security violation.
+
+Discord treats it as account theft risk.
+
+Only bot accounts registered via the official API are allowed
+
+If you want automation legally, you must register a bot on the Discord Developer Portal.
+
+## 2. Restrictions
+The Licensee shall not:
+- Copy, share, or distribute the Code without prior written consent.
+- Modify, reverse engineer, or create derivative works of the Code.
+- Sell, rent, sublicense, or otherwise commercialize the Code without an explicit license.
+
+---
+
+## 3. Ownership
+The Code remains the exclusive property of the Author. No ownership rights are transferred.
+
+---
+
+## 4. Confidentiality
+The Licensee agrees to treat the Code as confidential and prevent unauthorized access.
+
+---
+
+## 5. Termination
+This License terminates automatically if the Licensee breaches any term. Upon termination, the Licensee must delete all copies of the Code.
+
+---
+
+## 6. Disclaimer of Warranty
+The Code is provided â€œas isâ€, without warranty of any kind. The Author makes no guarantees regarding performance, reliability, or fitness for any purpose.
+
+---
+
+## 7. Limitation of Liability
+The Author shall not be liable for any damages (including account bans, data loss, or legal consequences) arising from use of the Code.
+The Licensee assumes full responsibility for all risks.
+
+## ChatGPT
+You said:
+Copyright (c) 2025 Your Name
+
+All rights reserved.
+
+Unauthorized copying, distribution, or modification of this code is strictly prohibited without explicit written permission from the author.
+
+This code is proprietary and confidential. Use without a valid commercial license is not permitted.
+
+
+
+It's abt a discord selfbot , explain every terms and conditions too and risks and also about paid
+ChatGPT said:
+Got it â€” letâ€™s unpack this carefully.
+
+Youâ€™ve written a copyright notice for a Discord selfbot project. Hereâ€™s what each line means, and also some legal, ethical, and practical risks you should know, especially regarding paid/commercial use.
+
+ðŸ”– Breakdown of Your Copyright Notice
+1. Copyright (c) 2025 Your Name
+
+This declares that you are the copyright holder of the code, effective 2025.
+
+Copyright applies automatically when you create the code, but including a notice makes it explicit.
+
+2. All rights reserved.
+
+This means you (the author) keep all rights to the code â€” nobody can legally copy, distribute, or modify it without your permission.
+
+If you want others to use it, you must grant them a license.
+
+3. Unauthorized copying, distribution, or modification ... prohibited
+
+Explicitly forbids others from sharing, altering, or using the code without written approval.
+
+Violation = copyright infringement, enforceable under law.
+
+4. This code is proprietary and confidential.
+
+Youâ€™re labeling it not open source.
+
+Only those you authorize can access or use it.
+
+5. Use without a valid commercial license is not permitted.
+
+You are requiring anyone who wants to use it (especially for profit) to obtain a paid license from you.
+
+This allows you to monetize your work legally.
+
+âš–ï¸ Legal & Risk Considerations (Specific to Discord Selfbots)
+Discordâ€™s Terms of Service Violation
+
+Selfbots (automating a normal user account) are strictly against Discordâ€™s ToS.
+
+Risk: account termination, permanent bans, and potential blacklisting.
+
+Distribution Risk
+
+Selling or sharing selfbot code increases visibility, making it more likely Discordâ€™s Trust & Safety team will act against you or your customers.
+
+In extreme cases, if your tool is used for abuse (spam, harassment, phishing), you could face legal liability.
+
+Paid Licensing Complications
+
+If you charge money for selfbot software, youâ€™re not only violating Discordâ€™s ToS but also potentially enabling misuse at scale.
+
+Customers could demand refunds, report you, or resell your code illegally.
+
+Payment platforms (PayPal, Stripe, etc.) often ban accounts selling ToS-violating software.
+
+Security Concerns
+
+Selfbots require users to input their Discord token, which is equivalent to their account password.
+
+Handling othersâ€™ tokens is extremely risky â€” you could be accused of account theft or data misuse.
+
+ðŸ’° If You Still Want to Go
+You said:
+I mean make a licence for me 
+ChatGPT said:
+Understood ðŸ‘
+I can draft a custom license agreement for your code. But before that, I need to be clear with you:
+
+A Discord selfbot is against Discordâ€™s Terms of Service. Any distribution, especially for money, carries real risks (account bans, payment processor bans, and possible liability if someone misuses it).
+
+I can still create a proprietary license for your project (like an â€œEULAâ€ â€” End User License Agreement). It wonâ€™t protect you from Discord, but it will define your rules for users of your code.
+
+Hereâ€™s a license draft you can use/adapt:
+
+ðŸ“œ Custom Proprietary License (Draft)
+Copyright (c) 2025 [Your Name]
+All rights reserved.
+
+This software (â€œthe Codeâ€) is proprietary and confidential. By obtaining, installing, or using the Code, you (â€œthe Licenseeâ€) agree to the following terms:
+
+1. Grant of License
+The Author grants the Licensee a non-exclusive, non-transferable license to use the Code for personal purposes only, subject to compliance with these terms.
+
+Commercial use requires a separate paid license issued directly by the Author.
+
+2. Restrictions
+The Licensee shall not:
+
+Copy, share, or distribute the Code without prior written consent.
+
+Modify, decompile, reverse engineer, or create derivative works of the Code.
+
+Sell, rent, sublicense, or otherwise commercialize the Code without an explicit commercial license.
+
+3. Ownership
+The Code remains the sole property of the Author. No ownership rights are transferred to the Licensee.
+
+4. Confidentiality
+The Licensee agrees to treat the Code as confidential information and prevent unauthorized access.
+
+5. Termination
+This License will terminate automatically if the Licensee breaches any term. Upon termination, all use of the Code must cease, and the Licensee must delete all copies in their possession.
+
+6. Disclaimer of Warranty
+The Code is provided â€œas isâ€, without warranty of any kind.
+The Author makes no guarantees regarding performance, reliability, or fitness for any purpose.
+
+7. Limitation of Liability
+The Author shall not be liable for any damages (including account bans, data loss, or legal consequences) arising from the use of the Code. The Licensee assumes all responsibility for risks associated with its use.
+
+8. Governing Law
+This License shall be governed by and interpreted under the laws of [Your Country/State].
+
+By using this software, you acknowledge that you have read, understood, and agreed to these terms.
+
+ðŸ‘‰ I can also draft a commercial license add-on (for paid users) if you want to include pricing, scope of allowed use, and revocation rights.
+
+Do you want me to make a two-tier system (free personal-use license + paid commercial license), or just one strict paid license?
+
+You said:
+Yes that's right now make the license for github 
+ChatGPT said:
+Got it âœ…
+If youâ€™re putting this on GitHub, youâ€™ll want a LICENSE file in your repo. Since this is proprietary (not open-source), the file should clearly state that no rights are granted unless you approve them.
+
+Hereâ€™s a ready-to-use LICENSE file you can drop into your repo:
+
+LICENSE
+Copyright (c) 2025 [Your Name]
+All rights reserved.
+
+This software is proprietary and confidential.
+
+By downloading, installing, or using this software (â€œthe Codeâ€), you (â€œthe Licenseeâ€) agree to the following terms:
+
+1. Grant of License
+The Author grants the Licensee a non-exclusive, non-transferable license to use the Code for personal purposes only.
+
+Any commercial use (including resale, redistribution, or use in paid services) requires a separate commercial license issued by the Author.
+
+2. Restrictions
+The Licensee shall not:
+
+Copy, share, or distribute the Code without prior written consent.
+
+Modify, reverse engineer, or create derivative works of the Code.
+
+Sell, rent, sublicense, or otherwise commercialize the Code without an explicit license.
+
+3. Ownership
+The Code remains the exclusive property of the Author. No ownership rights are transferred.
+
+4. Confidentiality
+The Licensee agrees to treat the Code as confidential and prevent unauthorized access.
+
+5. Termination
+This License terminates automatically if the Licensee breaches any term. Upon termination, the Licensee must delete all copies of the Code.
+
+6. Disclaimer of Warranty
+The Code is provided â€œas isâ€, without warranty of any kind. The Author makes no guarantees regarding performance, reliability, or fitness for any purpose.
+
+7. Limitation of Liability
+The Author shall not be liable for any damages (including account bans, data loss, or legal consequences) arising from use of the Code.
+The Licensee assumes full responsibility for all risks.
+
+8. Governing Law
+This License shall be governed by the laws of [Your Country/State].
+
+By using this software, you acknowledge that you have read, understood, and agreed to these terms.
+
+âš ï¸ Quick note: GitHub normally expects open-source licenses (MIT, GPL, Apache, etc.). If you add this proprietary LICENSE, GitHub will mark your repo as â€œNo licenseâ€ (meaning others legally canâ€™t use it without permission). Thatâ€™s fine for your case.
+
+ðŸ‘‰ Do you want me to also make a COMMERCIAL_LICENSE.md file for GitHub that defines what paid users get (like terms of purchase, revocation, updates, etc.)?
+
+You said:
+Let me download the license
+ChatGPT said:
+Hereâ€™s your LICENSE file ready to download:
+
+ðŸ“¥ Download LICENSE
+
+You can place this in the root of your GitHub repository.
+
+Do you also want me to create a COMMERCIAL_LICENSE.md file for users who buy a license? 
+
+You said:
+Tell about discord selfbot rules and if we use for license
+ChatGPT said:
+Good question â€” letâ€™s clear this up properly.
+
+ðŸ“Œ Discordâ€™s Rules on Selfbots
+Discord has very strict rules on automation and selfbots. From their Terms of Service and Developer Policy:
+
+Selfbots are prohibited
+
+A selfbot = using a normal user account with automated code (instead of a bot account created via the official API).
+
+Discord explicitly bans them because they can automate spam, scraping, and account abuse.
+
+Enforcement: account termination (permanent ban).
+
+User tokens must not be shared or used in 3rd-party apps
+
+Asking someone to input their account token into your selfbot is a major security violation.
+
+Discord treats it as account theft risk.
+
+Only bot accounts registered via the official API are allowed
+
+------
+
+By using this software, you acknowledge that you have read, understood, and agreed to these terms.

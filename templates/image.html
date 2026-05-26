@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>XTREME | Image Intelligence</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Permanent+Marker&display=swap');
+
+    .cursive-italic {
+      font-family: 'Dancing Script', cursive;
+      font-style: italic;
+    }
+    .anime-font {
+      font-family: 'Permanent Marker', cursive;
+    }
+
+    /* Custom scanline animation for the viewer */
+    @keyframes scan-line { 0% { top: 0; opacity: 0.8; } 100% { top: 100%; opacity: 0; } }
+    .scan-overlay::after {
+      content: ''; position: absolute; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--xc1), transparent);
+      animation: scan-line 2s linear infinite; pointer-events: none;
+    }
+    
+    @keyframes radar-ping { 0% { transform: scale(1); opacity: 0.8; } 100% { transform: scale(2.5); opacity: 0; } }
+    .radar-dot { position: relative; }
+    .radar-dot::before {
+      content: ''; position: absolute; inset: 0; border-radius: 9999px;
+      background: currentColor; animation: radar-ping 1.5s cubic-bezier(0,0,0.2,1) infinite; opacity: 0.4;
+    }
+    
+    .model-bar { transition: width 0.6s cubic-bezier(0.34,1.56,0.64,1); }
+    .toggle-checkbox:checked + .toggle-label > div { transform: translateX(20px); }
+
+    /* Anime Edit Style Animations */
+    @keyframes anime-strike {
+        0% { transform: scale(1.5) skewX(-15deg) translateY(20px); opacity: 0; filter: blur(10px); }
+        60% { transform: scale(0.9) skewX(10deg) translateY(-5px); opacity: 1; filter: blur(0); }
+        100% { transform: scale(1) skewX(0) translateY(0); opacity: 1; }
+    }
+    .animate-strike {
+        animation: anime-strike 0.5s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    @keyframes log-slide {
+        0% { transform: translateX(-30px) scale(0.95); opacity: 0; }
+        100% { transform: translateX(0) scale(1); opacity: 1; }
+    }
+    
+    /* Sleek inner shadow for the viewer */
+    .image-box {
+        box-shadow: inset 0 0 60px rgba(0,0,0,0.9);
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+  
+  <main class="flex-1 p-4 md:p-6 lg:p-10 flex flex-col gap-6 z-10 relative w-full max-w-[1400px] mx-auto">
+    <!-- Top Header -->
+    <div class="flex flex-col md:flex-row items-start md:items-end justify-between border-b border-white/10 pb-4 mb-2 gap-4">
+      <div>
+        <h1 class="text-5xl md:text-6xl text-white">VISION <span style="color:var(--xc1)">ENGINE</span></h1>
+        <p class="font-['Space_Grotesk'] text-sm text-white/40 uppercase tracking-widest mt-2">Neural Image Processing & Detection</p>
+      </div>
+      <div id="status-badge" class="px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider bg-white/5 border border-white/10 text-white/40">Offline</div>
+    </div>
+
+    <!-- 2 Column Layout -->
+    <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
+
+      <!-- LEFT: CONFIG & MODELS -->
+      <div class="xl:col-span-4 flex flex-col gap-6">
+        
+        <!-- API CONFIG -->
+        <div class="glass rounded-[2rem] p-6 flex flex-col gap-5 border border-white/10 shadow-2xl backdrop-blur-3xl">
+          <h2 class="font-['Space_Grotesk'] text-xl font-bold text-white uppercase tracking-widest flex items-center gap-3">
+            <span style="color:var(--xc1)">◈</span> Settings
+          </h2>
+          
+          <div class="flex flex-col gap-2">
+            <label class="font-['Space_Grotesk'] text-[10px] uppercase tracking-widest text-white/40 font-bold ml-1">HuggingFace Token</label>
+            <div class="flex gap-2">
+              <input type="password" id="hf-token" class="flex-1 min-w-0 bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-white/30" placeholder="hf_...">
+              <button onclick="save()" class="px-5 py-3 rounded-xl text-xs uppercase hover:bg-white/10 border border-white/20 transition-all active:scale-95 shrink-0 shadow-lg font-bold" style="background:var(--xc1); border-color:var(--xc1); color:#fff;">Save</button>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-4 mt-2">
+            <!-- Toggle 1 -->
+            <div class="flex items-center justify-between p-4 bg-black/30 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+              <div class="pr-2">
+                <div class="font-['Space_Grotesk'] text-sm font-bold text-white">Auto Catcher</div>
+                <div class="font-['Space_Grotesk'] text-[10px] text-white/40 uppercase tracking-widest mt-0.5">Fast AI Vision</div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" id="enabled" class="sr-only toggle-checkbox" onchange="save()">
+                <div class="w-11 h-6 bg-white/10 rounded-full toggle-label relative transition-all duration-300">
+                  <div class="w-4 h-4 bg-white rounded-full absolute top-1 left-1 transition-transform duration-300 shadow-sm"></div>
+                </div>
+              </label>
+            </div>
+
+            <!-- Toggle 2 -->
+            <div class="flex flex-col gap-3 p-4 bg-black/30 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+              <div class="flex items-center justify-between">
+                <div class="pr-2">
+                  <div class="font-['Space_Grotesk'] text-sm font-bold text-white">Local Engine</div>
+                  <div class="font-['Space_Grotesk'] text-[10px] text-white/40 uppercase tracking-widest mt-0.5">Zero API lag</div>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input type="checkbox" id="local_mode" class="sr-only toggle-checkbox" onchange="save()">
+                  <div class="w-11 h-6 bg-white/10 rounded-full toggle-label relative transition-all duration-300">
+                    <div class="w-4 h-4 bg-white rounded-full absolute top-1 left-1 transition-transform duration-300 shadow-sm"></div>
+                  </div>
+                </label>
+              </div>
+              <div class="flex items-center justify-between mt-2 pt-3 border-t border-white/5">
+                <div class="font-['Space_Grotesk'] text-[10px] uppercase tracking-widest text-white/40">Type</div>
+                <select id="local_engine" class="bg-black border border-white/10 rounded-lg px-3 py-1.5 font-['Space_Grotesk'] text-xs text-white outline-none cursor-pointer">
+                  <option value="onnx">ONNX (75MB)</option>
+                  <option value="pytorch">PyTorch (Heavy)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Toggle 3 -->
+            <div class="flex items-center justify-between p-4 bg-black/30 rounded-2xl border border-white/5 hover:border-white/10 transition-colors">
+              <div class="pr-2">
+                <div class="font-['Space_Grotesk'] text-sm font-bold text-white">Hint Fallback</div>
+                <div class="font-['Space_Grotesk'] text-[10px] text-white/40 uppercase tracking-widest mt-0.5">Trigger on AI Fail</div>
+              </div>
+              <label class="relative inline-flex items-center cursor-pointer shrink-0">
+                <input type="checkbox" id="advanced_mode" class="sr-only toggle-checkbox" onchange="save()">
+                <div class="w-11 h-6 bg-white/10 rounded-full toggle-label relative transition-all duration-300">
+                  <div class="w-4 h-4 bg-white rounded-full absolute top-1 left-1 transition-transform duration-300 shadow-sm"></div>
+                </div>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Models -->
+        <div class="glass rounded-[2rem] p-6 flex flex-col gap-4 border border-white/10 shadow-2xl backdrop-blur-3xl">
+           <!-- Parallel Badge -->
+          <div id="parallel-badge" class="hidden items-center gap-3 px-4 py-3 bg-black/40 rounded-2xl border border-white/10 mb-2">
+            <div class="w-2.5 h-2.5 rounded-full animate-pulse shrink-0 parallel-dot" style="background:var(--xc1)"></div>
+            <div class="font-['Space_Grotesk'] text-[11px] uppercase tracking-widest font-bold parallel-text" style="color:var(--xc1)">Active</div>
+          </div>
+
+          <h2 class="font-['Space_Grotesk'] text-sm font-bold text-white uppercase tracking-widest flex items-center justify-between px-1">
+            <span>Neural Models</span>
+            <span class="text-[10px] text-white/30" id="model-speed">—</span>
+          </h2>
+          <div class="flex flex-col gap-2.5" id="model-list">
+            <!-- rendered by JS -->
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: LIVE VIEWER & LOGS -->
+      <div class="xl:col-span-8 flex flex-col gap-6">
+        
+        <!-- Live Viewer - HUGE -->
+        <div class="glass rounded-[2.5rem] p-6 flex flex-col gap-5 border border-white/10 shadow-2xl backdrop-blur-3xl">
+          <div class="flex items-center gap-3 px-2">
+            <div id="live-dot" class="w-3 h-3 rounded-full bg-white/20 shrink-0 shadow-[0_0_15px_currentColor]"></div>
+            <h2 class="font-['Space_Grotesk'] text-sm uppercase tracking-widest text-white/50 font-bold">Live Vision Feed</h2>
+            <span id="live-label" class="ml-auto font-['Space_Grotesk'] text-[10px] text-white/30 uppercase tracking-widest">Idle</span>
+          </div>
+
+          <!-- Viewer: Made it BIGGER -->
+          <div id="spawn-viewer" class="relative rounded-[2rem] overflow-hidden bg-black/50 border border-white/5 flex items-center justify-center min-h-[400px] md:min-h-[550px] image-box group">
+            <div id="spawn-placeholder" class="flex flex-col items-center gap-3 text-white/20 py-8">
+              <span class="text-4xl font-['Bebas_Neue'] tracking-wider opacity-30">AWAITING SIGNAL...</span>
+            </div>
+            <!-- Huge image -->
+            <img id="spawn-img" src="" class="hidden w-full h-[400px] md:h-[550px] object-cover md:object-contain rounded-[2rem] drop-shadow-[0_0_25px_rgba(255,255,255,0.15)] transition-all duration-500 group-hover:scale-105" alt="Spawn">
+            <!-- Scan line overlay when active -->
+            <div id="scan-overlay" class="hidden absolute inset-0 scan-overlay pointer-events-none rounded-[2rem] border-2" style="border-color:var(--xc1)"></div>
+          </div>
+
+          <!-- Result: Anime Fonts! -->
+          <div id="analysis-result" class="hidden flex-col gap-4 px-2">
+            <div class="flex items-center justify-between">
+              <div class="flex flex-col">
+                <div class="font-['Space_Grotesk'] text-xs uppercase tracking-widest text-white/50 mb-1">Identified As</div>
+                <!-- Cursive Italic Font for Name -->
+                <div id="result-name" class="text-6xl md:text-8xl cursive-italic tracking-wider text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)] leading-none pt-2">—</div>
+              </div>
+              <div class="flex flex-col text-right">
+                <div class="font-['Space_Grotesk'] text-xs uppercase tracking-widest text-white/50 mb-1">Confidence</div>
+                <!-- Anime Marker Font for % -->
+                <div id="result-conf" class="text-6xl md:text-8xl anime-font tracking-wide leading-none pt-2 drop-shadow-[0_0_15px_currentColor]" style="color:var(--xc1)">0%</div>
+              </div>
+            </div>
+            <div id="result-bar-wrap" class="w-full bg-black/60 rounded-full h-2 overflow-hidden mt-2 shadow-inner">
+              <div id="result-bar" class="h-full model-bar shadow-[0_0_15px_currentColor]" style="background:var(--xc1); width:0%"></div>
+            </div>
+            <div id="result-node" class="font-['Space_Grotesk'] text-[10px] text-white/30 uppercase tracking-widest mt-1">—</div>
+          </div>
+
+          <!-- Nodes Catching list -->
+          <div id="node-status-list" class="flex flex-wrap gap-3 mt-4 pt-4 border-t border-white/10 px-2">
+            <!-- rendered by JS -->
+          </div>
+        </div>
+
+        <!-- STATS & LOGS -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="glass rounded-[2rem] p-8 border border-white/10 flex flex-col items-center justify-center gap-2 shadow-xl hover:bg-white/5 transition-colors cursor-default">
+            <div class="font-['Space_Grotesk'] text-xs uppercase tracking-widest text-white/50 font-bold">Total Detections</div>
+            <div class="text-7xl font-['Bebas_Neue'] tracking-wider text-white mt-2 drop-shadow-md" id="total-dets">0</div>
+          </div>
+          <div class="glass rounded-[2rem] p-8 border border-white/10 flex flex-col items-center justify-center gap-2 shadow-xl hover:bg-white/5 transition-colors cursor-default">
+            <div class="font-['Space_Grotesk'] text-xs uppercase tracking-widest text-white/50 font-bold">Avg Accuracy</div>
+            <div class="text-7xl font-['Bebas_Neue'] tracking-wider mt-2 drop-shadow-[0_0_15px_currentColor]" style="color:var(--xc1)" id="avg-conf">0%</div>
+          </div>
+        </div>
+
+        <div class="glass rounded-[2rem] flex flex-col overflow-hidden border border-white/10 shadow-2xl backdrop-blur-3xl min-h-[400px]">
+          <div class="px-8 py-6 border-b border-white/10 flex justify-between items-center bg-black/40">
+            <span class="font-['Space_Grotesk'] text-sm font-bold tracking-widest uppercase text-white">Visual Detection Log</span>
+            <button onclick="clearHistory()" class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest text-red-400 hover:text-red-300 transition-colors px-4 py-2 bg-red-500/10 rounded-full">Clear</button>
+          </div>
+          <div class="overflow-y-auto p-6 flex flex-col gap-4 max-h-[500px]" id="logs">
+            <div class="font-['Space_Grotesk'] text-sm text-white/30 text-center py-10 uppercase tracking-widest">No visual data recorded yet</div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <script src="/static/xtreme_ui.js"></script>
+  <script>
+    const MODELS = [
+      { id: 'Pokemon-classifier-gen9-1025', label: 'PokéClassifier Gen9',      color: 'purple' },
+      { id: 'pokemon_classifier',           label: 'PokéClassifier Base',       color: 'blue'   },
+      { id: 'pokemons_1000_types_image_detection', label: 'PokéDetector 1000', color: 'cyan'   },
+      { id: 'pokemon-classifier',           label: 'PokéClassifier (Abhishek)', color: 'teal'   },
+      { id: 'Qwen2-VL-7B-Instruct',         label: 'Qwen2-VL 7B',              color: 'orange' },
+      { id: 'Qwen2-VL-2B-Instruct',         label: 'Qwen2-VL 2B',              color: 'yellow' },
+    ];
+
+    let _modelStatuses = {}; // live statuses merged from all nodes
+
+    function renderModels() {
+      const el = document.getElementById('model-list');
+      el.innerHTML = MODELS.map(m => {
+        const st = _modelStatuses[m.id] || {};
+        const status = st.status || 'STANDBY';
+        let dotCls = 'bg-white/20';
+        let stTxt = 'Standby';
+        let txtStyle = 'color:rgba(255,255,255,0.2)';
+        let bgStyle = 'background:rgba(0,0,0,0.2); border-color:rgba(255,255,255,0.05)';
+
+        if (status === 'SUCCESS') {
+          dotCls = 'bg-green-400'; stTxt = '✓ HIT'; txtStyle = 'color:#4ade80'; bgStyle = 'background:rgba(74,222,128,0.1); border-color:rgba(74,222,128,0.2)';
+        } else if (status === 'QUERYING') {
+          dotCls = 'bg-yellow-400 animate-pulse'; stTxt = 'QUERYING...'; txtStyle = 'color:#facc15'; bgStyle = 'background:rgba(250,204,21,0.1); border-color:rgba(250,204,21,0.2)';
+        } else if (status === 'ERROR' || status === 'OFFLINE') {
+          dotCls = 'bg-red-400'; stTxt = '✗ ERROR'; txtStyle = 'color:#f87171';
+        }
+
+        const label = st.label ? `<span class="font-['Space_Grotesk'] text-[9px] font-bold text-white/40 truncate max-w-[70px]">${st.label}</span>` : '';
+        const ms = st.elapsed_ms ? `<span class="font-mono text-[9px] text-white/30 bg-black/40 px-2 py-0.5 rounded-full">${st.elapsed_ms}ms</span>` : '';
+        
+        return `
+          <div class="flex items-center gap-3 px-4 py-3.5 rounded-2xl border transition-all hover:bg-white/5" style="${bgStyle}">
+            <div class="w-1.5 h-1.5 rounded-full ${dotCls} shrink-0 shadow-[0_0_8px_currentColor]"></div>
+            <span class="font-['Space_Grotesk'] text-xs font-bold text-white/90 flex-1">${m.label}</span>
+            ${label}${ms}
+            <span class="font-['Space_Grotesk'] text-[10px] uppercase tracking-widest shrink-0 font-extrabold" style="${txtStyle}">${stTxt}</span>
+          </div>`;
+      }).join('');
+    }
+    renderModels();
+
+    let lastSpawnImgUrl = '';
+    let lastPendingName = '';
+
+    async function loadLive() {
+      try {
+        const data = await fetch('/api/image/live').then(r => r.json());
+        const nodes = data.nodes || [];
+
+        // Merge model statuses from all nodes
+        const merged = {};
+        for (const n of nodes) {
+          const ms = n.model_statuses || {};
+          for (const [mid, st] of Object.entries(ms)) {
+            if (!merged[mid] || st.status === 'SUCCESS') merged[mid] = st;
+          }
+        }
+        _modelStatuses = merged;
+        renderModels();
+
+        // Update aggregate stats from live nodes
+        let totalAI = 0, totalConf = 0, lastMs = 0;
+        for (const n of nodes) {
+          totalAI  += (n.total_ai_catches || 0);
+          totalConf += (n.avg_conf || 0) * (n.total_ai_catches || 0);
+          if (n.last_classify_ms > lastMs) lastMs = n.last_classify_ms;
+        }
+        if (totalAI > 0) {
+          document.getElementById('total-dets').textContent = totalAI;
+          document.getElementById('avg-conf').textContent = Math.round((totalConf / totalAI) * 100) + '%';
+        }
+        if (lastMs > 0) document.getElementById('model-speed').textContent = lastMs + 'ms';
+        
+        const nListEl = document.getElementById('node-status-list');
+        if (nodes.length === 0) {
+          nListEl.innerHTML = '<div class="font-[\'Space_Grotesk\'] text-xs text-white/20 uppercase tracking-widest py-2">No nodes connected</div>';
+        } else {
+          nListEl.innerHTML = nodes.map(n => {
+            const elapsed = n.spawn_time ? Math.round((Date.now()/1000) - n.spawn_time) : 0;
+            const isActive = n.catching;
+            const bgSt = isActive ? 'background:rgba(255,255,255,0.1); border-color:var(--xc1)' : 'background:rgba(0,0,0,0.3); border-color:rgba(255,255,255,0.05)';
+            const dotSt = isActive ? 'background:var(--xc1); box-shadow:0 0 10px var(--xc1)' : 'background:rgba(255,255,255,0.2)';
+            const statusBadge = isActive 
+                ? `<span class="font-['Space_Grotesk'] text-[9px] uppercase tracking-widest font-black ml-2 px-2 py-0.5 rounded-full bg-black/40" style="color:var(--xc1)">${n.is_image_catch ? '⚡ AI' : `HINT ${n.hint_count}`}</span>` 
+                : '';
+            return `
+              <div class="flex items-center gap-2 px-4 py-2 rounded-2xl border transition-all hover:bg-white/5" style="${bgSt}">
+                <div class="w-2 h-2 rounded-full shrink-0 ${isActive?'animate-pulse':''}" style="${dotSt}"></div>
+                <span class="font-['Space_Grotesk'] text-xs font-bold ${isActive ? 'text-white drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]' : 'text-white/40'}">${n.label}</span>
+                ${statusBadge}
+              </div>`;
+          }).join('');
+        }
+
+        const active = nodes.find(n => n.catching);
+        const liveDot = document.getElementById('live-dot');
+        const liveLabel = document.getElementById('live-label');
+        const scanOverlay = document.getElementById('scan-overlay');
+        const spawnImg = document.getElementById('spawn-img');
+        const spawnPlaceholder = document.getElementById('spawn-placeholder');
+        const analysisResult = document.getElementById('analysis-result');
+        const resName = document.getElementById('result-name');
+        const resConf = document.getElementById('result-conf');
+
+        if (active) {
+          liveDot.className = 'w-3 h-3 rounded-full radar-dot shrink-0';
+          liveDot.style.background = 'var(--xc1)';
+          liveLabel.textContent = `ANALYZING · ${active.label}`;
+          liveLabel.style.color = 'white';
+          liveLabel.style.fontWeight = 'bold';
+
+          // Update spawn image
+          if (active.pending_img && active.pending_img !== lastSpawnImgUrl) {
+            lastSpawnImgUrl = active.pending_img;
+            spawnImg.src = active.pending_img;
+            spawnImg.classList.remove('hidden');
+            spawnPlaceholder.classList.add('hidden');
+            scanOverlay.classList.remove('hidden');
+          }
+
+          // If we have a result
+          if (active.pending_name && active.pending_conf > 0) {
+            analysisResult.classList.remove('hidden');
+            analysisResult.classList.add('flex');
+            
+            // Trigger Anime Strike animation if name changed
+            if (lastPendingName !== active.pending_name) {
+                lastPendingName = active.pending_name;
+                resName.classList.remove('animate-strike');
+                resConf.classList.remove('animate-strike');
+                void resName.offsetWidth; // reflow
+                resName.classList.add('animate-strike');
+                resConf.classList.add('animate-strike');
+            }
+
+            resName.textContent = active.pending_name;
+            const confPct = Math.round(active.pending_conf * 100);
+            resConf.textContent = confPct + '%';
+            document.getElementById('result-bar').style.width = confPct + '%';
+            
+            const viaText = active.is_image_catch ? '⚡ AI Vision' : '💬 Hint Solver';
+            document.getElementById('result-node').innerHTML = `<span style="color:var(--xc1); font-weight:bold">${viaText}</span> · ${active.label}`;
+          }
+        } else {
+          liveDot.className = 'w-3 h-3 rounded-full bg-white/20 shrink-0 shadow-none';
+          liveDot.style.background = '';
+          liveLabel.textContent = 'IDLE';
+          liveLabel.style.color = '';
+          liveLabel.style.fontWeight = '';
+          scanOverlay.classList.add('hidden');
+        }
+      } catch(e) {}
+    }
+
+    let lastHistTotal = -1;
+
+    async function load() {
+      try {
+        const [cfg, data] = await Promise.all([
+          fetch('/api/image/config').then(r => r.json()),
+          fetch('/api/history?page=1&per=200').then(r => r.json())
+        ]);
+
+        document.getElementById('hf-token').value = cfg.hf_token || '';
+        document.getElementById('enabled').checked = cfg.enabled;
+        document.getElementById('local_mode').checked = cfg.local_mode || false;
+        document.getElementById('local_engine').value = cfg.local_engine || 'onnx';
+        document.getElementById('advanced_mode').checked = cfg.advanced_mode || false;
+
+        const badge = document.getElementById('status-badge');
+        if(cfg.enabled) {
+          badge.textContent = 'ACTIVE';
+          badge.style.background = 'rgba(255,255,255,0.15)';
+          badge.style.color = 'var(--xc1)';
+          badge.style.borderColor = 'var(--xc1)';
+        } else {
+          badge.textContent = 'OFFLINE';
+          badge.style.background = 'rgba(255,255,255,0.05)';
+          badge.style.color = 'rgba(255,255,255,0.4)';
+          badge.style.borderColor = 'rgba(255,255,255,0.1)';
+        }
+
+        const pBadge = document.getElementById('parallel-badge');
+        const badgeText = pBadge.querySelector('.parallel-text');
+        if (cfg.enabled) {
+          pBadge.classList.remove('hidden');
+          pBadge.classList.add('flex');
+          if (cfg.local_mode) {
+            const engName = (cfg.local_engine || 'onnx').toUpperCase();
+            badgeText.textContent = `LOCAL ${engName} ENGINE ACTIVE`;
+          } else {
+            badgeText.textContent = 'PARALLEL OVERDRIVE ACTIVE';
+          }
+        } else {
+          pBadge.classList.add('hidden');
+        }
+
+        // Stats
+        const detections = (data.items || []).filter(i => i.is_image_catch);
+        const total = detections.length;
+        document.getElementById('total-dets').textContent = total;
+        const avg = total > 0 ? detections.reduce((s,d) => s+(d.confidence||0), 0) / total : 0;
+        const pct = Math.round(avg * 100);
+        document.getElementById('avg-conf').textContent = pct + '%';
+
+        // Speed placeholder
+        const speeds = detections.filter(d => d.catch_elapsed_ms);
+        if (speeds.length > 0) {
+          const avgMs = Math.round(speeds.reduce((s,d) => s + d.catch_elapsed_ms, 0) / speeds.length);
+          document.getElementById('model-speed').textContent = avgMs + 'ms';
+        } else {
+          document.getElementById('model-speed').textContent = '<12s';
+        }
+
+        // Only re-render log when new entries arrive
+        if (data.total === lastHistTotal) return;
+        
+        // Calculate diff to see if we need to animate new entries
+        const isNewData = lastHistTotal !== -1;
+        lastHistTotal = data.total;
+
+        const logEl = document.getElementById('logs');
+        const visualLogs = (data.items || []).filter(i => i.discord_img).slice(0, 30);
+        if (visualLogs.length === 0) {
+          logEl.innerHTML = '<div class="font-[\'Space_Grotesk\'] text-sm text-white/30 text-center py-10 uppercase tracking-widest">No visual data recorded yet</div>';
+        } else {
+          logEl.innerHTML = visualLogs.map((l, idx) => {
+            const isAI = l.is_image_catch;
+            // Anime take over styling for hint vs AI
+            const bgSt = isAI 
+                ? 'background:rgba(255,255,255,0.05); border-color:var(--xc1)' 
+                : 'background:rgba(0,0,0,0.4); border-left: 4px solid var(--xc1); border-right:1px solid rgba(255,255,255,0.05); border-top:1px solid rgba(255,255,255,0.05); border-bottom:1px solid rgba(255,255,255,0.05);';
+            const methodText = isAI 
+                ? `<span style="color:var(--xc1)" class="font-bold drop-shadow-[0_0_5px_currentColor]">⚡ AI VISION</span>` 
+                : `<span class="text-white font-bold tracking-widest bg-white/20 px-2 py-0.5 rounded-full">💬 HINT OVERRIDE</span>`;
+            
+            // Only animate the very first item if it's a new update, or all if first load
+            const animClass = (isNewData && idx === 0) || !isNewData ? 'log-anime' : '';
+            
+            return `
+            <div class="flex gap-4 p-4 rounded-2xl transition-all items-center hover:scale-[1.02] cursor-pointer shadow-lg ${animClass}" style="${bgSt}; animation-delay:${idx * 40}ms;">
+              <img src="${l.discord_img}" onerror="this.style.display='none'" class="w-16 h-16 rounded-xl object-contain bg-black/60 shrink-0 border border-white/20 shadow-inner">
+              <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-center gap-2">
+                  <span class="cursive-italic text-3xl font-bold text-white truncate drop-shadow-md pb-1">${l.display_name || '—'}</span>
+                  <span class="font-mono text-[10px] text-white/40 shrink-0 bg-black/50 px-2 py-1 rounded-lg">${l.time}</span>
+                </div>
+                <div class="font-['Space_Grotesk'] text-[10px] mt-1 uppercase tracking-widest flex items-center gap-2">
+                  ${methodText} <span class="text-white/40">· ${l.caught_by}</span>
+                </div>
+              </div>
+              ${l.confidence ? `<div class="px-4 py-2 rounded-xl border border-white/20 font-['Bebas_Neue'] text-2xl tracking-wider shrink-0 bg-black/40 shadow-xl" style="color:var(--xc1)">${Math.round(l.confidence*100)}%</div>` : ''}
+            </div>
+          `}).join('');
+        }
+      } catch(e) { console.error(e); }
+    }
+
+    async function save() {
+      const cfg = {
+        hf_token: document.getElementById('hf-token').value,
+        enabled: document.getElementById('enabled').checked,
+        local_mode: document.getElementById('local_mode').checked,
+        local_engine: document.getElementById('local_engine').value,
+        advanced_mode: document.getElementById('advanced_mode').checked
+      };
+      await fetch('/api/image/config', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(cfg) });
+      if(window.XUI) window.XUI.showToast('XTREME CONFIG', 'Image Catcher Settings Saved.');
+      load();
+    }
+
+    async function clearHistory() {
+      if (!confirm('Clear visual history?')) return;
+      await fetch('/api/history/clear', {method:'POST'});
+      lastHistTotal = -1;
+      load();
+    }
+
+    // Live feed polls every 800ms, full load every 5s
+    setInterval(loadLive, 800);
+    setInterval(load, 5000);
+    load(); loadLive();
+  </script>
+</body>
+</html>

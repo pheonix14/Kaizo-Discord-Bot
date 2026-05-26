@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>XTREME | Msg Loop Engine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Outfit', -apple-system, sans-serif;
+      color: #ffffff;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-color: #000;
+      transition: background-image 1s ease-in-out;
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+    .glass {
+      background: rgba(10, 10, 10, 0.5);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    
+    input[type=number] { 
+      background: rgba(0,0,0,0.4); 
+      border: 1px solid rgba(255,255,255,0.1); 
+      color: #fff; outline: none; transition: 0.2s; 
+      padding: 6px 12px; border-radius: 8px; width: 80px; text-align: center; font-size: 0.875rem;
+    }
+    input[type=number]:focus { border-color: rgba(255,255,255,0.5); }
+    ::-webkit-scrollbar { width: 0px; } /* Hide scrollbar for smooth mobile feel */
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+  <nav class="glass px-6 py-4 flex items-center justify-between shrink-0 z-10 mx-4 mt-4 rounded-2xl">
+    <div class="flex items-center gap-6 overflow-x-auto no-scrollbar w-full">
+      <h1 class="text-xl font-bold tracking-tight shrink-0">XTREME</h1>
+      <div class="flex gap-4">
+        <a href="/" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Home</a>
+        <a href="/config" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Tokens</a>
+        <a href="/dex" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Dex</a> <a href="/history" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">History</a>
+        <a href="/owo" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">OwO</a>
+        <a href="/slash" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Slash</a>
+        <a href="/spam" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Spam</a>
+        <a href="/msg" class="text-white font-medium text-sm whitespace-nowrap px-3 py-1 bg-white/10 rounded-full">Msg</a>
+        <a href="/mimic" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Mimic</a>
+        <a href="/image" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Image</a>
+        <a href="/hook" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Hook</a>
+        <a href="/test" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Test</a>
+        <a href="/captcha" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap px-2 py-0.5 bg-red-500/15 border border-red-500/20 rounded-full">Captcha</a>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-1 overflow-y-auto p-4 md:p-8 z-10 flex flex-col md:flex-row gap-6">
+    
+    <!-- Left Column: Active Nodes & Controls -->
+    <div class="flex flex-col gap-6 w-full md:w-1/3">
+      <div class="glass rounded-3xl p-6 flex flex-col gap-4">
+        <div class="flex justify-between items-center">
+          <h2 class="text-sm font-semibold tracking-wide text-white/80">Active Nodes</h2>
+          <div class="flex gap-2">
+            <button onclick="selAll()" class="text-[10px] uppercase font-bold px-3 py-1.5 bg-white/10 rounded-full hover:bg-white/20 transition">All</button>
+            <button onclick="clrAll()" class="text-[10px] uppercase font-bold px-3 py-1.5 bg-white/10 rounded-full hover:bg-white/20 transition">None</button>
+          </div>
+        </div>
+        <div class="flex flex-col gap-3 max-h-[50vh] overflow-y-auto" id="tsel">
+          <div class="text-sm text-white/50 text-center py-4">Loading active nodes...</div>
+        </div>
+      </div>
+
+      <div class="glass rounded-3xl p-6">
+        <h2 class="text-sm font-semibold tracking-wide text-white/80 mb-4">Loop Controller</h2>
+        <div class="flex gap-3">
+          <button onclick="act('start')" class="flex-1 px-4 py-4 rounded-2xl font-bold text-sm bg-white text-black hover:scale-[1.02] active:scale-[0.98] transition-transform shadow-[0_0_20px_rgba(255,255,255,0.3)]">START LOOP</button>
+          <button onclick="act('stop')" class="flex-1 px-4 py-4 rounded-2xl font-bold text-sm bg-red-500/20 text-red-400 border border-red-500/30 hover:scale-[1.02] active:scale-[0.98] transition-transform">STOP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: send.txt Messages Editor -->
+    <div class="flex-1 glass rounded-3xl p-6 flex flex-col overflow-hidden">
+      <div class="flex justify-between items-center mb-6">
+        <div>
+          <h2 class="text-sm font-semibold tracking-wide text-white/80">Loop Messages Editor</h2>
+          <p class="text-[10px] text-white/40 mt-0.5">Edit chat/send.txt. One line per message. Randomly chosen.</p>
+        </div>
+        <button onclick="saveMessages()" class="px-6 py-2.5 bg-white text-black font-bold uppercase text-[10px] tracking-widest rounded-xl transition-all shadow-[0_0_15px_rgba(255,255,255,0.3)] hover:shadow-[0_0_25px_rgba(255,255,255,0.6)]">
+          Save Messages
+        </button>
+      </div>
+
+      <div class="flex-1 relative">
+        <textarea id="msg-content" class="w-full h-full bg-black/40 border border-white/10 rounded-2xl p-5 text-sm mono text-white outline-none focus:border-white/30 resize-none transition-all" placeholder="Enter messages (one per line)..."></textarea>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 px-6 py-3 bg-white/90 backdrop-blur-md text-black text-sm font-bold rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.5)] transition-all duration-300 transform translate-y-10 opacity-0 pointer-events-none z-50"></div>
+
+  <script src="/static/xtreme_ui.js"></script>
+  <script>
+    function toast(m) {
+      const t = document.getElementById('toast');
+      t.textContent = m;
+      t.classList.remove('translate-y-10', 'opacity-0');
+      setTimeout(() => t.classList.add('translate-y-10', 'opacity-0'), 2500);
+    }
+
+    let tokens = [], sel = new Set(), firstLoad = true;
+    const nodeGuilds = {}; // Stores loaded guilds per node
+    const isChannelLoaded = {}; // Tracks if we already fetched dropdowns for a node
+
+    let _lastTokenIds = '';
+
+    async function load() {
+      try {
+        const [tl, d] = await Promise.all([
+          fetch('/api/tokens').then(r => r.json()),
+          fetch('/api/data').then(r => r.json())
+        ]);
+        
+        if (tl.error || d.error) throw new Error(tl.error || d.error);
+        
+        tokens = tl; const nodes = d.nodes || [];
+        if (firstLoad && tl.length) {
+          tl.forEach(t => sel.add(t.id));
+          firstLoad = false;
+        }
+        const el = document.getElementById('tsel');
+        if(!tl.length) { el.innerHTML='<div class="text-sm text-white/50 text-center py-4">No nodes connected</div>'; return; }
+
+        const currentIds = tl.map(t=>t.id).join(',');
+        if (_lastTokenIds !== currentIds) {
+            _lastTokenIds = currentIds;
+
+        const htmlArr = tl.map(t => {
+          const n = nodes.find(x => x.id === t.id) || {};
+          const isSel = sel.has(t.id);
+          const savedChVal = t.msg_channel_id || '';
+          const savedDelayVal = t.msg_delay || 30;
+          const isOnline = n.msg_running;
+
+          return `
+            <div id="card_${t.id}" class="flex flex-col gap-4 p-5 rounded-[2rem] transition-all ${isSel?'bg-white/10 border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.05)]':'bg-white/5 border-transparent'} border">
+              <div onclick="tog('${t.id}')" class="flex items-center justify-between cursor-pointer">
+                  <div class="flex items-center gap-4">
+                      <div id="sel_circle_${t.id}" class="w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSel?'border-blue-400':'border-white/20'}">
+                          <div id="sel_dot_${t.id}" class="w-2.5 h-2.5 rounded-full bg-blue-400" style="display:${isSel?'block':'none'}"></div>
+                      </div>
+                      <div class="flex flex-col">
+                          <span id="lbl_${t.id}" class="text-sm font-bold ${isSel?'text-white':'text-white/60'} tracking-wide">${t.label}</span>
+                          <span class="text-[9px] mono text-white/30 uppercase tracking-tighter">${t.id.slice(0,12)}...</span>
+                      </div>
+                  </div>
+                  <div class="flex items-center gap-2">
+                      <span id="status_dot_${t.id}" class="w-2 h-2 rounded-full ${isOnline?'bg-green-400 animate-pulse':'bg-white/20'}"></span>
+                      <span id="status_txt_${t.id}" class="text-[9px] uppercase font-bold tracking-widest ${isOnline?'text-green-400':'text-white/40'}">${isOnline?'Running':'Stopped'}</span>
+                  </div>
+              </div>
+              
+              <div class="flex flex-col gap-3 p-4 bg-black/40 rounded-2xl border border-white/5" onclick="event.stopPropagation()">
+                  <div class="flex flex-col gap-1.5">
+                      <label class="text-[9px] uppercase tracking-widest text-white/40 font-bold ml-1">Discord Server</label>
+                      <select id="srv_select_${t.id}" onchange="onServerChange('${t.id}')" class="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-white/30 transition-all">
+                          <option value="">Select Discord Server...</option>
+                      </select>
+                  </div>
+
+                  <div class="flex flex-col gap-1.5">
+                      <div class="flex justify-between items-center ml-1">
+                          <label class="text-[9px] uppercase tracking-widest text-white/40 font-bold">Text Channel</label>
+                          <span class="text-[8px] uppercase tracking-widest text-blue-400 font-bold">Multi-Select</span>
+                      </div>
+                      <div id="ch_${t.id}" class="w-full bg-black/60 border border-white/10 rounded-xl px-2 py-2 text-xs text-white overflow-y-auto max-h-32 custom-scrollbar flex flex-col gap-1">
+                          <div class="text-white/40 px-2 py-1">Select Server First...</div>
+                      </div>
+                      <input type="text" id="manual_ch_${t.id}" oninput="onManualChannelInput('${t.id}')" class="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-2.5 text-xs text-white outline-none focus:border-white/30 transition-all placeholder-white/20 mono text-[10px]" placeholder="Or enter Channel IDs (comma-separated)" value="${savedChVal}">
+                  </div>
+
+                  <div class="flex items-center justify-between gap-4 mt-1">
+                      <span class="text-[9px] uppercase tracking-widest text-white/40 font-bold ml-1">Loop Delay (sec)</span>
+                      <input type="number" id="delay_${t.id}" class="w-20 bg-black/40 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white text-center outline-none focus:border-white/30 transition-all" value="${savedDelayVal}" min="5">
+                  </div>
+
+                  <div class="flex items-center justify-between gap-4 mt-1">
+                      <span class="text-[9px] uppercase tracking-widest text-white/40 font-bold ml-1">Randomize Delay (Humanizer)</span>
+                      <label class="relative inline-flex items-center cursor-pointer">
+                          <input type="checkbox" id="random_delay_${t.id}" class="sr-only peer" ${t.msg_random_delay ? 'checked' : ''}>
+                          <div class="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                      </label>
+                  </div>
+
+                  <button onclick="saveNodeCfg('${t.id}')" class="w-full mt-2 py-2.5 bg-white text-black hover:bg-white/90 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all active:scale-95">Set Config</button>
+              </div>
+            </div>
+          `;
+        });
+        
+        el.innerHTML = htmlArr.join('');
+
+        // Trigger dynamic dropdown loads for all connected tokens once on load
+        tl.forEach(t => {
+          if (!isChannelLoaded[t.id]) {
+            isChannelLoaded[t.id] = true;
+            loadNodeChannels(t.id, t.msg_channel_id || '');
+          }
+        });
+        } // End of full UI rebuild block
+
+        // Dynamic Status Updates (no DOM overwrite)
+        tl.forEach(t => {
+          const n = nodes.find(x => x.id === t.id) || {};
+          const isSel = sel.has(t.id);
+          const isOnline = n.msg_running;
+          
+          const dot = document.getElementById(`status_dot_${t.id}`);
+          const txt = document.getElementById(`status_txt_${t.id}`);
+          const card = document.getElementById(`card_${t.id}`);
+          const selDot = document.getElementById(`sel_dot_${t.id}`);
+          const selCircle = document.getElementById(`sel_circle_${t.id}`);
+          const lbl = document.getElementById(`lbl_${t.id}`);
+
+          if(dot) dot.className = `w-2 h-2 rounded-full ${isOnline?'bg-green-400 animate-pulse':'bg-white/20'}`;
+          if(txt) {
+              txt.textContent = isOnline?'Running':'Stopped';
+              txt.className = `text-[9px] uppercase font-bold tracking-widest ${isOnline?'text-green-400':'text-white/40'}`;
+          }
+          if(card) card.className = `flex flex-col gap-4 p-5 rounded-[2rem] transition-all ${isSel?'bg-white/10 border-white/20 shadow-[0_0_30px_rgba(255,255,255,0.05)]':'bg-white/5 border-transparent'} border`;
+          if(selCircle) selCircle.className = `w-5 h-5 rounded-full border-2 flex items-center justify-center ${isSel?'border-blue-400':'border-white/20'}`;
+          if(selDot) selDot.style.display = isSel ? 'block' : 'none';
+          if(lbl) lbl.className = `text-sm font-bold ${isSel?'text-white':'text-white/60'} tracking-wide`;
+        });
+      } catch (e) {
+        console.error("Load failed:", e);
+      }
+    }
+
+    window.nodeChannelsState = {}; // Stores Sets of selected channel IDs per node
+
+    async function loadNodeChannels(tid, currentChannelId) {
+      const srvDropdown = document.getElementById(`srv_select_${tid}`);
+      if (!srvDropdown) return;
+
+      srvDropdown.innerHTML = '<option value="">Loading Servers...</option>';
+      
+      // Initialize the persistence set from currently saved IDs
+      const savedIds = currentChannelId ? currentChannelId.split(',').map(x => x.trim()).filter(Boolean) : [];
+      window.nodeChannelsState[tid] = new Set(savedIds);
+
+      try {
+        const res = await fetch(`/api/msg/channels/${tid}`);
+        const r = await res.json();
+
+        // API now returns { guilds: [...], count: N } — unwrap it
+        const guilds = Array.isArray(r) ? r : (r.guilds || []);
+
+        if (r.error && !guilds.length) {
+          srvDropdown.innerHTML = `<option value="">Error: ${r.error}</option>`;
+          return;
+        }
+
+        if (!guilds.length) {
+          srvDropdown.innerHTML = '<option value="">No servers found</option>';
+          return;
+        }
+
+        nodeGuilds[tid] = guilds;
+        
+        let srvHtml = '<option value="">Select Discord Server...</option>';
+        let preSelectedGuildId = "";
+        
+        guilds.forEach(g => {
+          const hasChannel = g.channels && g.channels.some(ch => savedIds.includes(ch.id));
+          if (hasChannel) preSelectedGuildId = g.id;
+          srvHtml += `<option value="${g.id}" ${hasChannel ? 'selected' : ''}>${g.name}</option>`;
+        });
+        srvDropdown.innerHTML = srvHtml;
+        
+        repopulateChannels(tid, preSelectedGuildId || srvDropdown.value);
+      } catch (e) {
+        console.error("Failed to load servers/channels for token " + tid, e);
+        srvDropdown.innerHTML = '<option value="">Failed to fetch servers</option>';
+      }
+    }
+
+    function onServerChange(tid) {
+      const srvDropdown = document.getElementById(`srv_select_${tid}`);
+      repopulateChannels(tid, srvDropdown.value);
+    }
+
+    function repopulateChannels(tid, guildId) {
+      const chContainer = document.getElementById(`ch_${tid}`);
+      if (!chContainer) return;
+      
+      chContainer.innerHTML = '';
+      if (!guildId || !nodeGuilds[tid]) return;
+      
+      const g = nodeGuilds[tid].find(x => x.id === guildId);
+      if (!g || !g.channels) return;
+      
+      let chHtml = '';
+      const selectedSet = window.nodeChannelsState[tid] || new Set();
+      
+      g.channels.forEach(ch => {
+        const isChecked = selectedSet.has(ch.id);
+        chHtml += `
+          <label class="flex items-center gap-2 px-2 py-1.5 hover:bg-white/10 rounded-lg cursor-pointer transition-colors">
+            <input type="checkbox" value="${ch.id}" class="channel-cb-${tid} w-4 h-4 rounded border-white/20 bg-black/40 text-blue-500 focus:ring-0 cursor-pointer" style="accent-color: #3b82f6;" onchange="onCheckboxChange('${tid}', this)" ${isChecked ? 'checked' : ''}>
+            <span class="truncate flex-1"># ${ch.name}</span>
+          </label>
+        `;
+      });
+      chContainer.innerHTML = chHtml || '<div class="text-white/40 px-2 py-1">No channels found</div>';
+    }
+
+    function onCheckboxChange(tid, el) {
+      if (!window.nodeChannelsState[tid]) window.nodeChannelsState[tid] = new Set();
+      if (el.checked) {
+        window.nodeChannelsState[tid].add(el.value);
+      } else {
+        window.nodeChannelsState[tid].delete(el.value);
+      }
+      
+      // Update textbox
+      const txt = document.getElementById(`manual_ch_${tid}`);
+      if (txt) {
+        txt.value = Array.from(window.nodeChannelsState[tid]).join(',');
+      }
+    }
+
+    function onManualChannelInput(tid) {
+      const txt = document.getElementById(`manual_ch_${tid}`);
+      if (!txt) return;
+      
+      const ids = txt.value.split(',').map(x => x.trim()).filter(Boolean);
+      window.nodeChannelsState[tid] = new Set(ids);
+      
+      // Update currently visible checkboxes to match new set state
+      const cbs = document.querySelectorAll(`.channel-cb-${tid}`);
+      cbs.forEach(cb => {
+        cb.checked = window.nodeChannelsState[tid].has(cb.value);
+      });
+    }
+
+    async function saveNodeCfg(tid) {
+      const selectedSet = window.nodeChannelsState[tid] || new Set();
+      const ch = Array.from(selectedSet).join(',');
+      const delay = parseInt(document.getElementById(`delay_${tid}`).value) || 30;
+      const isRandom = document.getElementById(`random_delay_${tid}`).checked;
+      
+      if (!ch) {
+        toast('Please select or input at least one text channel');
+        return;
+      }
+      
+      await fetch('/api/msg/node_config', {
+        method: 'POST', 
+        headers: {'Content-Type': 'application/json'}, 
+        body: JSON.stringify({id: tid, msg_channel_id: ch, msg_delay: delay, msg_random_delay: isRandom})
+      });
+      toast('Node Loop Settings Configured');
+    }
+
+    function tog(id) { if(sel.has(id)) sel.delete(id); else sel.add(id); load(); }
+    function selAll() { tokens.forEach(t=>sel.add(t.id)); load(); }
+    function clrAll() { sel.clear(); load(); }
+
+    async function act(a) {
+      const ids = sel.size ? Array.from(sel) : 'all';
+      await fetch('/api/msg/'+a, {
+        method:'POST', 
+        headers:{'Content-Type':'application/json'}, 
+        body:JSON.stringify({ids})
+      });
+      toast(a==='start'?'Message Loop Activated':'Message Loop Terminated');
+      load();
+    }
+
+    // send.txt file loading & saving
+    async function loadMessages() {
+      try {
+        const r = await fetch('/api/msg/send_txt').then(res => res.json());
+        if (r.content !== undefined) {
+          document.getElementById('msg-content').value = r.content;
+        }
+      } catch (e) {
+        console.error("Failed to load messages:", e);
+      }
+    }
+
+    async function saveMessages() {
+      const content = document.getElementById('msg-content').value;
+      try {
+        const r = await fetch('/api/msg/send_txt', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({content})
+        }).then(res => res.json());
+        if (r.ok) {
+          toast('send.txt Saved Successfully');
+        }
+      } catch (e) {
+        console.error("Failed to save messages:", e);
+        toast('Failed to save send.txt');
+      }
+    }
+
+    load(); loadMessages(); setInterval(load, 4000);
+  </script>
+</body>
+</html>

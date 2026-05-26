@@ -1,0 +1,60 @@
+[
+  {
+    "id": "c0830137",
+    "datetime": "2026-05-18T22:17:08",
+    "time": "22:17:08",
+    "pokemon_name": "Darumaka",
+    "display_name": "Darumaka",
+    "caught_by": "darkfenix232",
+    "channel_id": "1504410730148134965",
+    "success": true,
+    "failure_reason": null,
+    "is_shiny": false,
+    "hint": "",
+    "level": "21",
+    "iv": "30.11%",
+    "discord_img": "https://cdn.discordapp.com/attachments/1504410730148134965/1505974993240985640/pokemon.jpg?ex=6a0c9402&is=6a0b4282&hm=6ce80ec043025aa576df32959bd8d846a8d4a91fa97786edf87267afae366547&",
+    "is_image_catch": true,
+    "confidence": 0.995,
+    "pokemon_id": 554,
+    "types": [
+      "fire"
+    ],
+    "is_legendary": false,
+    "is_mythical": false,
+    "is_ultra_beast": false,
+    "rarity": "common",
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/554.png",
+    "art": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/554.png",
+    "shiny_art": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/554.png"
+  },
+  {
+    "id": "c0d14080",
+    "datetime": "2026-05-18T22:15:42",
+    "time": "22:15:42",
+    "pokemon_name": "Teddiursa",
+    "display_name": "Teddiursa",
+    "caught_by": "darkfenix232",
+    "channel_id": "1504410730148134965",
+    "success": true,
+    "failure_reason": null,
+    "is_shiny": false,
+    "hint": "",
+    "level": "17",
+    "iv": "53.76%",
+    "discord_img": "https://cdn.discordapp.com/attachments/1504410730148134965/1505974648746278963/pokemon.jpg?ex=6a0c93af&is=6a0b422f&hm=3686850300906705df191c8c29c9f207570076fc3788b12e58a62fbcd36cef54&",
+    "is_image_catch": true,
+    "confidence": 0.991,
+    "pokemon_id": 216,
+    "types": [
+      "normal"
+    ],
+    "is_legendary": false,
+    "is_mythical": false,
+    "is_ultra_beast": false,
+    "rarity": "common",
+    "sprite": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/216.png",
+    "art": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/216.png",
+    "shiny_art": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/216.png"
+  }
+]

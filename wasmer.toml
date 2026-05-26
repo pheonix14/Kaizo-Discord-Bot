@@ -1,24 +1,18 @@
 [package]
-name = "kaizer-x"
-version = "0.1.0"
-description = "KAIZER X Ultimate Discord Bot & Dashboard"
+name = "dark-watchdog"
+version = "1.0.0"
+description = "Keep-Alive Watchdog for Fafnir Engine"
 license = "MIT"
-publish = false
 
 [[module]]
-name = "app"
-source = "python"
-abi = "wasi"
+name = "watchdog"
+source = "awake/main.py"
+kind = "python"
 
 [[command]]
-name = "run"
-module = "app"
+name = "start"
+module = "watchdog"
 runner = "python"
 
-[command.run.env]
-PYTHONPATH = "."
+[env]
 PORT = "8080"
-DASHBOARD_SECRET_KEY = "KAIZER_X_WASM_KEY"
-
-[command.run.args]
-args = ["main.py"]

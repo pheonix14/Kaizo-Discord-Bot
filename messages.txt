@@ -1,0 +1,170 @@
+import threading
+import urllib.request
+import time
+import json
+import os
+import sys
+
+# DARK AWAKE | WASMER KERNEL V2
+# Multi-Target Pulse Emitter | Proprietary Build
+
+watchdog_state = {
+    "targets": [
+        {
+            "url": "https://arui-test.onrender.com",
+            "pings": 0,
+            "success": 0,
+            "last_ping": None,
+            "is_active": True,
+            "label": "CORE PULSE"
+        }
+    ],
+    "logs": [],
+    "pings_received": 0,
+    "start_time": time.time()
+}
+
+def add_log(msg):
+    timestamp = time.strftime("%H:%M:%S")
+    watchdog_state["logs"].append(f"[{timestamp}] {msg}")
+    if len(watchdog_state["logs"]) > 50:
+        watchdog_state["logs"].pop(0)
+
+def ping_loop():
+    add_log("SYSTEM: Heartbeat Kernel Initialized")
+    while True:
+        for target in watchdog_state["targets"]:
+            if target.get("is_active"):
+                target["pings"] += 1
+                url = target["url"].strip()
+                
+                # Auto-prefix and auto-endpoint
+                ping_url = url
+                if not ping_url.startswith("http"):
+                    ping_url = "https://" + ping_url
+                
+                # Ensure we hit the API hook, not the HTML page
+                if "/api/hook" not in ping_url:
+                    ping_url = ping_url.rstrip("/") + "/api/hook"
+                
+                try:
+                    # Optimized zero-dependency request
+                    with urllib.request.urlopen(ping_url, timeout=10) as response:
+                        if response.status == 200:
+                            target["success"] += 1
+                            if target["pings"] % 30 == 0: # Log every 30s to keep clean
+                                add_log(f"PULSE: Stable {target.get('label', 'Link')} -> {url}")
+                        else:
+                            add_log(f"WARN: {url} returned HTTP {response.status}")
+                except Exception as e:
+                    if target["pings"] % 10 == 0:
+                        add_log(f"FAIL: {url} - Connection Refused")
+                
+                target["last_ping"] = time.strftime("%H:%M:%S")
+        
+        time.sleep(1)
+
+# WSGI Application Interface
+def app(environ, start_response):
+    path = environ.get('PATH_INFO', '/')
+    method = environ.get('REQUEST_METHOD', 'GET')
+    
+    if path == '/':
+        try:
+            with open('templates/index.html', 'r') as f:
+                content = f.read().encode()
+            start_response('200 OK', [('Content-Type', 'text/html')])
+            return [content]
+        except:
+            start_response('200 OK', [('Content-Type', 'text/plain')])
+            return [b"AWAKE KERNEL ONLINE. Templates missing."]
+            
+    elif path == '/api/status':
+        # Add uptime calculation for the UI
+        uptime_sec = int(time.time() - watchdog_state["start_time"])
+        h, rem = divmod(uptime_sec, 3600)
+        m, s = divmod(rem, 60)
+        watchdog_state["uptime"] = f"{h}h {m}m {s}s"
+        
+        start_response('200 OK', [('Content-Type', 'application/json')])
+        return [json.dumps(watchdog_state).encode()]
+
+    elif path == '/api/hook':
+        watchdog_state["pings_received"] += 1
+        if watchdog_state["pings_received"] % 10 == 0:
+            add_log(f"INBOUND: Received {watchdog_state['pings_received']} heartbeats")
+        
+        start_response('200 OK', [('Content-Type', 'application/json')])
+        return [json.dumps({"status": "pulse received", "node": "AWAKE-WASMER-V2"}).encode()]
+        
+    elif path == '/api/add' and method == 'POST':
+        try:
+            length = int(environ.get('CONTENT_LENGTH', 0))
+            data = json.loads(environ['wsgi.input'].read(length).decode('utf-8'))
+            url = data.get('url', '').strip()
+            
+            if url and not any(t['url'] == url for t in watchdog_state["targets"]):
+                watchdog_state["targets"].append({
+                    "url": url,
+                    "pings": 0,
+                    "success": 0,
+                    "last_ping": None,
+                    "is_active": True
+                })
+                add_log(f"SYSTEM: New pulse target deployed: {url}")
+            
+            start_response('200 OK', [('Content-Type', 'application/json')])
+            return [json.dumps({"success": True}).encode()]
+        except Exception as e:
+            start_response('400 Bad Request', [])
+            return [str(e).encode()]
+
+    elif path == '/api/remove' and method == 'POST':
+        try:
+            length = int(environ.get('CONTENT_LENGTH', 0))
+            data = json.loads(environ['wsgi.input'].read(length).decode('utf-8'))
+            url = data.get('url', '')
+            
+            # Don't allow removing the core URL if you want it kept alive as a fallback
+            # (Or just allow it, but the user said "failbakcs to keep alive")
+            watchdog_state["targets"] = [t for t in watchdog_state["targets"] if t['url'] != url]
+            add_log(f"SYSTEM: Target decommissioned: {url}")
+            
+            start_response('200 OK', [('Content-Type', 'application/json')])
+            return [json.dumps({"success": True}).encode()]
+        except:
+            start_response('400 Bad Request', [])
+            return [b"Error"]
+
+    elif path == '/api/toggle' and method == 'POST':
+        try:
+            length = int(environ.get('CONTENT_LENGTH', 0))
+            data = json.loads(environ['wsgi.input'].read(length).decode('utf-8'))
+            url = data.get('url', '')
+            for t in watchdog_state["targets"]:
+                if t['url'] == url:
+                    t['is_active'] = not t['is_active']
+                    add_log(f"SYSTEM: {url} pulse {'active' if t['is_active'] else 'paused'}")
+            
+            start_response('200 OK', [('Content-Type', 'application/json')])
+            return [json.dumps({"success": True}).encode()]
+        except:
+            start_response('400 Bad Request', [])
+            return [b"Error"]
+
+    start_response('404 Not Found', [('Content-Type', 'text/plain')])
+    return [b"404 - Kernel Path Not Found"]
+
+# Background Thread Initialization
+threading.Thread(target=ping_loop, daemon=True).start()
+
+# Wasmer/Uvicorn compatibility alias
+app = app
+
+if __name__ == "__main__":
+    from wsgiref.simple_server import make_server
+    PORT = int(os.environ.get("PORT", 8080))
+    with make_server('', PORT, app) as httpd:
+        print(f"AWAKE GUI ONLINE AT PORT {PORT}")
+        httpd.serve_forever()
+

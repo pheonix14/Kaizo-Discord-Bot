@@ -1,0 +1,50 @@
+{
+  "status": "Online \u2014 0 node(s)",
+  "caught": 0,
+  "faults": 0,
+  "logs": [
+    {
+      "time": "22:40:43",
+      "message": "Database updated: 1350 Pokemons cached.",
+      "type": "success"
+    },
+    {
+      "time": "22:40:42",
+      "message": "Updating Pokemon database from PokeAPI...",
+      "type": "info"
+    },
+    {
+      "time": "22:40:42",
+      "message": "Fafnir Engine starting...",
+      "type": "info"
+    }
+  ],
+  "tokens": [],
+  "spam": {
+    "message": "",
+    "speed": 0.2,
+    "count": "infinity",
+    "cooldown_after_catch": 3.0
+  },
+  "owo": {
+    "hunt": true,
+    "hunt_cd": 15,
+    "battle": true,
+    "battle_cd": 15,
+    "daily": true,
+    "daily_cd": 86400
+  },
+  "slash": {
+    "enabled": false,
+    "commands": []
+  },
+  "image": {
+    "enabled": true,
+    "hf_token": "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"
+  },
+  "break": {
+    "enabled": true,
+    "start_time": "02:00",
+    "duration": 10
+  }
+}

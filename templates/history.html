@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XTREME | Catch History</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Permanent+Marker&display=swap');
+
+    .cursive-italic {
+      font-family: 'Dancing Script', cursive;
+      font-style: italic;
+    }
+    .anime-font {
+      font-family: 'Permanent Marker', cursive;
+    }
+
+    /* Anime Entrance for Cards */
+    @keyframes anime-drop {
+      0% { transform: scale(1.2) translateY(-30px); opacity: 0; filter: blur(5px); }
+      100% { transform: scale(1) translateY(0); opacity: 1; filter: blur(0); }
+    }
+    .card-anime {
+      animation: anime-drop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    .glass {
+      background: rgba(10, 10, 10, 0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .card-hover:hover {
+      transform: translateY(-5px) scale(1.02);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .filter-btn { transition: all 0.2s; }
+    .filter-btn.active {
+      background: rgba(255, 255, 255, 1);
+      color: #000; font-weight: 700;
+      box-shadow: 0 0 15px rgba(255,255,255,0.5);
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+  
+  <main class="flex-1 p-4 md:p-6 lg:p-10 flex flex-col gap-6 z-10 relative w-full max-w-[1400px] mx-auto">
+    
+    <!-- Top Header -->
+    <div class="flex flex-col md:flex-row items-start md:items-end justify-between border-b border-white/10 pb-4 mb-2 gap-4">
+      <div>
+        <h1 class="text-5xl md:text-6xl text-white">CATCH <span style="color:var(--xc2)">HISTORY</span></h1>
+        <p class="font-['Space_Grotesk'] text-sm text-white/40 uppercase tracking-widest mt-2">Global Live Feed</p>
+      </div>
+      <div id="stats" class="px-5 py-3 rounded-2xl text-xs font-bold uppercase tracking-wider bg-black/40 border border-white/10 text-white/60 font-mono shadow-inner">
+        LOADING...
+      </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-black/40 p-4 rounded-3xl border border-white/5 backdrop-blur-md">
+      <div class="flex gap-2 bg-black/50 p-1.5 rounded-full border border-white/10 overflow-x-auto no-scrollbar w-full md:w-auto">
+        <button onclick="setFilter('all')" id="btn-all" class="filter-btn active px-6 py-2.5 rounded-full text-xs uppercase tracking-widest text-white/60 hover:text-white whitespace-nowrap">All</button>
+        <button onclick="setFilter('caught')" id="btn-caught" class="filter-btn px-6 py-2.5 rounded-full text-xs uppercase tracking-widest text-white/60 hover:text-white whitespace-nowrap">Caught</button>
+        <button onclick="setFilter('failed')" id="btn-failed" class="filter-btn px-6 py-2.5 rounded-full text-xs uppercase tracking-widest text-white/60 hover:text-white whitespace-nowrap">Failed</button>
+        <button onclick="setFilter('rare')" id="btn-rare" class="filter-btn px-6 py-2.5 rounded-full text-xs uppercase tracking-widest text-white/60 hover:text-white whitespace-nowrap">Rare</button>
+        <button onclick="setFilter('shiny')" id="btn-shiny" class="filter-btn px-6 py-2.5 rounded-full text-xs uppercase tracking-widest text-white/60 hover:text-white whitespace-nowrap">Shiny</button>
+      </div>
+      <button onclick="clearHistory()" class="w-full md:w-auto px-6 py-3 rounded-full bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 text-xs font-bold uppercase tracking-widest transition-colors whitespace-nowrap">
+        Clear Data
+      </button>
+    </div>
+
+    <!-- Captcha Alert Area -->
+    <div id="captcha-alert" class="hidden w-full"></div>
+
+    <!-- Grid -->
+    <div id="grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5">
+      <div class="col-span-full text-center text-white/40 py-20 text-sm tracking-widest uppercase">Loading Pokédex...</div>
+    </div>
+    
+    <div id="pager" class="flex justify-center gap-2 mt-8 mb-10 flex-wrap"></div>
+  </main>
+
+  <script src="/static/xtreme_ui.js"></script>
+  <script src="/static/fafnir_core.js"></script>
+  <script>
+    let curFilter = 'all';
+    let curPage = 1;
+    const PER_PAGE = 50;
+    let _allItems = [];
+    let _labelToId = {};
+
+    function imgUrl(item) {
+      if (item.is_captcha) return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
+      const name = (item.pokemon_name || item.display_name || '').toLowerCase().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '');
+      if (name) {
+        if (item.is_shiny) return `https://img.pokemondb.net/sprites/home/shiny/${name}.png`;
+        return `https://img.pokemondb.net/sprites/home/normal/${name}.png`;
+      }
+      return 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
+    }
+
+    function handleImgErr(el, item) {
+      const name = (item.pokemon_name || item.display_name || '').toLowerCase().replace(/[\s_]+/g, '-').replace(/[^a-z0-9-]/g, '');
+      const urls = [];
+      if (item.pokemon_id) urls.push(`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${item.pokemon_id}.png`);
+      if (name) urls.push(`https://img.pokemondb.net/sprites/home/normal/${name}.png`);
+      urls.push('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png');
+      let i = 0;
+      el.onerror = () => { if (i < urls.length) el.src = urls[i++]; else el.onerror = null; };
+      if (i < urls.length) el.src = urls[i++];
+    }
+
+    function buildCard(item, idx, animeClass = 'card-anime') {
+      const name = item.display_name || item.pokemon_name || 'Unknown';
+      const isCaught = item.success && !item.is_captcha;
+      const isShiny = item.is_shiny;
+      const isRare = ['legendary', 'mythical', 'ultra_beast'].includes(item.rarity);
+      const delay = (idx % 20) * 0.05;
+
+      const animStyle = animeClass ? `animation-delay: ${delay}s; opacity: 0;` : `opacity: 1;`;
+
+      if (item.is_captcha) {
+        const accountName = item.caught_by || 'Unknown Account';
+        const tid = _labelToId[accountName] || '';
+        const resumeBtn = tid ? `<button onclick="resumeTokenCaptcha('${tid}')" class="w-full py-2 rounded-xl bg-white text-black font-black text-[10px] uppercase tracking-widest hover:bg-white/90 transition shadow-lg">Resume</button>` : '';
+
+        return `
+          <div class="glass rounded-[2rem] overflow-hidden card-hover border-red-500/50 flex flex-col items-center justify-center p-6 gap-3 text-center relative ${animeClass}" style="${animStyle}">
+             <div class="absolute top-0 left-0 right-0 bg-red-500/20 text-white font-bold py-1.5 text-[10px] uppercase tracking-widest shadow-md flex items-center justify-center gap-1">
+                 <span class="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse"></span>
+                 ${accountName}
+             </div>
+             <div class="w-20 h-20 animate-pulse mt-4">
+                <img src="${imgUrl(item)}" class="w-full h-full object-contain opacity-80">
+             </div>
+             <div>
+                <h3 class="text-red-400 font-bold tracking-widest text-xs uppercase mb-1">Captcha Active</h3>
+                <p class="text-white/40 text-[10px] font-mono">${item.time || ''}</p>
+             </div>
+             <div class="flex gap-2 w-full mt-2">
+                 <a href="${item.captcha_url || '#'}" target="_blank" class="flex-1 py-2 rounded-xl bg-red-500/20 text-red-300 font-bold text-[10px] uppercase tracking-widest hover:bg-red-500/30 transition border border-red-500/30">Solve Now</a>
+                 ${resumeBtn}
+             </div>
+          </div>`;
+      }
+
+      if (item.is_quest) {
+        const accountName = item.caught_by || 'Unknown Account';
+        return `
+          <div class="glass rounded-[2rem] overflow-hidden card-hover border-purple-500/50 flex flex-col items-center justify-center p-6 gap-3 text-center relative shadow-[0_0_15px_rgba(168,85,247,0.15)] ${animeClass}" style="${animStyle}">
+             <div class="absolute top-0 left-0 right-0 bg-purple-500/20 text-white font-bold py-1.5 text-[10px] uppercase tracking-widest shadow-md flex items-center justify-center gap-1 border-b border-purple-500/30">
+                 <span class="text-purple-300">★</span>
+                 ${accountName}
+             </div>
+             <div class="w-20 h-20 mt-4 flex items-center justify-center bg-purple-500/20 rounded-full border border-purple-500/40 shadow-[0_0_20px_rgba(168,85,247,0.3)]">
+                 <svg class="w-10 h-10 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+             </div>
+             <div>
+                <h3 class="text-purple-300 font-black tracking-widest text-xs uppercase mb-1 drop-shadow-md">Quest Completed</h3>
+                <p class="text-white text-[10px] leading-relaxed mt-2 break-words font-medium">${item.failure_reason || ''}</p>
+                <p class="text-white/40 text-[9px] font-mono mt-2">${item.time || ''}</p>
+             </div>
+          </div>`;
+      }
+
+      const borderColor = isShiny ? 'border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.2)]' : (isRare ? 'border-purple-500/50 shadow-[0_0_15px_rgba(168,85,247,0.2)]' : (isCaught ? 'border-green-500/20' : 'border-red-500/20'));
+      const bgImgColor = isCaught ? 'bg-white/5' : 'bg-red-950/30';
+      const imgClass = isCaught ? 'opacity-100 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]' : 'opacity-30 grayscale blur-[1px]';
+
+      return `
+      <div class="glass rounded-[2rem] overflow-hidden card-hover flex flex-col ${borderColor} ${animeClass}" style="${animStyle}">
+        <div class="relative h-36 ${bgImgColor} flex items-center justify-center p-6">
+          ${isShiny ? '<span class="absolute top-3 right-3 bg-yellow-500/20 text-yellow-300 border border-yellow-500/30 px-2 py-1 rounded-lg text-[9px] font-bold tracking-widest uppercase shadow-md">Shiny</span>' : ''}
+          ${!isShiny && isRare ? '<span class="absolute top-3 right-3 bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-1 rounded-lg text-[9px] font-bold tracking-widest uppercase shadow-md">Rare</span>' : ''}
+          
+          <img src="${imgUrl(item)}" onerror="handleImgErr(this, ${JSON.stringify(item).replace(/"/g, '&quot;')})" class="w-full h-full object-contain ${imgClass} hover:scale-110 transition-transform duration-500" alt="${name}">
+        </div>
+        
+        <div class="p-5 flex flex-col gap-2">
+          <!-- Cursive Italic Font for Name -->
+          <h3 class="text-3xl cursive-italic text-white tracking-wider truncate drop-shadow-md">${name}</h3>
+          <div class="flex justify-between items-center mt-1">
+             <span class="text-[10px] font-bold uppercase tracking-widest ${isCaught ? 'text-green-400' : 'text-red-400'} anime-font text-sm drop-shadow-md">${isCaught ? 'CAUGHT' : 'FAILED'}</span>
+             <span class="text-[10px] font-mono text-white/40 bg-black/40 px-2 py-1 rounded-lg border border-white/5">${item.time || ''}</span>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    async function loadData() {
+      try {
+        const r = await window.Fafnir.safeFetch(`/api/history?page=1&per=200`);
+        _allItems = r.items || [];
+        render();
+
+        const d = await window.Fafnir.safeFetch('/api/data');
+        const nodes = d.nodes || [];
+        nodes.forEach(n => { if (n.label && n.id) _labelToId[n.label] = n.id; });
+
+        const captchaNodes = nodes.filter(n => n.captcha_detected);
+        const captchaAlert = document.getElementById('captcha-alert');
+        
+        if (captchaNodes.length > 0) {
+            let alertHtml = `
+              <div class="glass border-2 border-red-500 rounded-[2rem] p-6 bg-red-500/25 backdrop-blur-3xl shadow-[0_0_50px_rgba(239,68,68,0.4)] flex flex-col gap-4 text-center">
+                  <div class="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center mx-auto animate-pulse shadow-[0_0_20px_rgba(239,68,68,0.8)]">
+                      <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                  </div>
+                  <div>
+                      <h2 class="text-3xl font-black text-white uppercase tracking-tighter anime-font text-red-100">⚠️ Captcha Wall Detected</h2>
+                      <p class="text-xs text-red-300 uppercase font-bold tracking-widest mt-1">Catching halted for affected account(s) • Action required</p>
+                  </div>
+                  <div class="flex flex-col gap-3 w-full max-h-60 overflow-y-auto pr-1">
+            `;
+            
+            captchaNodes.forEach(node => {
+                const nodeLabel = node.label || node.id;
+                const url = node.captcha_url || '#';
+                const timeStr = node.captcha_time || 'Just now';
+                alertHtml += `
+                  <div class="bg-black/60 border border-red-500/30 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 text-left">
+                      <div class="flex-1 min-w-0">
+                          <p class="text-sm font-bold text-red-300 uppercase tracking-wide truncate">${nodeLabel}</p>
+                          <p class="text-[10px] text-white/40 font-mono mt-1">Detected at ${timeStr}</p>
+                      </div>
+                      <div class="flex gap-2 w-full sm:w-auto shrink-0">
+                          <a href="${url}" target="_blank" class="flex-1 sm:flex-initial px-6 py-3 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-black uppercase tracking-wider text-center transition shadow-lg">🔗 Solve</a>
+                          <button onclick="resumeTokenCaptcha('${node.id}')" class="flex-1 sm:flex-initial px-6 py-3 bg-white text-black hover:bg-white/90 rounded-xl text-xs font-black uppercase tracking-wider transition shadow-lg">Resume</button>
+                      </div>
+                  </div>
+                `;
+            });
+            
+            alertHtml += `
+                  </div>
+                  <button onclick="dismissCaptcha()" class="text-[10px] text-white/30 uppercase font-bold hover:text-white transition-colors mt-2">Dismiss Alert Box</button>
+              </div>
+            `;
+            captchaAlert.innerHTML = alertHtml;
+            captchaAlert.classList.remove('hidden');
+        } else {
+            const captchaData = d.captcha;
+            if (captchaData && captchaData.url) {
+                captchaAlert.innerHTML = `
+                  <div class="glass border-2 border-red-500 rounded-[2rem] p-6 bg-red-500/20 backdrop-blur-3xl shadow-[0_0_50px_rgba(239,68,68,0.4)] flex flex-col items-center gap-4 text-center animate-pulse">
+                      <div class="w-14 h-14 bg-red-500 rounded-full flex items-center justify-center">
+                          <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                      </div>
+                      <div>
+                          <h2 class="text-3xl font-black text-white uppercase tracking-tighter anime-font text-red-100">⚠️ Captcha Wall Detected</h2>
+                          <p id="captcha-token-label" class="text-xs text-red-300 font-bold uppercase tracking-widest mt-1">Token on standby: ${captchaData.label} • Detected at ${captchaData.time}</p>
+                      </div>
+                      <a id="captcha-link" href="${captchaData.url}" target="_blank" class="w-full bg-white text-black py-4 rounded-2xl font-black uppercase tracking-widest text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-xl">🔗 Solve Captcha Now</a>
+                      <button onclick="dismissCaptcha()" class="text-[10px] text-white/30 uppercase font-bold hover:text-white transition-colors">Mark Resolved &amp; Dismiss</button>
+                  </div>`;
+                captchaAlert.classList.remove('hidden');
+            } else {
+                captchaAlert.classList.add('hidden');
+            }
+        }
+      } catch (e) { console.error("Failed to load history", e); }
+    }
+
+    function setFilter(f) {
+      curFilter = f;
+      curPage = 1;
+      document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+      document.getElementById(`btn-${f}`).classList.add('active');
+      render();
+    }
+
+    function render() {
+      // 1. Deduplicate entries from backend (Ignore UUID because backend logs twice for image vs hint)
+      const uniqueItems = [];
+      const seen = new Set();
+      for (const i of _allItems) {
+          const key = (i.time || '') + '|' + (i.pokemon_name || i.display_name || '') + '|' + (i.caught_by || '');
+          if (!seen.has(key)) {
+              seen.add(key);
+              uniqueItems.push(i);
+          }
+      }
+      _allItems = uniqueItems;
+
+      let items = [..._allItems];
+      if (curFilter === 'caught') items = items.filter(i => i.success && !i.is_captcha);
+      else if (curFilter === 'failed') items = items.filter(i => !i.success && !i.is_captcha);
+      else if (curFilter === 'rare') items = items.filter(i => ['legendary', 'mythical', 'ultra_beast'].includes(i.rarity));
+      else if (curFilter === 'shiny') items = items.filter(i => i.is_shiny);
+
+      const c = _allItems.filter(i => i.success && !i.is_captcha).length;
+      document.getElementById('stats').innerHTML = `TOTAL: <span class="text-white">${_allItems.length}</span> &nbsp;|&nbsp; CAUGHT: <span class="text-green-400">${c}</span>`;
+
+      const totalPages = Math.max(1, Math.ceil(items.length / PER_PAGE));
+      if (curPage > totalPages) curPage = 1;
+      const slice = items.slice((curPage - 1) * PER_PAGE, curPage * PER_PAGE);
+
+      const currentIds = slice.map(i => i.id || (i.time + i.pokemon_name)).join('|');
+      
+      // If nothing changed, do absolutely nothing
+      if (window._lastRenderedIds === currentIds) return;
+
+      window._lastRenderedIds = currentIds;
+
+      const grid = document.getElementById('grid');
+      
+      // Save scroll position to prevent yanking to top
+      const oldScroll = window.scrollY;
+
+      if (!slice.length) {
+        grid.innerHTML = '<div class="col-span-full text-center text-white/40 py-20 text-sm tracking-widest uppercase">No Pokémon Found</div>';
+        document.getElementById('pager').innerHTML = '';
+        if (oldScroll > 0) window.scrollTo(0, oldScroll);
+        return;
+      }
+
+      if (!window._animatedCards) window._animatedCards = new Set();
+
+      grid.innerHTML = slice.map((item, idx) => {
+          const uniqueKey = item.id || (item.time + item.pokemon_name);
+          let animeClass = '';
+          // Only animate NEW cards that haven't been rendered yet
+          if (!window._animatedCards.has(uniqueKey)) {
+              animeClass = 'card-anime';
+              window._animatedCards.add(uniqueKey);
+          }
+          return buildCard(item, idx, animeClass);
+      }).join('');
+
+      const pager = document.getElementById('pager');
+      if (totalPages <= 1) { 
+          pager.innerHTML = ''; 
+          if (oldScroll > 0) window.scrollTo(0, oldScroll);
+          return; 
+      }
+
+      let html = '';
+      for (let i = 1; i <= totalPages; i++) {
+        const activeCls = i === curPage ? 'bg-white text-black font-bold shadow-[0_0_15px_rgba(255,255,255,0.5)]' : 'bg-white/10 text-white/60 hover:bg-white/20 hover:text-white';
+        html += `<button onclick="curPage=${i};render()" class="w-10 h-10 rounded-xl ${activeCls} transition flex items-center justify-center text-sm font-mono">${i}</button>`;
+      }
+      pager.innerHTML = html;
+      if (oldScroll > 0) window.scrollTo(0, oldScroll);
+    }
+
+    async function clearHistory() {
+      if (!confirm('Are you sure you want to clear all history? This cannot be undone.')) return;
+      await fetch('/api/history/clear', { method: 'POST' });
+      _allItems = [];
+      render();
+    }
+
+    async function dismissCaptcha() {
+      document.getElementById('captcha-alert').classList.add('hidden');
+      await fetch('/api/captcha/clear', { method: 'POST' });
+      loadData();
+    }
+
+    async function resumeTokenCaptcha(tid) {
+      await fetch(`/api/captcha/clear/${tid}`, { method: 'POST' });
+      loadData();
+    }
+
+    loadData();
+    setInterval(loadData, 5000);
+  </script>
+</body>
+</html>

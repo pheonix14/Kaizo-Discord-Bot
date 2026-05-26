@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>XTREME | Captcha Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --red-glow:   rgba(239, 68, 68, 0.35);
+      --green-glow: rgba(74, 222, 128, 0.35);
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: 'Outfit', -apple-system, sans-serif;
+      color: #fff;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-color: #030303;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -10%, rgba(239,68,68,0.10) 0%, transparent 70%),
+        radial-gradient(ellipse 60% 40% at 90% 80%,  rgba(139,92,246,0.07) 0%, transparent 60%);
+    }
+    .glass {
+      background: rgba(10,10,10,0.55);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.07);
+      box-shadow: 0 4px 30px rgba(0,0,0,0.3);
+    }
+    .glass-red {
+      background: rgba(239,68,68,0.08);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(239,68,68,0.25);
+      box-shadow: 0 0 40px var(--red-glow);
+    }
+    .glass-green {
+      background: rgba(74,222,128,0.07);
+      backdrop-filter: blur(24px);
+      border: 1px solid rgba(74,222,128,0.2);
+      box-shadow: 0 0 30px var(--green-glow);
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 99px; }
+
+    @keyframes pulse-red {
+      0%,100% { box-shadow: 0 0 20px var(--red-glow), 0 0 60px var(--red-glow); }
+      50%      { box-shadow: 0 0 40px var(--red-glow), 0 0 80px rgba(239,68,68,0.2); }
+    }
+    @keyframes float-in {
+      from { opacity:0; transform:translateY(14px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes shimmer {
+      0%   { background-position:-200% center; }
+      100% { background-position:200% center; }
+    }
+    @keyframes tick { 0%{opacity:1}50%{opacity:0.3}100%{opacity:1} }
+
+    .card-in { animation: float-in 0.35s ease both; }
+
+    .alert-ring { animation: pulse-red 2.4s ease-in-out infinite; }
+
+    .solve-btn {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      transition: all 0.2s;
+      position: relative; overflow: hidden;
+    }
+    .solve-btn::after {
+      content:'';position:absolute;inset:0;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);
+      background-size:200% 100%;animation:shimmer 2s linear infinite;
+    }
+    .solve-btn:hover { transform:scale(1.02); box-shadow:0 0 24px rgba(239,68,68,0.5); }
+    .solve-btn:active { transform:scale(0.98); }
+
+    .resume-btn {
+      background:rgba(255,255,255,0.9); color:#000;
+      transition:all 0.2s;
+    }
+    .resume-btn:hover { background:#fff; transform:scale(1.02); box-shadow:0 0 20px rgba(255,255,255,0.2); }
+    .resume-btn:active { transform:scale(0.97); }
+    .resume-btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; }
+
+    .status-dot-red   { width:8px;height:8px;border-radius:50%;background:#ef4444;box-shadow:0 0 10px rgba(239,68,68,0.8);animation:tick 1.2s ease-in-out infinite; }
+    .status-dot-green { width:8px;height:8px;border-radius:50%;background:#4ade80;box-shadow:0 0 10px rgba(74,222,128,0.8); }
+    .status-dot-gray  { width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2); }
+
+    .tab-btn { transition:all 0.2s; }
+    .tab-btn.active {
+      background:rgba(239,68,68,0.15);
+      border-color:rgba(239,68,68,0.4);
+      color:#fca5a5;
+    }
+
+    .hist-row { animation:float-in 0.25s ease both; }
+
+    /* Copy button */
+    .copy-btn { transition:all 0.15s; cursor:pointer; }
+    .copy-btn:hover { background:rgba(255,255,255,0.1); }
+    .copy-btn.copied { background:rgba(74,222,128,0.2); color:#4ade80; }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+  <!-- Nav -->
+  <nav class="glass px-6 py-4 flex items-center justify-between shrink-0 z-10 mx-4 mt-4 rounded-2xl">
+    <div class="flex items-center gap-6 overflow-x-auto no-scrollbar w-full">
+      <h1 class="text-xl font-bold tracking-tight shrink-0">XTREME</h1>
+      <div class="flex gap-4">
+        <a href="/"       class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Home</a>
+        <a href="/config" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Tokens</a>
+        <a href="/dex"    class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Dex</a>
+        <a href="/history" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">History</a>
+        <a href="/owo"    class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">OwO</a>
+        <a href="/slash"  class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Slash</a>
+        <a href="/spam"   class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Spam</a>
+        <a href="/msg"    class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Msg</a>
+        <a href="/mimic"  class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Mimic</a>
+        <a href="/image"  class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Image</a>
+        <a href="/hook"   class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Hook</a>
+        <a href="/test"   class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Test</a>
+        <a href="/captcha" class="text-white font-semibold text-sm whitespace-nowrap px-3 py-1 bg-red-500/20 border border-red-500/30 rounded-full">Captcha</a>
+      </div>
+    </div>
+    <!-- status pill -->
+    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-xs font-bold border border-white/20 ml-4 shrink-0">
+      <div id="status-dot" class="status-dot-green"></div>
+      <span id="status-txt" class="uppercase tracking-wider text-green-400">Online</span>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main class="flex-1 p-4 md:p-6 flex flex-col gap-5 max-w-5xl mx-auto w-full">
+
+    <!-- Header row -->
+    <div class="flex items-center justify-between flex-wrap gap-3">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center alert-ring">
+          <svg class="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-2xl font-black tracking-tight">Captcha Manager</h1>
+          <p class="text-xs text-white/40 uppercase tracking-widest font-bold mt-0.5">Real-time monitor and full history log</p>
+        </div>
+        <div id="captcha-count-badge" class="hidden px-3 py-1.5 rounded-full text-xs font-black uppercase tracking-wider text-white"
+             style="background:linear-gradient(135deg,#ef4444,#b91c1c);box-shadow:0 0 20px rgba(239,68,68,0.35)">
+          0 Active
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button id="clear-all-btn" onclick="resumeAll()" class="hidden text-red-400 px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all"
+                style="background:linear-gradient(135deg,rgba(239,68,68,0.15),rgba(239,68,68,0.05));border:1px solid rgba(239,68,68,0.3)">
+          Resume All
+        </button>
+        <button onclick="clearHistory()" class="text-white/40 px-4 py-2.5 rounded-xl text-xs font-bold uppercase tracking-widest transition-all border border-white/10 hover:border-white/25 hover:text-white/80">
+          Clear Log
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats row -->
+    <div class="grid grid-cols-4 gap-3">
+      <div class="glass rounded-2xl p-4 flex flex-col items-center justify-center text-center border border-white/5">
+        <div class="text-[10px] uppercase tracking-widest text-white/40 font-bold mb-1">Active Now</div>
+        <div id="stat-active" class="text-3xl font-black text-red-400 mono">0</div>
+      </div>
+      <div class="glass rounded-2xl p-4 flex flex-col items-center justify-center text-center border border-white/5">
+        <div class="text-[10px] uppercase tracking-widest text-white/40 font-bold mb-1">Clear</div>
+        <div id="stat-clear" class="text-3xl font-black text-green-400 mono">0</div>
+      </div>
+      <div class="glass rounded-2xl p-4 flex flex-col items-center justify-center text-center border border-white/5">
+        <div class="text-[10px] uppercase tracking-widest text-white/40 font-bold mb-1">Total Nodes</div>
+        <div id="stat-total" class="text-3xl font-black text-white/70 mono">0</div>
+      </div>
+      <div class="glass rounded-2xl p-4 flex flex-col items-center justify-center text-center border border-white/5">
+        <div class="text-[10px] uppercase tracking-widest text-white/40 font-bold mb-1">History Count</div>
+        <div id="stat-hist" class="text-3xl font-black text-purple-400 mono">0</div>
+      </div>
+    </div>
+
+    <!-- Alert banner (shown when captchas present) -->
+    <div id="alert-banner" class="hidden glass-red rounded-2xl px-5 py-4 flex items-center gap-4">
+      <div class="status-dot-red shrink-0"></div>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-bold text-red-300 uppercase tracking-wide">Catching halted for flagged account(s)</p>
+        <p class="text-[10px] text-white/40 font-bold uppercase tracking-widest mt-0.5">Solve each captcha link, then click Resume to restart loops</p>
+      </div>
+      <svg class="w-5 h-5 text-red-400 shrink-0 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+      </svg>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-2">
+      <button id="tab-live" onclick="switchTab('live')" class="tab-btn active px-5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-xs font-black uppercase tracking-widest flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
+        <span>Live Active</span>
+        <span id="tab-live-count" class="ml-1 text-[9px] bg-red-500/20 text-red-400 px-1.5 py-0.5 rounded-full hidden">0</span>
+      </button>
+      <button id="tab-history" onclick="switchTab('history')" class="tab-btn px-5 py-2.5 rounded-xl border border-white/10 bg-white/5 text-xs font-black uppercase tracking-widest flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full bg-purple-500 inline-block shadow-[0_0_8px_rgba(168,85,247,0.8)]"></span>
+        <span>Full History</span>
+        <span id="tab-hist-count" class="ml-1 text-[9px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded-full">0</span>
+      </button>
+    </div>
+
+    <!-- ── LIVE ACTIVE TAB ── -->
+    <div id="pane-live" class="flex flex-col gap-4">
+      <!-- Active captcha cards injected here -->
+      <div id="captcha-list" class="flex flex-col gap-4"></div>
+      <!-- All-clear state -->
+      <div id="empty-state" class="hidden">
+        <div class="glass-green rounded-3xl p-10 flex flex-col items-center gap-5 text-center" style="animation:float-in 0.5s ease both">
+          <div class="w-16 h-16 bg-green-500/15 border border-green-500/30 rounded-full flex items-center justify-center">
+            <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-xl font-black text-green-300 uppercase tracking-tight">All Clear</h2>
+            <p class="text-sm text-white/40 font-medium mt-1">No captchas detected — all loops running freely</p>
+          </div>
+          <div id="all-clear-nodes" class="flex flex-col gap-2 w-full max-w-sm"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── HISTORY TAB ── -->
+    <div id="pane-history" class="hidden flex flex-col gap-3">
+      <div class="glass rounded-2xl p-4 flex items-center justify-between">
+        <div>
+          <p class="text-sm font-bold text-white/80">All Captcha Events</p>
+          <p class="text-[10px] text-white/40 mt-0.5">Ordered newest first · Tracks all detections this session</p>
+        </div>
+        <button onclick="clearHistory()" class="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-red-400 border border-red-500/30 rounded-xl hover:bg-red-500/10 transition-all">
+          Clear All
+        </button>
+      </div>
+      <div id="history-list" class="flex flex-col gap-2">
+        <div class="glass rounded-xl p-6 text-center text-white/30 text-sm">No captcha history yet this session</div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-[10px] text-white/20 mono uppercase tracking-widest">
+      Auto-refreshes every 3s · Last updated: <span id="last-update">—</span>
+    </div>
+
+  </main>
+
+  <script>
+    // ── State ─────────────────────────────────────────────────────────────────
+    let activeTab = 'live';
+    let prevActiveHash = '';
+    let prevHistHash   = '';
+    let _nodeMap = {};   // id → node (for resume buttons)
+
+    // ── Tab switching ─────────────────────────────────────────────────────────
+    function switchTab(t) {
+      activeTab = t;
+      document.getElementById('pane-live').classList.toggle('hidden', t !== 'live');
+      document.getElementById('pane-history').classList.toggle('hidden', t !== 'history');
+      document.getElementById('tab-live').classList.toggle('active', t === 'live');
+      document.getElementById('tab-history').classList.toggle('active', t === 'history');
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function truncUrl(url, max=52) {
+      if (!url || url === '#') return '—';
+      try {
+        const u = new URL(url);
+        const s = u.hostname + (u.pathname.length > 1 ? u.pathname.slice(0,24) + '…' : '');
+        return s.length > max ? s.slice(0,max) + '…' : s;
+      } catch { return url.length > max ? url.slice(0,max) + '…' : url; }
+    }
+
+    async function copyLink(url, btn) {
+      try {
+        await navigator.clipboard.writeText(url);
+        btn.textContent = 'Copied';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 1600);
+      } catch {}
+    }
+
+    // ── Resume ────────────────────────────────────────────────────────────────
+    async function resumeOne(tid, btn) {
+      btn.disabled = true; btn.textContent = '...';
+      try {
+        await fetch(`/api/captcha/clear/${tid}`, { method: 'POST' });
+        btn.textContent = 'Resumed';
+        btn.classList.add('text-green-400','!bg-green-500/10');
+        btn.classList.remove('resume-btn');
+        setTimeout(poll, 700);
+      } catch {
+        btn.textContent = 'Error'; btn.disabled = false;
+        setTimeout(() => { btn.textContent = 'Resume'; btn.disabled = false; }, 2000);
+      }
+    }
+
+    async function resumeAll() {
+      const btn = document.getElementById('clear-all-btn');
+      btn.textContent = '...'; btn.disabled = true;
+      try {
+        await fetch('/api/captcha/clear', { method: 'POST' });
+        btn.textContent = 'Resumed All';
+        setTimeout(() => { btn.textContent = 'Resume All'; btn.disabled = false; poll(); }, 1500);
+      } catch {
+        btn.textContent = 'Resume All'; btn.disabled = false;
+      }
+    }
+
+    async function clearHistory() {
+      await fetch('/api/captcha/history/clear', { method: 'POST' });
+      prevHistHash = '';
+      document.getElementById('history-list').innerHTML =
+        '<div class="glass rounded-xl p-6 text-center text-white/30 text-sm">No captcha history yet this session</div>';
+      document.getElementById('stat-hist').textContent = '0';
+      document.getElementById('tab-hist-count').textContent = '0';
+    }
+
+    // ── Render active card ─────────────────────────────────────────────────────
+    function buildActiveCard(node, idx) {
+      const url     = node.captcha_url || '#';
+      const hasUrl  = url && url !== '#';
+      const label   = node.label || node.id?.slice(0,8) || 'Unknown';
+      const time    = node.captcha_time || '—';
+      const profile = node.profile || {};
+      const avatar  = profile.avatar || '';
+      const username= profile.username || label;
+
+      return `
+        <div class="glass-red rounded-2xl overflow-hidden card-in" style="animation-delay:${idx*0.06}s">
+          <!-- header -->
+          <div class="px-6 py-4 border-b border-red-500/15 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="status-dot-red shrink-0"></div>
+              <img src="${avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" class="w-9 h-9 rounded-full border border-red-500/30 shrink-0" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+              <div class="min-w-0">
+                <p class="text-base font-black text-white uppercase tracking-wide truncate">${label}</p>
+                <p class="text-[10px] text-white/40 mono">${username !== label ? '@' + username + ' · ' : ''}ID: ${(node.id||'').slice(0,12)}…</p>
+              </div>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-[10px] font-black uppercase tracking-widest text-red-400 px-2 py-1 bg-red-500/20 border border-red-500/30 rounded-lg">Blocked</span>
+              <span class="mono text-[10px] text-white/40 font-bold">${time}</span>
+            </div>
+          </div>
+
+          <!-- body -->
+          <div class="px-6 py-5 flex flex-col gap-4">
+
+            <!-- URL row -->
+            <div class="bg-black/30 border border-white/5 rounded-xl px-4 py-3 flex items-center gap-3">
+              <svg class="w-4 h-4 text-white/30 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+              </svg>
+              <span class="mono text-xs flex-1 truncate ${hasUrl ? 'text-white/70' : 'text-white/20 italic'}" title="${hasUrl ? url : ''}">
+                ${hasUrl ? truncUrl(url) : 'No URL captured'}
+              </span>
+              ${hasUrl ? `<button class="copy-btn px-2 py-1 rounded-lg text-white/30 hover:text-white text-[10px] font-bold mono border border-white/8 transition"
+                                  onclick="copyLink('${url.replace(/'/g,"\\'")}', this)">Copy</button>` : ''}
+            </div>
+
+            <!-- Full URL (smaller) -->
+            ${hasUrl ? `<p class="text-[9px] text-white/20 mono break-all leading-relaxed">${url}</p>` : ''}
+
+            <!-- Actions -->
+            <div class="flex gap-3">
+              ${hasUrl ? `
+              <a href="${url}" target="_blank" rel="noopener noreferrer"
+                 class="solve-btn flex-1 text-center text-white text-xs font-black uppercase tracking-widest px-5 py-3 rounded-xl no-underline flex items-center justify-center gap-2">
+                <span>Open and Solve</span>
+              </a>` : `
+              <span class="flex-1 text-center text-white/20 text-xs font-bold uppercase tracking-widest px-5 py-3 rounded-xl border border-white/5 bg-white/2 flex items-center justify-center">
+                <span>No Link Available</span>
+              </span>`}
+              <button id="resume-btn-${node.id}"
+                      onclick="resumeOne('${node.id}', this)"
+                      class="resume-btn flex-1 text-xs font-black uppercase tracking-widest px-5 py-3 rounded-xl">
+                Resume
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function buildClearCard(node) {
+      const label  = node.label || node.id?.slice(0,8) || 'Unknown';
+      const avatar = (node.profile || {}).avatar || '';
+      const username = (node.profile || {}).username || label;
+      return `
+        <div class="flex items-center gap-3 bg-white/3 border border-white/5 rounded-xl px-4 py-2.5">
+          <div class="status-dot-green shrink-0"></div>
+          <img src="${avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" class="w-7 h-7 rounded-full border border-green-500/20 shrink-0" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-bold text-white/80 truncate">${label}</p>
+            ${username !== label ? `<p class="text-[9px] text-white/30 mono">@${username}</p>` : ''}
+          </div>
+          <span class="text-[10px] font-black uppercase tracking-widest text-green-400">Running</span>
+        </div>
+      `;
+    }
+
+    // ── Render history rows ───────────────────────────────────────────────────
+    function buildHistRow(entry, idx) {
+      const label    = entry.label || 'Unknown';
+      const url      = entry.url   || '#';
+      const hasUrl   = url && url !== '#';
+      const time     = entry.time  || '—';
+      const resolved = entry.resolved;
+      const dt       = entry.datetime ? new Date(entry.datetime).toLocaleString() : '';
+
+      return `
+        <div class="hist-row glass rounded-xl overflow-hidden border ${resolved ? 'border-white/5' : 'border-red-500/20'}" style="animation-delay:${Math.min(idx,12)*0.03}s">
+          <div class="flex items-center gap-4 px-4 py-3">
+            <!-- status dot -->
+            <div class="${resolved ? 'status-dot-gray' : 'status-dot-red'} shrink-0"></div>
+
+            <!-- account -->
+            <div class="min-w-0 w-36 shrink-0">
+              <p class="text-sm font-black text-white/90 uppercase tracking-wide truncate">${label}</p>
+              <p class="text-[9px] mono text-white/30">${time}</p>
+            </div>
+
+            <!-- datetime -->
+            <p class="text-[9px] text-white/30 mono hidden sm:block w-36 shrink-0">${dt}</p>
+
+            <!-- status badge -->
+            <div class="shrink-0">
+              ${resolved
+                ? '<span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest text-green-400 bg-green-500/10 border border-green-500/20">Resolved</span>'
+                : '<span class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest text-red-400 bg-red-500/10 border border-red-500/20">Active</span>'}
+            </div>
+
+            <!-- URL -->
+            <div class="flex-1 min-w-0 bg-black/30 border border-white/5 rounded-lg px-3 py-2 flex items-center gap-2">
+              <span class="mono text-[10px] truncate flex-1 ${hasUrl ? 'text-white/60' : 'text-white/20 italic'}" title="${hasUrl ? url : ''}">
+                ${hasUrl ? truncUrl(url, 44) : 'No URL'}
+              </span>
+              ${hasUrl ? `<button class="copy-btn text-[9px] mono text-white/30 hover:text-white px-1.5 py-0.5 rounded border border-white/8 transition shrink-0"
+                                  onclick="copyLink('${url.replace(/'/g,"\\'")}', this)">Copy</button>` : ''}
+            </div>
+
+            <!-- Solve link -->
+            ${hasUrl ? `<a href="${url}" target="_blank" rel="noopener noreferrer"
+               class="shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-white no-underline transition flex items-center justify-center"
+               style="background:linear-gradient(135deg,rgba(239,68,68,0.8),rgba(220,38,38,0.8))">
+               Solve
+            </a>` : `<span class="shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-white/20 border border-white/5">No Link</span>`}
+          </div>
+        </div>
+      `;
+    }
+
+    // ── Poll live status ──────────────────────────────────────────────────────
+    async function pollLive() {
+      try {
+        const d  = await fetch('/api/data').then(r => r.json());
+        const nodes = d.nodes || [];
+
+        const blocked = nodes.filter(n => n.captcha_detected);
+        const clear   = nodes.filter(n => !n.captcha_detected);
+
+        // Build node map for resume buttons
+        _nodeMap = {};
+        nodes.forEach(n => { _nodeMap[n.id] = n; });
+
+        // Stats
+        document.getElementById('stat-active').textContent = blocked.length;
+        document.getElementById('stat-clear').textContent  = clear.length;
+        document.getElementById('stat-total').textContent  = nodes.length;
+
+        // Badge + clear-all button
+        const badge    = document.getElementById('captcha-count-badge');
+        const clearBtn = document.getElementById('clear-all-btn');
+        const liveCnt  = document.getElementById('tab-live-count');
+        if (blocked.length > 0) {
+          badge.textContent = `${blocked.length} Active`;
+          badge.classList.remove('hidden');
+          clearBtn.classList.remove('hidden');
+          liveCnt.textContent = blocked.length;
+          liveCnt.classList.remove('hidden');
+        } else {
+          badge.classList.add('hidden');
+          clearBtn.classList.add('hidden');
+          liveCnt.classList.add('hidden');
+        }
+
+        // Alert banner
+        document.getElementById('alert-banner').classList.toggle('hidden', blocked.length === 0);
+
+        // Status dot (navbar)
+        const isOnline = d.status !== 'Offline';
+        const dot = document.getElementById('status-dot');
+        const txt = document.getElementById('status-txt');
+        if (isOnline) {
+          dot.className = 'status-dot-green';
+          txt.textContent = 'Online'; txt.className = 'uppercase tracking-wider text-green-400';
+        } else {
+          dot.className = 'status-dot-red';
+          txt.textContent = 'Offline'; txt.className = 'uppercase tracking-wider text-red-400';
+        }
+
+        // Render live cards
+        const hash = blocked.map(n => n.id + n.captcha_url + n.captcha_time).join('|');
+        if (hash !== prevActiveHash) {
+          prevActiveHash = hash;
+          const list  = document.getElementById('captcha-list');
+          const empty = document.getElementById('empty-state');
+          const allCN = document.getElementById('all-clear-nodes');
+          if (blocked.length > 0) {
+            list.innerHTML = blocked.map((n, i) => buildActiveCard(n, i)).join('');
+            empty.classList.add('hidden');
+          } else {
+            list.innerHTML = '';
+            empty.classList.remove('hidden');
+            allCN.innerHTML = clear.map(n => buildClearCard(n)).join('') ||
+              '<p class="text-xs text-white/20 text-center italic">No nodes registered</p>';
+          }
+        }
+
+        // Timestamp
+        document.getElementById('last-update').textContent =
+          new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+
+      } catch (e) {
+        console.warn('pollLive error:', e);
+        const txt = document.getElementById('status-txt');
+        const dot = document.getElementById('status-dot');
+        txt.textContent = 'Offline'; txt.className = 'uppercase tracking-wider text-red-400';
+        dot.className = 'status-dot-red';
+      }
+    }
+
+    // ── Poll history ──────────────────────────────────────────────────────────
+    async function pollHistory() {
+      try {
+        const d   = await fetch('/api/captcha/history').then(r => r.json());
+        const hist = d.history || [];
+
+        // Stats
+        document.getElementById('stat-hist').textContent     = hist.length;
+        document.getElementById('tab-hist-count').textContent = hist.length;
+
+        const hash = hist.map(e => e.label + e.time + e.resolved).join('|');
+        if (hash === prevHistHash) return;
+        prevHistHash = hash;
+
+        const el = document.getElementById('history-list');
+        if (!hist.length) {
+          el.innerHTML = '<div class="glass rounded-xl p-6 text-center text-white/30 text-sm">No captcha history yet this session</div>';
+          return;
+        }
+        el.innerHTML = hist.map((e, i) => buildHistRow(e, i)).join('');
+      } catch {}
+    }
+
+    // ── Combined poll ─────────────────────────────────────────────────────────
+    async function poll() {
+      await Promise.all([pollLive(), pollHistory()]);
+    }
+
+    poll();
+    setInterval(poll, 3000);
+  </script>
+  <script src="/static/xtreme_ui.js"></script>
+  <script src="/static/fafnir_core.js"></script>
+</body>
+</html>

@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>XTREME | Member Search & Server Scanner</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Grotesk:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&family=Dancing+Script:wght@700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --c1: #ff2d55;
+      --c2: #0affe4;
+      --c3: #a855f7;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      color: #fff;
+      min-height: 100vh;
+      background-color: #000;
+      overflow-x: hidden;
+    }
+    .glass {
+      background: rgba(10, 10, 10, 0.6);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 0 !important;
+    }
+    .card {
+      background: #000;
+      border: 1px solid rgba(255,255,255,.08);
+      position: relative;
+      overflow: hidden;
+      transition: all .3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; width: 100%; height: 2px;
+      background: var(--c2);
+      transform: scaleX(0); transform-origin: left;
+      transition: transform .4s cubic-bezier(.23,1,.32,1);
+    }
+    .card:hover {
+      background: rgba(255,255,255,.03);
+      border-color: rgba(10,255,228,0.3);
+      transform: translateY(-2px);
+    }
+    .card:hover::before { transform: scaleX(1); }
+
+    .section-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px; letter-spacing: .3em; text-transform: uppercase;
+      color: var(--c2); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .section-label::after { content: ''; flex: 0 0 40px; height: 1px; background: var(--c2); }
+
+    .btn-primary {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 12px; letter-spacing: .15em; text-transform: uppercase;
+      color: #000; background: #fff;
+      border: none; padding: 10px 22px;
+      position: relative; overflow: hidden;
+      transition: color .3s;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      cursor: pointer;
+    }
+    .btn-primary::before {
+      content: ''; position: absolute; inset: 0;
+      background: var(--c2); transform: translateX(-101%);
+      transition: transform .35s cubic-bezier(.23,1,.32,1);
+    }
+    .btn-primary:hover::before { transform: translateX(0); }
+    .btn-primary:hover { color: #fff; }
+    .btn-primary span { position: relative; z-index: 1; }
+
+    .btn-ghost {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px; letter-spacing: .15em; text-transform: uppercase;
+      color: rgba(255,255,255,.5); background: none;
+      border: 1px solid rgba(255,255,255,.15);
+      padding: 10px 22px; cursor: pointer;
+      transition: all .2s;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-ghost:hover { color: #fff; border-color: var(--c2); background: rgba(10,255,228,0.05); }
+
+    .btn-active {
+      color: #fff !important;
+      border-color: var(--c2) !important;
+      background: rgba(10,255,228,0.1) !important;
+      box-shadow: 0 0 10px rgba(10,255,228,0.2);
+    }
+
+    input, select {
+      font-family: 'Space Grotesk', sans-serif;
+      background: rgba(0,0,0,.6);
+      border: 1px solid rgba(255,255,255,.1);
+      color: #fff; outline: none;
+      transition: border-color .2s;
+    }
+    input:focus, select:focus { border-color: var(--c2); }
+
+    .toggle-wrap { position: relative; }
+    .toggle-wrap input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      display: flex; width: 44px; height: 24px;
+      background: rgba(255,255,255,.1);
+      position: relative; cursor: pointer; transition: background .2s;
+      border: 1px solid rgba(255,255,255,.1);
+    }
+    .toggle-wrap input:checked + .toggle-track { background: var(--c2); border-color: var(--c2); }
+    .toggle-track::after {
+      content: ''; position: absolute;
+      top: 3px; left: 3px;
+      width: 16px; height: 16px;
+      background: #fff; transition: left .2s;
+    }
+    .toggle-wrap input:checked + .toggle-track::after { left: calc(100% - 19px); }
+
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    .cursive-italic { font-family: 'Dancing Script', cursive; font-style: italic; }
+
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+    .pulse { animation: pulse 1.8s ease-in-out infinite; }
+
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); }
+    ::-webkit-scrollbar-thumb:hover { background: var(--c2); }
+    @media (max-width: 1024px) {
+      #modal-spotted-servers {
+        grid-template-columns: 1fr !important;
+      }
+    }
+    @media (max-width: 768px) {
+      body {
+        overflow-x: hidden;
+      }
+      .card {
+        padding: 16px !important;
+      }
+      .section-label {
+        font-size: 9px;
+        margin-bottom: 12px;
+      }
+      h1 {
+        font-size: clamp(32px, 5vw, 44px) !important;
+      }
+      .btn-primary, .btn-ghost {
+        padding: 8px 16px !important;
+        font-size: 10px !important;
+      }
+      #search-results-grid {
+        grid-template-columns: 1fr !important;
+      }
+      #vault-modal > div {
+        padding: 16px !important;
+        max-height: 92vh !important;
+        max-height: 92dvh !important;
+      }
+      #modal-avatar {
+        width: 64px !important;
+        height: 64px !important;
+      }
+      #modal-username {
+        font-size: 1.5rem !important;
+      }
+    }
+    @media (max-width: 640px) {
+      .hide-mobile { display: none !important; }
+      .text-mobile-xs { font-size: 10px !important; }
+      .padding-mobile-sm { padding: 8px !important; }
+    }
+    @media (max-width: 480px) {
+      .card {
+        padding: 12px !important;
+      }
+      .btn-primary, .btn-ghost {
+        padding: 6px 12px !important;
+        font-size: 9px !important;
+      }
+      #server-list-rows button {
+        padding: 4px 8px !important;
+        font-size: 8px !important;
+      }
+      #server-list-rows tr td {
+        padding: 8px 4px !important;
+      }
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+  <main class="flex-1 p-4 md:p-6 lg:p-10 flex flex-col gap-0 z-10 relative w-full max-w-[1600px] mx-auto">
+    
+    <!-- Top Header -->
+    <div class="flex flex-col md:flex-row items-start md:items-end justify-between border-b border-white/10 pb-6 mb-8 gap-4">
+      <div>
+        <div class="section-label">◈ SERVER INTEL CENTER</div>
+        <h1 style="font-family:'Bebas Neue',sans-serif;font-size:clamp(40px,6vw,72px);line-height:.9;letter-spacing:.02em;">
+          MEMBER SEARCH &amp; <em style="font-family:'Dancing Script',cursive;font-style:italic;color:var(--c2);">SCANNER</em>
+        </h1>
+      </div>
+      <div class="flex items-center flex-wrap gap-2.5 w-full md:w-auto md:justify-end">
+        <a href="/" class="btn-ghost" style="font-size:11px;padding:10px 20px;">◈ Command Center</a>
+        <div class="flex items-center gap-2 bg-black/40 border border-white/10 px-5 py-3">
+          <span class="w-2 h-2 bg-cyan-400 pulse" style="box-shadow:0 0 8px var(--c2);"></span>
+          <span style="font-size:11px;letter-spacing:.15em;text-transform:uppercase;font-weight:700;color:var(--c2);">INTEL ONLINE</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Database Missing Alert Banner -->
+    <div id="db-missing-banner" class="hidden border border-red-500/30 bg-red-950/20 p-4 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="flex items-start gap-3">
+        <span class="text-xl">⚠️</span>
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-red-400">Database Schema Additions Missing</h4>
+          <p class="text-[10px] text-white/70 mt-1 leading-relaxed">
+            The scanner tables are not initialized in the Supabase database. Please copy the SQL statements in 
+            <a href="file:///c:/Users/acer/Desktop/xtreme-deployer-x1/supabase_schema_additions.sql" class="underline text-cyan-400 hover:text-white">supabase_schema_additions.sql</a>
+            and run them in your Supabase SQL Editor, then execute <code class="bg-black/60 px-1 py-0.5 rounded mono text-cyan-300">NOTIFY pgrst, 'reload schema';</code> to refresh the PostgREST cache.
+          </p>
+        </div>
+      </div>
+      <button onclick="retryDBCheck()" class="btn-ghost font-bold text-[10px] shrink-0 border-red-500/20 hover:border-red-400 text-red-400 hover:bg-red-500/10">Retry Connection</button>
+    </div>
+
+    <!-- Layout Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+      
+      <!-- Left Control Panel (Columns 1-4) -->
+      <div class="md:col-span-5 lg:col-span-4 flex flex-col gap-6 w-full">
+        
+        <!-- Search Controls -->
+        <div class="card p-5 flex flex-col gap-4">
+          <div class="section-label" style="margin-bottom:0;">◉ Intel Search</div>
+          
+          <div class="relative w-full">
+            <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-white/30 text-xs">🔍</span>
+            <input type="text" id="search-q" oninput="triggerSearch()" placeholder="Type Username, Nickname, Bio..." 
+              class="w-full pl-9 pr-4 py-2.5 text-xs bg-black/50 border border-white/10 text-white placeholder-white/30 transition shadow-inner">
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div class="flex flex-col gap-1">
+              <label class="text-[8px] uppercase tracking-widest text-white/40 font-bold ml-1">Sort By</label>
+              <select id="search-sort" onchange="triggerSearch()" class="px-2 py-2 text-[10px] bg-black/60 border border-white/10 text-white font-bold cursor-pointer">
+                <option value="username">Username</option>
+                <option value="last_seen">Last Spotted</option>
+                <option value="joined_at">Join Date</option>
+              </select>
+            </div>
+            <div class="flex flex-col gap-1">
+              <label class="text-[8px] uppercase tracking-widest text-white/40 font-bold ml-1">Filter</label>
+              <select id="search-filter" onchange="triggerSearch()" class="px-2 py-2 text-[10px] bg-black/60 border border-white/10 text-white font-bold cursor-pointer">
+                <option value="all">All Members</option>
+                <option value="humans">Humans Only</option>
+                <option value="bots">Bots Only</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Token Authorization Checklist -->
+        <div class="card p-5 flex flex-col gap-4">
+          <div class="flex items-center justify-between border-b border-white/5 pb-3">
+            <div class="section-label" style="margin-bottom:0;">⬡ Scanners Authorised</div>
+            <button onclick="toggleAllTokens(true)" class="text-[9px] uppercase tracking-wider text-cyan-400 hover:text-white transition">All</button>
+          </div>
+          <div id="token-checklist" class="flex flex-col gap-2 max-h-40 overflow-y-auto pr-1">
+            <div class="text-[10px] text-white/35 py-4 text-center">Loading scanner tokens...</div>
+          </div>
+        </div>
+
+        <!-- Auto-Scan Configuration -->
+        <div class="card p-5 flex flex-col gap-4">
+          <div class="flex items-center justify-between border-b border-white/5 pb-3">
+            <div>
+              <div class="section-label" style="margin-bottom:0px;">◈ Auto-Scan Engine</div>
+              <p style="font-size:8px;color:rgba(255,255,255,.3);letter-spacing:.05em;">Scans randomly in background</p>
+            </div>
+            <label class="toggle-wrap">
+              <input type="checkbox" id="auto-scan-toggle" onchange="saveConfig()">
+              <div class="toggle-track"></div>
+            </label>
+          </div>
+          
+          <div id="auto-scan-indicator" class="flex items-center gap-2 border border-white/5 p-3 bg-white/5">
+            <span class="w-1.5 h-1.5 rounded-full bg-white/30" id="auto-dot"></span>
+            <span class="text-[9px] uppercase tracking-widest text-white/50" id="auto-txt">Auto-Scanner Dormant</span>
+          </div>
+        </div>
+
+        <!-- Active Scanning Jobs -->
+        <div class="card p-5 flex flex-col gap-4">
+          <div class="flex items-center justify-between border-b border-white/5 pb-2">
+            <div class="section-label" style="margin-bottom:0;">◈ Active Scans</div>
+            <button onclick="stopAllScans()" class="btn-ghost" style="padding:4px 10px;font-size:9px;">✕ Stop All</button>
+          </div>
+          <div id="active-scans-list" class="flex flex-col gap-4 max-h-60 overflow-y-auto pr-1">
+            <div class="text-[10px] text-white/35 py-6 text-center">No active scans running.</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Main Panel (Columns 5-12) -->
+      <div class="md:col-span-7 lg:col-span-8 flex flex-col gap-6 w-full">
+        
+        <!-- Search Results Panel -->
+        <div id="search-results-section" class="card p-5 flex flex-col gap-4">
+          <div class="flex items-center justify-between border-b border-white/5 pb-3">
+            <div class="section-label" style="margin-bottom:0;">◈ Scraped Member Database</div>
+            <span id="results-count" class="mono text-[10px] font-bold text-white/40">50 Records Spotted</span>
+          </div>
+          
+          <div id="search-results-grid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Populated via JS -->
+            <div class="col-span-full py-16 text-center text-white/30 text-xs tracking-widest uppercase">Querying Member Database...</div>
+          </div>
+        </div>
+
+        <!-- Accessible Servers Grid -->
+        <div class="card p-5 flex flex-col gap-4">
+          <div class="section-label" style="margin-bottom:4px;">⬡ Discovered Discord Guilds</div>
+          <p style="font-size:10px;color:rgba(255,255,255,.3);letter-spacing:.05em;margin-top:-8px;margin-bottom:8px;">Servers accessible via authorised scanner tokens.</p>
+          
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-white/10 pb-2">
+                  <th class="py-2.5 text-[9px] uppercase tracking-widest text-white/40 font-bold">Server</th>
+                  <th class="py-2.5 text-[9px] uppercase tracking-widest text-white/40 font-bold text-center">Members</th>
+                  <th class="py-2.5 text-[9px] uppercase tracking-widest text-white/40 font-bold text-center hide-mobile">Last Scanned</th>
+                  <th class="py-2.5 text-[9px] uppercase tracking-widest text-white/40 font-bold text-center hide-mobile">Priority</th>
+                  <th class="py-2.5 text-[9px] uppercase tracking-widest text-white/40 font-bold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="server-list-rows" class="divide-y divide-white/5">
+                <tr>
+                  <td colspan="5" class="py-10 text-center text-white/30 text-[10px] uppercase tracking-widest">Loading servers list...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- Detailed Profile Vault Modal -->
+  <div id="vault-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+    <div class="glass max-w-2xl w-full max-h-[85vh] overflow-y-auto flex flex-col p-6 md:p-8 card border border-white/15">
+      
+      <div class="flex justify-between items-start border-b border-white/10 pb-4 mb-5">
+        <div>
+          <div class="section-label" style="margin-bottom:2px;">◈ Member Intel Record</div>
+          <h2 id="modal-username" class="text-3xl font-bold uppercase tracking-wider text-white select-text">Username</h2>
+          <span id="modal-userid" class="text-[9px] font-mono font-bold text-white/50 uppercase tracking-widest bg-white/5 px-3 py-1 rounded-sm border border-white/10 mt-1 inline-block select-text">ID: 0000000000</span>
+        </div>
+        <button onclick="closeVaultModal()" class="text-white/40 hover:text-white font-bold text-2xl transition-transform hover:rotate-90">✕</button>
+      </div>
+
+      <div class="flex flex-col gap-6 select-text">
+        <!-- Top Summary Profile -->
+        <div class="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-5 border border-white/5 p-4 bg-white/5">
+          <img id="modal-avatar" src="" class="w-16 h-16 sm:w-20 sm:h-20 rounded-none object-cover border border-white/10 shrink-0">
+          <div class="flex-1 min-w-0 text-center sm:text-left w-full">
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              <span id="modal-status-badge" class="px-2 py-0.5 text-[8px] uppercase tracking-widest font-bold bg-white/15 text-white/70">OFFLINE</span>
+              <span id="modal-bot-badge" class="hidden px-2 py-0.5 text-[8px] uppercase tracking-widest font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">BOT</span>
+            </div>
+            <div id="modal-custom-status" class="text-xs text-cyan-400 font-bold mt-1.5 truncate"></div>
+            <div id="modal-bio" class="text-xs text-white/60 mt-2 leading-relaxed italic whitespace-pre-line border-t border-white/5 pt-2">No profile bio fetched.</div>
+          </div>
+        </div>
+
+        <!-- Spotted Servers (Real-time spotted) -->
+        <div class="flex flex-col gap-2">
+          <div class="section-label" style="margin-bottom:8px;">⬡ Spotted Server Locations</div>
+          <div id="modal-spotted-servers" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <!-- Server cards -->
+          </div>
+        </div>
+
+        <!-- Historical Archive Vault -->
+        <div class="flex flex-col gap-3 border-t border-white/10 pt-4">
+          <div class="section-label" style="margin-bottom:4px;">◈ Profile Change Vault</div>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="flex flex-col gap-2 bg-black/40 border border-white/5 p-3">
+              <span class="text-[9px] uppercase tracking-widest text-white/40 font-bold">Past Usernames</span>
+              <ul id="modal-past-usernames" class="list-disc pl-4 text-xs text-white/70 flex flex-col gap-1">
+                <li class="italic text-white/35">No username changes logged.</li>
+              </ul>
+            </div>
+            <div class="flex flex-col gap-2 bg-black/40 border border-white/5 p-3">
+              <span class="text-[9px] uppercase tracking-widest text-white/40 font-bold">Past bios</span>
+              <ul id="modal-past-bios" class="list-disc pl-4 text-xs text-white/70 flex flex-col gap-1">
+                <li class="italic text-white/35">No past bios logged.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <button onclick="closeVaultModal()" class="btn-primary w-full mt-6"><span>◈ Dismiss Intel</span></button>
+    </div>
+  </div>
+
+  <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 glass px-6 py-3 text-[10px] font-bold uppercase tracking-widest opacity-0 transition-all pointer-events-none z-[200] border border-white/10"></div>
+
+  <script>
+    let authorisedTokens = [];
+    let isConfigLoaded = false;
+    let searchDebounce;
+    let activeModalUser = null;
+    let cachedServers = [];
+    let cachedScans = {};
+    let cachedSearchResults = [];   // persisted so vault modal can reuse without re-fetch
+    let _statusPollId, _serversPollId, _searchSyncId;
+    let _lastSelectedTokensKey = ''; // to detect token checkbox changes
+
+    function toast(m, isErr = false) {
+      const t = document.getElementById('toast');
+      t.textContent = m;
+      t.className = `fixed bottom-8 left-1/2 -translate-x-1/2 glass px-6 py-3 text-[10px] font-bold uppercase tracking-widest opacity-100 transition-all z-[200] border ${isErr ? 'border-red-500/30 text-red-400 bg-red-950/20' : 'border-cyan-500/30 text-cyan-300 bg-cyan-950/10'}`;
+      setTimeout(() => t.classList.add('opacity-0'), 2500);
+    }
+
+    function showDBMissingBanner(msg) {
+      const banner = document.getElementById('db-missing-banner');
+      if (banner) {
+        banner.classList.remove('hidden');
+        if (msg) {
+          banner.querySelector('p').innerHTML = msg + ` <br/><span class="text-[9px] text-white/45 font-mono">Ensure you've executed the SQL additions and refreshed the PostgREST cache.</span>`;
+        }
+      }
+    }
+    function hideDBMissingBanner() {
+      const banner = document.getElementById('db-missing-banner');
+      if (banner) banner.classList.add('hidden');
+    }
+    function retryDBCheck() {
+      toast("Re-checking database...");
+      loadConfig();
+      pollStatus();
+    }
+
+    async function loadConfig() {
+      try {
+        const [tokens, config] = await Promise.all([
+          fetch('/api/tokens').then(r => r.json()),
+          fetch('/api/scan/config').then(r => r.json())
+        ]);
+
+        if (config.error === 'DATABASE_TABLES_MISSING') {
+          showDBMissingBanner(config.message);
+          return;
+        }
+        hideDBMissingBanner();
+
+        authorisedTokens = tokens;
+        
+        // Render Token checklist
+        const checklist = document.getElementById('token-checklist');
+        const selected = config.selected_tokens || [];
+        
+        checklist.innerHTML = tokens.map(t => `
+          <label class="flex items-center gap-2.5 px-2.5 py-1.5 hover:bg-white/5 rounded-none cursor-pointer transition-colors">
+            <input type="checkbox" value="${t.id}" class="token-cb w-4 h-4 rounded-none border-white/20 bg-black/40 text-cyan-500 focus:ring-0 cursor-pointer" 
+              style="accent-color: var(--c2);" ${selected.includes(t.id) ? 'checked' : ''} onchange="saveConfig()">
+            <div class="flex-1 min-w-0">
+              <span class="truncate block text-xs font-bold text-white">${t.label}</span>
+              <span class="text-[8px] mono text-white/30 block mt-0.5">${t.channel_id ? 'CH: ' + t.channel_id : 'Global'}</span>
+            </div>
+            <span class="w-1.5 h-1.5 ${t.active ? 'bg-cyan-400 pulse' : 'bg-white/20'}" style="transform: rotate(45deg);"></span>
+          </label>
+        `).join('');
+
+        document.getElementById('auto-scan-toggle').checked = config.auto_scan;
+        updateAutoScanIndicator(config);
+
+        isConfigLoaded = true;
+      } catch (e) {
+        console.error("Failed to load configs", e);
+      }
+    }
+
+    function toggleAllTokens(checked) {
+      document.querySelectorAll('.token-cb').forEach(cb => cb.checked = checked);
+      saveConfig();
+    }
+
+    async function saveConfig() {
+      if (!isConfigLoaded) return;
+      const autoScan = document.getElementById('auto-scan-toggle').checked;
+      const selected = Array.from(document.querySelectorAll('.token-cb:checked')).map(cb => cb.value);
+      
+      try {
+        const res = await fetch('/api/scan/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            auto_scan: autoScan,
+            selected_tokens: selected
+          })
+        }).then(r => r.json());
+
+        if (res.ok) {
+          toast("Scan configuration saved.");
+          updateAutoScanIndicator({ auto_scan: autoScan });
+          renderServerGrid(cachedServers, cachedScans);
+          pollStatus();
+        }
+      } catch (e) {
+        toast("Failed to save config.", true);
+      }
+    }
+
+    function updateAutoScanIndicator(config) {
+      const dot = document.getElementById('auto-dot');
+      const text = document.getElementById('auto-txt');
+      if (config.auto_scan) {
+        dot.className = "w-1.5 h-1.5 rounded-full bg-cyan-400 pulse";
+        text.textContent = "Auto-Scanner Active (Scanning Loop)";
+        text.className = "text-[9px] uppercase tracking-widest text-cyan-400 font-bold";
+      } else {
+        dot.className = "w-1.5 h-1.5 rounded-full bg-white/30";
+        text.textContent = "Auto-Scanner Dormant";
+        text.className = "text-[9px] uppercase tracking-widest text-white/50";
+      }
+    }
+
+    async function pollScans() {
+      // Cheap: only hits /api/scan/status (in-memory, no DB)
+      try {
+        const statusRes = await fetch('/api/scan/status').then(r => r.json());
+        if (statusRes.error === 'DATABASE_TABLES_MISSING') {
+          showDBMissingBanner(statusRes.message);
+          return;
+        }
+        hideDBMissingBanner();
+        
+        const nextScans = statusRes.scans || {};
+        
+        // Detect scan status transitions to refresh server grid in real time
+        let statusChanged = false;
+        for (const k in nextScans) {
+          const oldScan = cachedScans[k];
+          const newScan = nextScans[k];
+          if (!oldScan || oldScan.status !== newScan.status) {
+            statusChanged = true;
+          }
+        }
+        for (const k in cachedScans) {
+          if (!nextScans[k]) {
+            statusChanged = true;
+          }
+        }
+
+        cachedScans = nextScans;
+        renderActiveScans(cachedScans);
+        // Re-render server grid progress bars if a scan is active
+        if (cachedServers.length > 0) renderServerGrid(cachedServers, cachedScans);
+        
+        if (statusChanged) {
+          pollServers();
+        }
+      } catch (e) {
+        console.warn("Scan status poll error", e);
+      }
+    }
+
+    async function pollServers() {
+      // Expensive: hits Discord gateway + Supabase. Runs every 25s.
+      try {
+        const serverRes = await fetch('/api/scan/servers').then(r => r.json());
+        if (serverRes.error === 'DATABASE_TABLES_MISSING') {
+          showDBMissingBanner(serverRes.message);
+          return;
+        }
+        hideDBMissingBanner();
+        cachedServers = serverRes.servers || [];
+        renderServerGrid(cachedServers, cachedScans);
+      } catch (e) {
+        console.warn("Servers poll error", e);
+      }
+    }
+
+    // Legacy alias used by manualScan / stopAllScans / saveConfig
+    async function pollStatus() {
+      await Promise.all([pollScans(), pollServers()]);
+    }
+
+    function renderActiveScans(scans) {
+      const list = document.getElementById('active-scans-list');
+      const activeKeys = Object.keys(scans).filter(k => scans[k].status === 'scanning' || scans[k].status === 'processing');
+      
+      if (activeKeys.length === 0) {
+        list.innerHTML = '<div class="text-[10px] text-white/35 py-6 text-center">No active scans running.</div>';
+        return;
+      }
+
+      list.innerHTML = activeKeys.map(k => {
+        const s = scans[k];
+        const progress = Math.min(100, Math.round((s.members_scanned / Math.max(1, s.total_members)) * 100));
+        const color = s.status === 'processing' ? 'var(--c3)' : 'var(--c2)';
+        
+        return `
+          <div class="border border-white/5 p-3 flex flex-col gap-2 bg-white/5 relative">
+            <div class="flex justify-between items-center">
+              <span class="text-xs font-bold text-white truncate max-w-[150px]">${s.guild_name}</span>
+              <span class="mono text-[9px] text-white/40">${progress}%</span>
+            </div>
+            
+            <div class="w-full bg-white/10 h-1.5 overflow-hidden">
+              <div class="h-full transition-all duration-300" style="width:${progress}%; background:${color}"></div>
+            </div>
+            
+            <div class="flex justify-between items-center text-[9px] text-white/45">
+              <span>Scanned ${s.members_scanned}/${s.total_members}</span>
+              <span class="uppercase tracking-wider font-bold" style="color:${color}">${s.status}</span>
+            </div>
+            
+            <div class="text-[8px] mono text-white/30 max-h-16 overflow-y-auto mt-1 border-t border-white/5 pt-1 flex flex-col gap-0.5">
+              ${s.log.slice(0, 3).map(l => `<span class="truncate">${l}</span>`).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderServerGrid(servers, scans = {}) {
+      const tbody = document.getElementById('server-list-rows');
+      
+      // Filter based on selected tokens
+      const selected = Array.from(document.querySelectorAll('.token-cb:checked')).map(cb => cb.value);
+      const filtered = servers.filter(s => s.tokens && s.tokens.some(t => selected.includes(t)));
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="py-10 text-center text-white/30 text-[10px] uppercase tracking-widest">No accessible servers found for selected tokens.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(s => {
+        // Find if there is an active scan for this server (ends with :guild_id)
+        const activeKey = Object.keys(scans).find(k => k.endsWith(`:${s.id}`));
+        const scan = activeKey ? scans[activeKey] : null;
+        const isScanning = scan && (scan.status === 'scanning' || scan.status === 'processing');
+
+        let membersHtml = `<span class="text-xs font-bold text-white/70 font-mono">${s.member_count.toLocaleString()}</span>`;
+        let timeStr = s.last_scanned ? new Date(s.last_scanned).toLocaleString() : 'Never';
+        let actionHtml = `
+          <button onclick="manualScan('${s.id}', '${s.name.replace(/'/g, "\\'")}')" class="btn-ghost" style="padding:6px 12px; font-size:9px;">
+            Scan Now
+          </button>
+        `;
+
+        if (isScanning) {
+          const progress = Math.min(100, Math.round((scan.members_scanned / Math.max(1, scan.total_members)) * 100));
+          membersHtml = `
+            <div class="flex flex-col items-center gap-1 w-24 mx-auto">
+              <span class="text-[10px] font-bold font-mono text-cyan-400">${scan.members_scanned.toLocaleString()} / ${scan.total_members.toLocaleString()}</span>
+              <div class="w-full bg-white/10 h-1 overflow-hidden" style="box-shadow: 0 0 4px rgba(10,255,228,0.2)">
+                <div class="h-full bg-cyan-400 transition-all duration-300" style="width:${progress}%"></div>
+              </div>
+            </div>
+          `;
+          timeStr = `<span class="text-cyan-400 animate-pulse text-[10px] font-bold uppercase tracking-wider">Scanning (${progress}%)</span>`;
+          actionHtml = `
+            <button disabled class="btn-ghost opacity-55 cursor-not-allowed flex items-center gap-1.5" style="padding:6px 12px; font-size:9px; color: var(--c2); border-color: rgba(10,255,228,0.2);">
+              <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping"></span>
+              Scanning...
+            </button>
+          `;
+        }
+
+        return `
+          <tr>
+            <td class="py-3 flex items-center gap-3">
+              <img src="${s.icon || ''}" class="w-8 h-8 object-cover border border-white/10 shrink-0" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+              <div>
+                <span class="text-xs font-bold text-white block truncate max-w-[180px]">${s.name}</span>
+                <span class="text-[8px] mono text-white/35 block mt-0.5">ID: ${s.id}</span>
+              </div>
+            </td>
+            <td class="py-3 text-center">${membersHtml}</td>
+            <td class="py-3 text-center text-[10px] text-white/50 font-mono hide-mobile">${timeStr}</td>
+            <td class="py-3 text-center hide-mobile">
+              <button onclick="togglePriority('${s.id}')" class="text-base text-white/20 hover:text-yellow-400 transition ${s.priority ? '!text-yellow-400' : ''}">
+                ★
+              </button>
+            </td>
+            <td class="py-3 text-right">${actionHtml}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function togglePriority(gid) {
+      try {
+        const res = await fetch('/api/scan/priority', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ guild_id: gid })
+        }).then(r => r.json());
+
+        if (res.ok) {
+          toast(res.priority ? "Guild flagged as priority." : "Priority flag removed.");
+          pollStatus();
+        }
+      } catch (e) {
+        toast("Priority toggle failed.", true);
+      }
+    }
+
+    async function manualScan(gid, name) {
+      const selected = Array.from(document.querySelectorAll('.token-cb:checked')).map(cb => cb.value);
+      if (selected.length === 0) {
+        toast("Select at least ONE scanner token first!", true);
+        return;
+      }
+
+      toast(`Initiating scan on ${name}...`);
+      try {
+        const res = await fetch('/api/scan/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            guild_ids: [gid],
+            token_ids: selected
+          })
+        }).then(r => r.json());
+
+        if (res.ok && res.triggered > 0) {
+          toast(`Scan initialized successfully!`);
+          pollStatus();
+        } else {
+          toast(res.error || "No nodes were ready or in server to scan.", true);
+        }
+      } catch (e) {
+        toast("Failed to initiate manual scan.", true);
+      }
+    }
+
+    async function stopAllScans() {
+      if (!confirm("Are you sure you want to stop all active server scans?")) return;
+      try {
+        await fetch('/api/scan/stop', { method: 'POST' });
+        toast("Scan tasks halted.");
+        pollStatus();
+      } catch (e) {}
+    }
+
+    // ── Search Engine Database Queries ─────────────────────────────────────────
+    function triggerSearch() {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(performSearch, 600); // 600ms debounce — fast enough, not spammy
+    }
+
+    async function performSearch() {
+      const q = document.getElementById('search-q').value.trim();
+      const sort = document.getElementById('search-sort').value;
+      const filter = document.getElementById('search-filter').value;
+      
+      const grid = document.getElementById('search-results-grid');
+      const counter = document.getElementById('results-count');
+      
+      try {
+        const url = `/api/scan/search?q=${encodeURIComponent(q)}&sort=${sort}&filter=${filter}`;
+        const res = await fetch(url).then(r => r.json());
+        
+        if (res.error === 'DATABASE_TABLES_MISSING') {
+          showDBMissingBanner(res.message);
+          return;
+        }
+        hideDBMissingBanner();
+        
+        const results = res.results || [];
+        cachedSearchResults = results; // cache for vault modal reuse
+        
+        counter.textContent = `${results.length} Records Spotted`;
+        
+        if (results.length === 0) {
+          grid.innerHTML = '<div class="col-span-full py-16 text-center text-white/30 text-xs tracking-widest uppercase font-bold">No member records found matching query</div>';
+          return;
+        }
+
+        grid.innerHTML = results.map(u => {
+          const statusColors = {
+            online: 'text-green-400',
+            idle: 'text-yellow-400',
+            dnd: 'text-red-400',
+            offline: 'text-white/40'
+          };
+          const statCls = statusColors[u.status] || 'text-white/40';
+          const isBot = !!u.bot;
+          
+          // Determine if matches are historical
+          const qLower = q.toLowerCase();
+          let isHistoricMatch = false;
+          if (q) {
+            const pastNames = u.past_usernames || [];
+            const pastBios = u.past_bios || [];
+            const matchesPastUser = pastNames.some(n => String(n).toLowerCase().includes(qLower));
+            const matchesPastBio = pastBios.some(b => String(b).toLowerCase().includes(qLower));
+            
+            let matchesPastNick = false;
+            if (u.spotted_servers) {
+              u.spotted_servers.forEach(s => {
+                const pastNicks = s.past_nicknames || [];
+                if (pastNicks.some(n => String(n).toLowerCase().includes(qLower))) {
+                  matchesPastNick = true;
+                }
+              });
+            }
+            if (matchesPastUser || matchesPastBio || matchesPastNick) {
+              isHistoricMatch = true;
+            }
+          }
+          
+          return `
+            <div onclick="openVaultModal('${u.id}')" class="border border-white/5 p-4 flex gap-3.5 bg-black/40 hover:bg-white/5 cursor-pointer transition shadow-inner relative overflow-hidden">
+              ${isHistoricMatch ? '<div class="absolute top-0 right-0 w-24 h-24 pointer-events-none overflow-hidden"><div class="absolute top-3 -right-8 w-28 bg-amber-500/10 text-amber-300 border border-amber-500/30 text-[7px] uppercase tracking-widest text-center py-0.5 rotate-45 font-bold shadow-sm">ARCHIVE</div></div>' : ''}
+              <img src="${u.avatar || ''}" class="w-11 h-11 object-cover border border-white/10 shrink-0" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold text-white truncate block max-w-[120px] select-text">${u.username}</span>
+                  ${isBot ? '<span class="px-1.5 py-0.5 text-[7px] uppercase tracking-widest font-black bg-purple-500/10 text-purple-300 border border-purple-500/25">BOT</span>' : ''}
+                  <span class="w-1.5 h-1.5 rounded-full bg-current ${statCls}" title="Status: ${u.status}"></span>
+                  ${isHistoricMatch ? '<span class="px-1.5 py-0.5 text-[6px] uppercase tracking-widest font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-sm">HISTORIC MATCH</span>' : ''}
+                </div>
+                <span class="text-[8px] mono text-white/30 block mt-0.5 select-text">ID: ${u.id}</span>
+                <span class="text-[10px] text-cyan-400 font-bold block mt-1 truncate select-text">${u.custom_status || ''}</span>
+                <span class="text-[9px] text-white/45 block mt-0.5 truncate select-text">${u.bio || 'No profile bio synced.'}</span>
+              </div>
+              <div class="flex flex-col justify-between items-end shrink-0 z-10">
+                <span class="text-[8px] uppercase tracking-widest text-cyan-400 font-mono">${(u.spotted_servers||[]).length} Server(s)</span>
+                <span class="text-[8px] uppercase tracking-widest text-white/30 font-bold">Intel Vault</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (e) {
+        console.error("Search query error", e);
+      }
+    }
+
+    // ── Detail Modal (Vault) View ──────────────────────────────────────────────
+    async function openVaultModal(userId) {
+      // First try cache — avoids a full search round-trip on every click
+      let u = cachedSearchResults.find(r => r.id === userId);
+      if (!u) {
+        // Fallback: fetch by exact ID
+        try {
+          const res = await fetch(`/api/scan/search?q=${encodeURIComponent(userId)}`).then(r => r.json());
+          const users = res.results || [];
+          if (users.length === 0) return;
+          u = users.find(x => x.id === userId) || users[0];
+        } catch (e) {
+          console.error("Vault modal load error", e);
+          return;
+        }
+      }
+      try {
+        activeModalUser = u;
+
+        document.getElementById('modal-username').textContent = u.username;
+        document.getElementById('modal-userid').textContent = `ID: ${u.id}`;
+        document.getElementById('modal-avatar').src = u.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png';
+        
+        const badge = document.getElementById('modal-status-badge');
+        badge.textContent = (u.status || 'offline').toUpperCase();
+        const statColors = {
+          online: 'bg-green-500/20 text-green-300 border border-green-500/30',
+          idle: 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30',
+          dnd: 'bg-red-500/20 text-red-300 border border-red-500/30',
+          offline: 'bg-white/10 text-white/60 border border-white/15'
+        };
+        badge.className = `px-2 py-0.5 text-[8px] uppercase tracking-widest font-bold ${statColors[u.status] || statColors.offline}`;
+
+        const botBadge = document.getElementById('modal-bot-badge');
+        botBadge.className = u.bot ? 'px-2 py-0.5 text-[8px] uppercase tracking-widest font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30' : 'hidden';
+
+        document.getElementById('modal-custom-status').textContent = u.custom_status || '';
+        
+        const bioEl = document.getElementById('modal-bio');
+        if (!u.bio && !u.bot) {
+          bioEl.innerHTML = '<span class="text-cyan-400 animate-pulse font-bold tracking-wider">Fetching profile bio from Discord...</span>';
+          fetch(`/api/scan/user/${u.id}/profile`, { method: 'POST' })
+            .then(r => r.json())
+            .then(data => {
+              if (data.ok && data.bio) {
+                bioEl.textContent = data.bio;
+                u.bio = data.bio;
+              } else {
+                bioEl.textContent = 'No profile bio fetched. Profile is private or rate-limited.';
+              }
+            })
+            .catch(() => {
+              bioEl.textContent = 'Failed to fetch profile bio from Discord.';
+            });
+        } else {
+          bioEl.textContent = u.bio || 'No profile bio fetched.';
+        }
+
+        const qVal = document.getElementById('search-q').value.trim().toLowerCase();
+
+        // Spotted Servers
+        const serversContainer = document.getElementById('modal-spotted-servers');
+        if ((u.spotted_servers||[]).length === 0) {
+          serversContainer.innerHTML = '<div class="col-span-full py-4 text-center text-[10px] text-white/35 italic">No server spotting records found in DB.</div>';
+        } else {
+          serversContainer.innerHTML = u.spotted_servers.map(s => {
+            const dateStr = s.joined_at ? new Date(s.joined_at).toLocaleDateString() : 'Unknown';
+            const pastNickList = s.past_nicknames.length > 0 ? ` &middot; <span class="text-white/35 font-normal">Past: ${s.past_nicknames.map(pn => {
+              const hl = qVal && String(pn).toLowerCase().includes(qVal) ? 'text-amber-300 font-bold bg-amber-500/10 px-1 border border-amber-500/20' : '';
+              return `<span class="${hl}">${pn}</span>`;
+            }).join(', ')}</span>` : '';
+            return `
+              <div class="border border-white/5 p-3 flex flex-col gap-2 bg-black/50">
+                <div class="flex items-center gap-2.5">
+                  <img src="${s.guild_icon || ''}" class="w-6 h-6 object-cover border border-white/10 shrink-0" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+                  <div class="flex-1 min-w-0">
+                    <span class="text-xs font-bold text-white block truncate select-text">${s.guild_name}</span>
+                    <span class="text-[8px] text-white/40 block mt-0.5">ID: ${s.guild_id}</span>
+                  </div>
+                </div>
+                
+                <div class="text-[9px] text-white/50 border-t border-white/5 pt-1.5 mt-0.5 flex flex-col gap-0.5 select-text">
+                  <span class="font-bold">Nickname: <span class="text-white select-text">${s.nickname || u.username}</span>${pastNickList}</span>
+                  <span>Joined: ${dateStr}</span>
+                </div>
+                
+                ${s.invite_link && s.invite_link !== 'No Invite Link' ? `
+                  <a href="${s.invite_link}" target="_blank" class="btn-ghost w-full mt-1" style="font-size:8px;padding:4px;text-align:center;display:block;">
+                    Join Discord Server
+                  </a>
+                ` : ''}
+              </div>
+            `;
+          }).join('');
+        }
+
+        // Past Usernames
+        const uList = document.getElementById('modal-past-usernames');
+        const pastNames = u.past_usernames || [];
+        if (pastNames.length === 0) {
+          uList.innerHTML = '<li class="italic text-white/30">No username changes logged.</li>';
+        } else {
+          uList.innerHTML = pastNames.map(n => {
+            const highlight = qVal && String(n).toLowerCase().includes(qVal) ? 'text-amber-300 font-bold bg-amber-500/10 px-1 border border-amber-500/20' : 'font-bold';
+            return `<li class="select-text"><span class="${highlight}">${n}</span></li>`;
+          }).join('');
+        }
+
+        // Past Bios
+        const bList = document.getElementById('modal-past-bios');
+        const pastBios = u.past_bios || [];
+        if (pastBios.length === 0) {
+          bList.innerHTML = '<li class="italic text-white/30">No past bios logged.</li>';
+        } else {
+          bList.innerHTML = pastBios.map(b => {
+            const highlight = qVal && String(b).toLowerCase().includes(qVal) ? 'text-amber-300 bg-amber-500/10 px-1 border border-amber-500/20' : '';
+            return `<li class="select-text whitespace-pre-wrap"><span class="${highlight}">${b}</span></li>`;
+          }).join('');
+        }
+
+        document.getElementById('vault-modal').classList.remove('hidden');
+      } catch(e) {
+        console.error("Vault modal render error", e);
+      }
+    }
+
+    function closeVaultModal() {
+      document.getElementById('vault-modal').classList.add('hidden');
+      activeModalUser = null;
+    }
+
+    // Modal background dismiss
+    document.getElementById('vault-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeVaultModal();
+    });
+
+    // ── Startup Init ──────────────────────────────────────────────────────────
+    // Show loading state immediately so page doesn't look broken
+    document.getElementById('search-results-grid').innerHTML =
+      '<div class="col-span-full py-16 text-center text-white/30 text-xs tracking-widest uppercase font-bold">Connecting to Intel DB...</div>';
+    document.getElementById('server-list-rows').innerHTML =
+      '<tr><td colspan="5" class="py-10 text-center text-white/30 text-[10px] uppercase tracking-widest">Loading servers...</td></tr>';
+
+    loadConfig();
+    performSearch();
+    pollScans();           // status: instant + every 4s
+    pollServers();         // servers: instant + every 25s
+
+    // Separate intervals: scans every 4s (cheap), servers every 25s (expensive)
+    _statusPollId  = setInterval(pollScans,   4000);
+    _serversPollId = setInterval(pollServers, 25000);
+    _searchSyncId  = setInterval(performSearch, 60000); // background DB sync every 60s
+
+    // Page Visibility API — pause all polling when tab is hidden, resume on focus
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        clearInterval(_statusPollId);
+        clearInterval(_serversPollId);
+        clearInterval(_searchSyncId);
+      } else {
+        // Immediate refresh on tab re-focus
+        pollScans();
+        pollServers();
+        performSearch();
+        _statusPollId  = setInterval(pollScans,   4000);
+        _serversPollId = setInterval(pollServers, 25000);
+        _searchSyncId  = setInterval(performSearch, 60000);
+      }
+    });
+  </script>
+  <script src="/static/xtreme_ui.js"></script>
+</body>
+</html>

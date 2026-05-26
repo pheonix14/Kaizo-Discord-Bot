@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>FAFNIR | Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      color: #ffffff;
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-color: #000;
+      transition: background-image 1s ease-in-out;
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+    }
+    .glass {
+      background: rgba(10, 10, 10, 0.5);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+    }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    ::-webkit-scrollbar { width: 0px; }
+  </style>
+</head>
+<body class="flex flex-col h-screen">
+
+  <div id="bg-overlay" class="absolute inset-0 bg-black/60 -z-10"></div>
+
+  <nav class="glass px-6 py-4 flex items-center justify-between shrink-0 z-10 mx-4 mt-4 rounded-2xl">
+    <div class="flex items-center gap-6 overflow-x-auto no-scrollbar w-full">
+      <h1 class="text-xl font-bold tracking-tight shrink-0">FAFNIR</h1>
+      <div class="flex gap-4">
+        <a href="/" class="text-white font-medium text-sm whitespace-nowrap px-3 py-1 bg-white/10 rounded-full">Home</a>
+        <a href="/config" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Tokens</a>
+        <a href="/history" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">History</a>
+        <a href="/owo" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">OwO</a>
+        <a href="/slash" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Slash</a>
+        <a href="/spam" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Spam</a>
+        <a href="/msg" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Msg</a>
+        <a href="/image" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Image</a>
+        <a href="/hook" class="text-white/60 hover:text-white transition-colors text-sm font-medium whitespace-nowrap">Hook</a>
+      </div>
+    </div>
+    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 text-xs font-bold border border-white/20 ml-4 shrink-0">
+      <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse shadow-[0_0_10px_rgba(74,222,128,0.8)]"></div>
+      <span id="stxt" class="uppercase tracking-wider">Connecting</span>
+    </div>
+  </nav>
+
+  <main class="flex-1 overflow-auto p-4 md:p-6 flex flex-col md:flex-row gap-6 z-10 relative">
+    <div id="captcha-alert" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-[5000] w-full max-w-xl px-4">
+      <div class="glass border-2 border-red-500 rounded-3xl p-6 bg-red-500/20 backdrop-blur-3xl shadow-[0_0_50px_rgba(239,68,68,0.4)] flex flex-col items-center gap-4 text-center animate-pulse">
+          <div class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
+              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+          </div>
+          <div>
+              <h2 class="text-xl font-black text-white uppercase tracking-tighter">⚠️ Captcha Wall Detected</h2>
+              <p id="captcha-token-label" class="text-xs text-red-300 font-bold uppercase tracking-widest mt-1">Token on Standby</p>
+              <p class="text-[10px] text-white/50 uppercase font-bold tracking-widest mt-1">All loops halted • Manual resolution required</p>
+          </div>
+          <a id="captcha-link" href="#" target="_blank" class="w-full bg-white text-black py-4 rounded-2xl font-black uppercase tracking-widest text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-xl">🔗 Solve Captcha Now</a>
+          <button onclick="dismissCaptcha()" class="text-[10px] text-white/30 uppercase font-bold hover:text-white transition-colors">Mark Resolved &amp; Dismiss</button>
+      </div>
+  </div>
+
+    <!-- Left Column (Metrics & Config) -->
+    <div class="flex flex-col gap-6 w-full md:w-80 shrink-0">
+      <!-- Identity Section -->
+      <div id="identity-section" class="flex flex-col gap-2 overflow-x-auto no-scrollbar py-1"></div>
+
+      <div class="flex gap-4">
+        <div class="glass rounded-3xl p-6 flex-1 flex flex-col items-center justify-center transition-all hover:bg-white/5 border border-white/5 shadow-lg">
+          <div class="text-[10px] uppercase tracking-widest text-white/50 mb-1 font-bold">Caught</div>
+          <div class="text-4xl font-bold tracking-tighter" id="mc">0</div>
+        </div>
+        <div class="glass rounded-3xl p-6 flex-1 flex flex-col items-center justify-center transition-all hover:bg-white/5 border border-white/5 shadow-lg">
+          <div class="text-[10px] uppercase tracking-widest text-white/50 mb-1 font-bold">Faults</div>
+          <div class="text-4xl font-bold tracking-tighter text-red-400" id="mf">0</div>
+        </div>
+      </div>
+
+      <!-- Humanizer Panel -->
+      <div class="glass rounded-3xl p-6 flex flex-col gap-4 border border-white/5 shadow-lg">
+        <div class="flex items-center justify-between">
+            <h2 class="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold">Humanizer</h2>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="break-enabled" class="sr-only peer" onchange="saveBreak()">
+                <div class="w-9 h-5 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-500"></div>
+            </label>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col gap-1">
+                <label class="text-[9px] uppercase text-white/30 ml-1">Start (UTC)</label>
+                <input type="text" id="break-time" class="bg-black/40 border border-white/5 rounded-xl px-3 py-2 text-xs mono outline-none focus:border-white/20" value="02:00" onchange="saveBreak()">
+            </div>
+            <div class="flex flex-col gap-1">
+                <label class="text-[9px] uppercase text-white/30 ml-1">Duration (m)</label>
+                <input type="number" id="break-dur" class="bg-black/40 border border-white/5 rounded-xl px-3 py-2 text-xs mono outline-none focus:border-white/20" value="10" onchange="saveBreak()">
+            </div>
+        </div>
+        <p class="text-[9px] text-white/30 mono uppercase leading-relaxed">Bot takes a random daily break to simulate sleep patterns.</p>
+      </div>
+
+      <!-- Balance Summary Section -->
+      <div class="glass rounded-3xl p-6 flex flex-col gap-4 border border-white/5 shadow-lg relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500/20 via-yellow-500/50 to-yellow-500/20"></div>
+        <div class="flex items-center justify-between">
+            <h2 class="text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold">Treasury</h2>
+            <button onclick="syncBal()" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors" title="Sync Balances">
+                <svg class="w-3 h-3 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            </button>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+            <div class="flex flex-col">
+                <div class="text-[9px] uppercase text-white/30 ml-1">Pokécoins</div>
+                <div id="total-pk" class="text-xl font-bold text-yellow-400 drop-shadow-md">0</div>
+            </div>
+            <div class="flex flex-col">
+                <div class="text-[9px] uppercase text-white/30 ml-1">Cowoncy</div>
+                <div id="total-owo" class="text-xl font-bold text-pink-400 drop-shadow-md">0</div>
+            </div>
+        </div>
+        <button onclick="toggleBalDetails()" class="text-[9px] uppercase tracking-widest text-white/20 hover:text-white/40 transition-colors font-bold mt-1 text-center">View Details</button>
+        <div id="bal-details" class="hidden flex flex-col gap-2 mt-2 pt-2 border-t border-white/5"></div>
+      </div>
+      <div class="glass rounded-3xl p-6 flex flex-col shadow-lg border border-white/5">
+        <div class="text-xs uppercase tracking-widest text-white/50 font-bold mb-4">System Summary</div>
+        <div id="system-summary-container" class="flex flex-col gap-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-white/40">Uptime</span>
+            <span id="uptime" class="text-xs font-bold mono">0s</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-white/40">Heartbeat</span>
+            <span id="pings" class="text-xs font-bold mono">0</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-white/40">Requests</span>
+            <span id="reqs" class="text-xs font-bold mono">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column (Console & Nodes) -->
+    <div class="flex-1 flex flex-col gap-6 min-w-0">
+      <div id="console-container" class="glass rounded-[2rem] flex flex-col overflow-hidden border border-white/10 shadow-2xl transition-all duration-500 ease-in-out">
+        <div class="px-6 py-4 bg-white/5 border-b border-white/5 flex items-center justify-between backdrop-blur-md">
+          <div class="flex items-center gap-3">
+            <div class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+            <h2 class="text-xs font-bold uppercase tracking-widest text-white/60">Live Log Stream</h2>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="reset()" class="px-3 py-1.5 rounded-xl bg-red-500/20 hover:bg-red-500/30 text-red-400 text-[10px] font-bold uppercase tracking-widest transition-all">Clear</button>
+            <button id="tbtn" onclick="toggleConsole()" class="p-1.5 rounded-xl bg-white/5 hover:bg-white/10 transition-all text-white/60">
+                <svg id="expand-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" style="transition: transform 0.5s;"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+            </button>
+          </div>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-2" id="logs">
+          <!-- Logs go here -->
+        </div>
+      </div>
+
+      <div class="glass rounded-3xl p-6 flex flex-col flex-1 overflow-hidden shadow-lg border border-white/5">
+        <div class="flex justify-between items-center mb-4">
+          <div class="text-xs uppercase tracking-widest text-white/50 font-bold">Active Nodes</div>
+          <a href="/config" class="text-[10px] uppercase font-bold text-blue-400 hover:text-blue-300">Manage</a>
+        </div>
+        <div class="flex flex-col gap-3 overflow-y-auto pr-2" id="nodes">
+          <div class="text-sm text-white/30 text-center py-4">No active nodes</div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="/static/luxury_theme.js"></script>
+  <script src="/static/fafnir_core.js"></script>
+  <script>
+    let lh = '';
+    let isExpanded = false;
+    let balExpanded = false;
+
+    function toggleConsole() {
+        const container = document.getElementById('console-container');
+        const icon = document.getElementById('expand-icon');
+        isExpanded = !isExpanded;
+        if (isExpanded) {
+            container.classList.add('fixed', 'inset-4', 'z-[2000000]');
+            icon.style.transform = 'rotate(180deg)';
+        } else {
+            container.classList.remove('fixed', 'inset-4', 'z-[2000000]');
+            icon.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    function toggleBalDetails() {
+        const det = document.getElementById('bal-details');
+        balExpanded = !balExpanded;
+        det.classList.toggle('hidden', !balExpanded);
+    }
+
+    async function syncBal() {
+        const btn = document.querySelector('[onclick="syncBal()"]');
+        const originalIcon = btn.innerHTML;
+        btn.innerHTML = `<svg class="w-3 h-3 text-blue-400 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>`;
+        btn.disabled = true;
+        
+        try {
+            await window.Fafnir.safeFetch('/api/balance/sync', { method: 'POST' });
+            setTimeout(() => {
+                btn.innerHTML = originalIcon;
+                btn.disabled = false;
+            }, 5000);
+        } catch (e) {
+            btn.innerHTML = originalIcon;
+            btn.disabled = false;
+        }
+    }
+
+    async function poll() {
+      try {
+        const [d, m] = await Promise.all([
+            window.Fafnir.safeFetch('/api/data'),
+            window.Fafnir.safeFetch('/api/metrics')
+        ]);
+
+        window.Fafnir.updateStatusUI(d.status === 'Offline' ? 'Offline' : 'Online');
+        
+        document.getElementById('mc').textContent = d.caught ?? 0;
+        document.getElementById('mf').textContent = d.faults ?? 0;
+        
+        document.getElementById('uptime').textContent = m.uptime || 'N/A';
+        document.getElementById('pings').textContent = m.pings || 0;
+        document.getElementById('reqs').textContent = m.reqs || m.requests || 0;
+
+        const nodes = d.nodes || [];
+        
+        // Treasury Calculations
+        let totalPk = 0;
+        let totalOwo = 0;
+        nodes.forEach(n => {
+            if (n.balances) {
+                totalPk += n.balances.pokecoins || 0;
+                totalOwo += n.balances.cowoncy || 0;
+            }
+        });
+        document.getElementById('total-pk').textContent = totalPk.toLocaleString();
+        document.getElementById('total-owo').textContent = totalOwo.toLocaleString();
+
+        const balDet = document.getElementById('bal-details');
+        balDet.innerHTML = nodes.map(n => `
+            <div class="flex justify-between items-center bg-white/5 p-2 rounded-xl border border-white/5">
+                <span class="text-[9px] font-bold text-white/50 truncate pr-2 w-1/3">${n.label}</span>
+                <div class="flex gap-3 w-2/3 justify-end">
+                    <span class="text-[10px] font-bold text-yellow-400/80">${(n.balances?.pokecoins||0).toLocaleString()}</span>
+                    <span class="text-[10px] font-bold text-pink-400/80">${(n.balances?.cowoncy||0).toLocaleString()}</span>
+                </div>
+            </div>
+        `).join('');
+
+        // Identity Section
+        const idSection = document.getElementById('identity-section');
+        const profiles = nodes.filter(n => n.profile && n.profile.username);
+        if (profiles.length > 0) {
+            idSection.innerHTML = profiles.map(n => `
+                <div class="glass flex items-center gap-3 p-3 rounded-2xl border border-white/10 hover:bg-white/5 transition-all shadow-lg min-w-[240px]">
+                    <img src="${n.profile.avatar}" class="w-12 h-12 rounded-xl object-cover border border-white/10" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex justify-between items-center mb-0.5">
+                            <span class="text-sm font-bold text-white truncate">${n.profile.username}</span>
+                            <div class="flex items-center gap-1">
+                                <span class="w-2 h-2 rounded-full ${n.profile.status==='Online'?'bg-green-400':'bg-red-400'} shadow-[0_0_5px_currentColor]"></span>
+                                <span class="text-[9px] font-bold text-white/40 uppercase">${n.profile.status}</span>
+                            </div>
+                        </div>
+                        <div class="text-[10px] text-white/40 italic truncate">${n.profile.bio || ''}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Detailed Summary
+        const activeSpam = nodes.filter(n => n.spamming).length;
+        const activeOwo = nodes.filter(n => n.owo_running).length;
+        const activeCatch = nodes.filter(n => n.catching).length;
+        
+        const summaryHtml = `
+            <div class="grid grid-cols-2 gap-2 mt-4">
+                <div class="bg-white/5 rounded-xl p-2 border border-white/5">
+                    <div class="text-[9px] uppercase text-white/40">Tokens</div>
+                    <div class="text-sm font-bold">${nodes.length}</div>
+                </div>
+                <div class="bg-white/5 rounded-xl p-2 border border-white/5">
+                    <div class="text-[9px] uppercase text-white/40">Catching</div>
+                    <div class="text-sm font-bold text-blue-400">${activeCatch}</div>
+                </div>
+                <div class="bg-white/5 rounded-xl p-2 border border-white/5">
+                    <div class="text-[9px] uppercase text-white/40">Spamming</div>
+                    <div class="text-sm font-bold text-purple-400">${activeSpam}</div>
+                </div>
+                <div class="bg-white/5 rounded-xl p-2 border border-white/5">
+                    <div class="text-[9px] uppercase text-white/40">OwO</div>
+                    <div class="text-sm font-bold text-pink-400">${activeOwo}</div>
+                </div>
+            </div>
+        `;
+        const summaryContainer = document.getElementById('system-summary-container');
+        let detSum = document.getElementById('det-sum');
+        if (!detSum) {
+            detSum = document.createElement('div');
+            detSum.id = 'det-sum';
+            summaryContainer.appendChild(detSum);
+        }
+        detSum.innerHTML = summaryHtml;
+
+        const ne = document.getElementById('nodes');
+        if (!nodes.length) {
+          ne.innerHTML = '<div class="text-sm text-white/40 text-center py-4">No nodes registered.</div>';
+        } else {
+          ne.innerHTML = nodes.map(n => `
+            <div class="bg-black/50 rounded-2xl p-4 border border-white/5 hover:border-white/20 transition-all">
+              <div class="flex justify-between items-center mb-2">
+                <div class="flex items-center gap-2">
+                  <div class="w-8 h-8 rounded-lg overflow-hidden bg-white/5 border border-white/10">
+                    <img src="${n.profile?.avatar || ''}" class="w-full h-full object-cover" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'">
+                  </div>
+                  <div class="text-sm font-bold text-white truncate pr-2 max-w-[120px]">${n.label}</div>
+                </div>
+                <div class="flex gap-1.5">
+                  <div class="flex flex-col items-end">
+                    <span class="text-[8px] uppercase text-white/30 font-bold">Autocatch</span>
+                    <span class="w-1.5 h-1.5 rounded-full ${n.catching?'bg-blue-400 animate-pulse':'bg-white/10'} shadow-[0_0_8px_currentColor]"></span>
+                  </div>
+                  <div class="flex flex-col items-end">
+                    <span class="text-[8px] uppercase text-white/30 font-bold">Spam</span>
+                    <span class="w-1.5 h-1.5 rounded-full ${n.spamming?'bg-purple-400 animate-pulse':'bg-white/10'} shadow-[0_0_8px_currentColor]"></span>
+                  </div>
+                  <div class="flex flex-col items-end">
+                    <span class="text-[8px] uppercase text-white/30 font-bold">OwO</span>
+                    <span class="w-1.5 h-1.5 rounded-full ${n.owo_running?'bg-pink-400 animate-pulse':'bg-white/10'} shadow-[0_0_8px_currentColor]"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex justify-between items-center mt-3 pt-3 border-t border-white/5">
+                <div class="text-[9px] mono text-white/40 uppercase tracking-widest">CH: ${n.channel_id||'Global'}</div>
+                <div class="text-[9px] font-bold text-yellow-500/60 mono">${(n.balances?.pokecoins||0).toLocaleString()} <span class="text-[8px]">PC</span></div>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        const logs = d.logs || [];
+        const h = logs.slice(0, 5).map(l => l.message + l.time).join('|');
+        if (h !== lh) {
+          lh = h;
+          const logContainer = document.getElementById('logs');
+          logContainer.innerHTML = logs.map(l => {
+            const isErr = l.type==='error' || l.type==='warning';
+            const isCatch = l.type==='catch' || l.type==='success';
+            const colorClass = isErr ? 'border-red-500 text-red-200 bg-red-500/10' :
+                               isCatch ? 'border-green-500 text-green-200 bg-green-500/10' :
+                               'border-white/20 text-white/70 bg-white/5';
+            return `
+              <div class="flex gap-3 p-3 rounded-xl border-l-2 ${colorClass} transition-all">
+                <span class="mono text-[10px] font-bold opacity-50 shrink-0 mt-0.5">[${l.time}]</span>
+                <span class="mono text-xs font-medium break-words">${l.message}</span>
+              </div>
+            `;
+          }).join('');
+        }
+
+        const nodes = d.nodes || [];
+        const captchaNodes = nodes.filter(n => n.captcha_detected);
+        const captchaAlert = document.getElementById('captcha-alert');
+        
+        if (captchaNodes.length > 0) {
+            let alertHtml = `
+              <div class="glass border-2 border-red-500 rounded-3xl p-6 bg-red-500/25 backdrop-blur-3xl shadow-[0_0_50px_rgba(239,68,68,0.4)] flex flex-col gap-4 text-center">
+                  <div class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mx-auto animate-pulse">
+                      <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                  </div>
+                  <div>
+                      <h2 class="text-xl font-black text-white uppercase tracking-tighter">⚠️ Captcha Wall Detected</h2>
+                      <p class="text-[10px] text-red-300 uppercase font-bold tracking-widest mt-1">Catching halted for affected account(s) • Action required</p>
+                  </div>
+                  <div class="flex flex-col gap-3 w-full max-h-60 overflow-y-auto pr-1">
+            `;
+            
+            captchaNodes.forEach(node => {
+                const nodeLabel = node.label || node.id;
+                const url = node.captcha_url || '#';
+                const timeStr = node.captcha_time || 'Just now';
+                alertHtml += `
+                  <div class="bg-black/60 border border-red-500/30 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-left">
+                      <div class="flex-1 min-w-0">
+                          <p class="text-sm font-bold text-red-300 uppercase tracking-wide truncate">${nodeLabel}</p>
+                          <p class="text-[10px] text-white/40 mono mt-0.5">Detected at ${timeStr}</p>
+                      </div>
+                      <div class="flex gap-2 w-full sm:w-auto shrink-0">
+                          <a href="${url}" target="_blank" class="flex-1 sm:flex-initial px-4 py-2 bg-red-600 hover:bg-red-500 text-white rounded-xl text-xs font-black uppercase tracking-wider text-center transition animate-bounce">🔗 Solve</a>
+                          <button onclick="resumeTokenCaptcha('${node.id}')" class="flex-1 sm:flex-initial px-4 py-2 bg-white text-black hover:bg-white/90 rounded-xl text-xs font-black uppercase tracking-wider transition">Resume</button>
+                      </div>
+                  </div>
+                `;
+            });
+            
+            alertHtml += `
+                  </div>
+                  <button onclick="dismissCaptcha()" class="text-[10px] text-white/30 uppercase font-bold hover:text-white transition-colors mt-2">Dismiss Alert Box</button>
+              </div>
+            `;
+            captchaAlert.innerHTML = alertHtml;
+            captchaAlert.classList.remove('hidden');
+        } else {
+            // Fallback to legacy single global captcha from DB if nodes are empty/unavailable
+            const captchaData = d.captcha;
+            if (captchaData && captchaData.url) {
+                captchaAlert.innerHTML = `
+                  <div class="glass border-2 border-red-500 rounded-3xl p-6 bg-red-500/20 backdrop-blur-3xl shadow-[0_0_50px_rgba(239,68,68,0.4)] flex flex-col items-center gap-4 text-center animate-pulse">
+                      <div class="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
+                          <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                      </div>
+                      <div>
+                          <h2 class="text-xl font-black text-white uppercase tracking-tighter">⚠️ Captcha Wall Detected</h2>
+                          <p id="captcha-token-label" class="text-xs text-red-300 font-bold uppercase tracking-widest mt-1">Token on standby: ${captchaData.label} • Detected at ${captchaData.time}</p>
+                          <p class="text-[10px] text-white/50 uppercase font-bold tracking-widest mt-1">Catching halted • Manual resolution required</p>
+                      </div>
+                      <a id="captcha-link" href="${captchaData.url}" target="_blank" class="w-full bg-white text-black py-4 rounded-2xl font-black uppercase tracking-widest text-sm hover:scale-[1.02] active:scale-95 transition-all shadow-xl">🔗 Solve Captcha Now</a>
+                      <button onclick="dismissCaptcha()" class="text-[10px] text-white/30 uppercase font-bold hover:text-white transition-colors">Mark Resolved &amp; Dismiss</button>
+                  </div>`;
+                captchaAlert.classList.remove('hidden');
+            } else {
+                captchaAlert.classList.add('hidden');
+            }
+        }
+      } catch (e) {
+        window.Fafnir.updateStatusUI(window.Fafnir.failCount > 3 ? 'Offline' : 'Reconnecting');
+        
+        // Try a simple ping to see if the server is just cold-starting
+        if (window.Fafnir.failCount % 5 === 0) {
+            window.Fafnir.pokeServer();
+        }
+      }
+    }
+
+    async function loadBreak() {
+        try {
+            const cfg = await window.Fafnir.safeFetch('/api/break/config');
+            document.getElementById('break-enabled').checked = cfg.enabled;
+            document.getElementById('break-time').value = cfg.start_time;
+            document.getElementById('break-dur').value = cfg.duration;
+        } catch {}
+    }
+
+    async function saveBreak() {
+        const cfg = {
+            enabled: document.getElementById('break-enabled').checked,
+            start_time: document.getElementById('break-time').value,
+            duration: parseInt(document.getElementById('break-dur').value)
+        };
+        await fetch('/api/break/config', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(cfg)
+        });
+    }
+
+    async function dismissCaptcha() {
+        document.getElementById('captcha-alert').classList.add('hidden');
+        await fetch('/api/captcha/clear', { method: 'POST' });
+        poll();
+    }
+
+    async function resumeTokenCaptcha(tid) {
+        await fetch(`/api/captcha/clear/${tid}`, { method: 'POST' });
+        poll();
+    }
+
+    async function reset() { await fetch('/api/reset', { method: 'POST' }); }
+    loadBreak();
+    setInterval(poll, 2000); poll();
+  </script>
+</body>
+</html>
