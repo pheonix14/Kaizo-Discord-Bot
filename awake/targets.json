@@ -1,0 +1,29 @@
+{
+  "self_url": null,
+  "targets": [
+    {
+      "url": "https://xtreme-f6jh.onrender.com",
+      "pings": 0,
+      "success": 0,
+      "last_ping": null,
+      "is_active": true,
+      "label": "CORE PULSE"
+    },
+    {
+      "url": "https://xtreme-f6jh.onrender.com/hook",
+      "pings": 0,
+      "success": 0,
+      "last_ping": null,
+      "is_active": true,
+      "label": "TELEMETRY HOOK"
+    },
+    {
+      "url": "http://localhost:8085",
+      "pings": 0,
+      "success": 0,
+      "last_ping": null,
+      "is_active": true,
+      "label": ""
+    }
+  ]
+}

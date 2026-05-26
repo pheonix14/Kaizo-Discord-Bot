@@ -1,0 +1,19 @@
+[package]
+name = "dark-watchdog"
+version = "1.0.0"
+description = "Keep-Alive Watchdog for Dark X4 Engine"
+license = "MIT"
+
+[[module]]
+name = "watchdog"
+source = "main.py"
+kind = "python"
+
+[[command]]
+name = "start"
+module = "watchdog"
+runner = "python"
+# Wasmer's python runner uses the 'app' attribute by default if it detects a web interface
+
+[env]
+PORT = "8080"
