@@ -178,7 +178,7 @@ docker run -p 8085:8085 xtreme-core
 ## 📜 License
 
 **Closed Source · Proprietary Software**
-© 2026 XTREME CORE. All rights reserved.
+© 2026 XTREME CORE · Created by **pheonix14**. All rights reserved.
 
 Unauthorized distribution, copying, modification, or commercial use is strictly prohibited.
 
@@ -187,5 +187,7 @@ Unauthorized distribution, copying, modification, or commercial use is strictly 
 <div align="center">
 
 *Developed and maintained by the **XTREME STUDIO***
+
+*Created by **pheonix14***
 
 </div>
