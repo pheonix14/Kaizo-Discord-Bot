@@ -552,3 +552,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-25] feat(zero-emoji): harden strict zero-emoji architecture
 - [2026-05-26] fix(db): align schema migration runner
 - [2026-05-26] fix(tickets): fix close button
+- [2026-05-26] feat(stats): update member count updater
