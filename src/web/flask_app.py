@@ -44,14 +44,26 @@ logger = logging.getLogger("kaizer_k5.flask_app")
 # ---------------------------------------------------------------------------
 
 from pathlib import Path
+from werkzeug.middleware.proxy_fix import ProxyFix
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 app = Flask(
     __name__,
     template_folder=str(PROJECT_ROOT / "templates"),
     static_folder=str(PROJECT_ROOT / "static")
 )
-# Use a secret key for secure signed cookies
-app.secret_key = os.getenv("FLASK_SECRET_KEY", secrets.token_hex(16))
+# Trust Render's reverse-proxy headers so Flask sees the correct https:// scheme
+# x_for=1, x_proto=1, x_host=1 matches a single-hop proxy (Render's load balancer)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
+
+# Use a stable, explicitly-set secret key – never fall back to a random value
+# because a new random key on restart invalidates all existing sessions.
+app.secret_key = os.getenv("FLASK_SECRET_KEY")
+if not app.secret_key:
+    logger.critical(
+        "FLASK_SECRET_KEY env var is not set! "
+        "Sessions will break on every restart. Set it in Render env vars."
+    )
+    app.secret_key = secrets.token_hex(32)  # emergency fallback only
 
 # Register template helper for Discord invite URL
 @app.context_processor
@@ -188,11 +200,23 @@ def register_awake_heartbeat(node_url, peers_raw):
 # ---------------------------------------------------------------------------
 
 def get_redirect_uri() -> str:
-    """Build the OAuth2 callback redirect URL dynamically based on the current request domain."""
+    """Build the OAuth2 callback redirect URL.
+
+    Priority:
+    1. DISCORD_REDIRECT_URI env var (explicit override, e.g. for Render)
+    2. HOST_URL env var + /callback  (set HOST_URL=https://kaizer-k5.onrender.com on Render)
+    3. Dynamically from request – only reliable on local HTTP, NOT behind a reverse proxy.
+    """
     env_redirect = os.getenv("DISCORD_REDIRECT_URI")
     if env_redirect:
-        return env_redirect
-    return request.host_url.rstrip("/") + "/callback"
+        return env_redirect.rstrip("/")
+    host_url = os.getenv("HOST_URL")
+    if host_url:
+        return host_url.rstrip("/") + "/callback"
+    # Last-resort: derive from the request (only works correctly on local dev)
+    scheme = request.scheme  # Will be 'https' if ProxyFix is working
+    host = request.host
+    return f"{scheme}://{host}/callback"
 
 def verify_session() -> bool:
     """Validate the signed session cookie.
@@ -275,8 +299,16 @@ def login():
     url = f"https://discord.com/api/oauth2/authorize?{urlencode(params)}"
     resp = make_response(redirect(url))
     # Store state in a temporary signed cookie (expires in 10 min)
+    # SameSite=None + Secure=True is REQUIRED for OAuth cross-site cookies over HTTPS.
+    # The browser drops SameSite=Lax cookies on the redirect back from Discord (cross-site POST/redirect).
+    is_https = request.scheme == "https" or os.getenv("HOST_URL", "").startswith("https")
     payload = json.dumps({"state": state, "expires": time.time() + 600})
-    resp.set_cookie("oauth_state", payload, httponly=True, samesite="Lax")
+    resp.set_cookie(
+        "oauth_state", payload,
+        httponly=True,
+        samesite="None" if is_https else "Lax",
+        secure=is_https,
+    )
     return resp
 
 @app.route("/callback")
@@ -297,19 +329,18 @@ def callback():
         return "State mismatch", 400
     # Exchange code for token
     import requests
-    # Ensure we load the freshest secret from .env in case user just added it
-    from dotenv import dotenv_values
-    from pathlib import Path
-    env_path = Path(__file__).resolve().parent.parent.parent / '.env'
-    freshest_env = dotenv_values(env_path)
-    client_secret = freshest_env.get("DISCORD_CLIENT_SECRET", config.DISCORD_CLIENT_SECRET)
-    
+    # Use os.getenv directly – works both locally (via .env loaded at startup) and on Render (env vars).
+    # The old dotenv_values() re-read from disk does NOT work on Render (no .env file present).
+    client_secret = os.getenv("DISCORD_CLIENT_SECRET") or config.DISCORD_CLIENT_SECRET
+    redirect_uri = get_redirect_uri()
+    logger.info(f"[OAuth callback] Using redirect_uri: {redirect_uri}")
+
     data = {
         "client_id": config.DISCORD_APP_ID,
         "client_secret": client_secret,
         "grant_type": "authorization_code",
         "code": code,
-        "redirect_uri": get_redirect_uri(),
+        "redirect_uri": redirect_uri,
     }
     headers = {"Content-Type": "application/x-www-form-urlencoded"}
     token_resp = requests.post("https://discord.com/api/oauth2/token", data=data, headers=headers)
@@ -321,10 +352,22 @@ def callback():
     token_json = token_resp.json()
     access_token = token_json["access_token"]
     # Store in cookie (signed, HTTP-only)
+    # On HTTPS (Render), cookies MUST be Secure + SameSite=None for OAuth cross-site flow.
+    is_https = request.scheme == "https" or os.getenv("HOST_URL", "").startswith("https")
     session_payload = json.dumps({"expires": time.time() + 30 * 24 * 3600})
     resp = make_response(redirect("/dashboard?login=success"))
-    resp.set_cookie("session", session_payload, httponly=True, samesite="Lax")
-    resp.set_cookie("discord_token", access_token, httponly=True, samesite="Lax")
+    resp.set_cookie(
+        "session", session_payload,
+        httponly=True,
+        samesite="None" if is_https else "Lax",
+        secure=is_https,
+    )
+    resp.set_cookie(
+        "discord_token", access_token,
+        httponly=True,
+        samesite="None" if is_https else "Lax",
+        secure=is_https,
+    )
     # Fetch user data to log who logged in
     user_resp = requests.get("https://discord.com/api/users/@me", headers={"Authorization": f"Bearer {access_token}"})
     if user_resp.ok:
@@ -338,8 +381,14 @@ def callback():
 @app.route("/logout")
 def logout():
     resp = make_response(redirect("/"))
-    for cookie in ["session", "discord_token"]:
-        resp.delete_cookie(cookie)
+    is_https = request.scheme == "https" or os.getenv("HOST_URL", "").startswith("https")
+    for cookie in ["session", "discord_token", "oauth_state"]:
+        # Must specify same SameSite/Secure attributes used when setting the cookie
+        resp.delete_cookie(
+            cookie,
+            samesite="None" if is_https else "Lax",
+            secure=is_https,
+        )
     return resp
 
 @app.route("/dashboard")
@@ -376,8 +425,14 @@ def dashboard():
             pass
     if "guild_id" in session_data:
         del session_data["guild_id"]
+        is_https = request.scheme == "https" or os.getenv("HOST_URL", "").startswith("https")
         resp = make_response(render_template("dashboard.html", user=user))
-        resp.set_cookie("session", json.dumps(session_data), httponly=True, samesite="Lax")
+        resp.set_cookie(
+            "session", json.dumps(session_data),
+            httponly=True,
+            samesite="None" if is_https else "Lax",
+            secure=is_https,
+        )
         return resp
     return render_template("dashboard.html", user=user)
 
@@ -404,8 +459,14 @@ def server_dashboard(guild_id):
     
     from src.bot.admin_utils import is_developer
     is_dev = is_developer(user.get("id"))
+    is_https = request.scheme == "https" or os.getenv("HOST_URL", "").startswith("https")
     resp = make_response(render_template("server.html", user=user, guild_id=guild_id, is_developer=is_dev))
-    resp.set_cookie("session", json.dumps(session_data), httponly=True, samesite="Lax")
+    resp.set_cookie(
+        "session", json.dumps(session_data),
+        httponly=True,
+        samesite="None" if is_https else "Lax",
+        secure=is_https,
+    )
     return resp
 
 @app.route("/logs")
