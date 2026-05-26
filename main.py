@@ -1,38 +1,130 @@
-import webbrowser, threading, time, os, subprocess, sys, io
-if sys.platform.startswith('win'):
-    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
-    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
-from keep_alive import keep_alive
-import engine
+import warnings
+# Ignore RequestsDependencyWarning related to urllib3/chardet mismatch
+warnings.filterwarnings("ignore", message=".*urllib3.*")
+
+import asyncio
+import logging
+import uvicorn
+import errno
+import discord
+from src import config
+from src.bot.engine import bot
+# Removed FastAPI server import; using Flask backend
+
+class ColorFormatter(logging.Formatter):
+    # ANSI color codes
+    grey = "\x1b[38;20m"
+    yellow = "\x1b[33;20m"
+    red = "\x1b[31;20m"
+    bold_red = "\x1b[31;1m"
+    cyan = "\x1b[36;20m"
+    blue = "\x1b[34;20m"
+    green = "\x1b[32;20m"
+    reset = "\x1b[0m"
+
+    format_str = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+
+    FORMATS = {
+        logging.DEBUG: grey + format_str + reset,
+        logging.INFO: cyan + format_str + reset,
+        logging.WARNING: yellow + format_str + reset,
+        logging.ERROR: red + format_str + reset,
+        logging.CRITICAL: bold_red + format_str + reset
+    }
+
+    def format(self, record):
+        log_fmt = self.FORMATS.get(record.levelno)
+        # Apply specific colors to specific categories if desired
+        if record.levelno == logging.INFO:
+            if "discord" in record.name:
+                log_fmt = self.blue + self.format_str + self.reset
+            elif "kaizer" in record.name:
+                log_fmt = self.green + self.format_str + self.reset
+
+        formatter = logging.Formatter(log_fmt)
+        return formatter.format(record)
+
+# Configure root logger
+root_logger = logging.getLogger()
+root_logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setFormatter(ColorFormatter())
+root_logger.addHandler(handler)
+logger = logging.getLogger("kaizer_k5.main")
+
+def run_web():
+    """Start the Flask Web Server using the Flask app defined in src.web.flask_app."""
+    from src.web.flask_app import app as flask_app
+    host = config.HOST
+    port = config.PORT
+    logger.info(f"Starting Flask Dashboard on http://{host}:{port}")
+    # Flask's built‑in server is sufficient for development; for production consider a WSGI server.
+    flask_app.run(host=host, port=port, debug=False)
+
+
+async def run_bot():
+    """Start the Discord Bot client with automatic reconnect/retry logic."""
+    logger.info("Initializing Discord Bot Client...")
+    retry_delay = 5
+    max_delay = 60
+    try:
+        while True:
+            try:
+                await bot.start(config.DISCORD_BOT_TOKEN)
+                break
+            except discord.errors.LoginFailure:
+                logger.critical("Failed to log in: Invalid Discord Bot Token.")
+                break
+            except asyncio.CancelledError:
+                raise
+            except Exception as e:
+                logger.error(f"Discord Bot encountered a startup exception: {e}")
+                try:
+                    await bot.close()
+                except Exception as close_err:
+                    logger.warning(f"Failed to close bot client during cleanup: {close_err}")
+                logger.info(f"Retrying connection in {retry_delay} seconds...")
+                await asyncio.sleep(retry_delay)
+                retry_delay = min(retry_delay * 2, max_delay)
+    finally:
+        logger.info("Shutting down Discord Bot Client...")
+        try:
+            await asyncio.shield(bot.close())
+        except Exception as e:
+            logger.warning(f"Error closing bot in finally block: {e}")
+
+
+async def main():
+    # Run the web server and bot client concurrently, cleanly shutting down if either stops
+    web_task = asyncio.create_task(asyncio.to_thread(run_web))
+    bot_task = asyncio.create_task(run_bot())
+    
+    try:
+        done, pending = await asyncio.wait(
+            [web_task, bot_task],
+            return_when=asyncio.FIRST_COMPLETED
+        )
+    finally:
+        # Clean up all pending tasks
+        logger.info("Main loop exited. Starting cleanup...")
+        pending_tasks = []
+        for t in [web_task, bot_task]:
+            if not t.done():
+                pending_tasks.append(t)
+                t.cancel()
+        
+        if pending_tasks:
+            logger.info(f"Cancelling {len(pending_tasks)} pending tasks...")
+            await asyncio.gather(*pending_tasks, return_exceptions=True)
+            
+        logger.info("Ensuring Discord Bot is cleanly closed...")
+        try:
+            await bot.close()
+        except Exception as e:
+            logger.warning(f"Error closing bot in main cleanup: {e}")
 
 if __name__ == "__main__":
-    import logger
-    logger.init_db()
-    logger.set_status(f"Online (PID {os.getpid()})")
-    
-    # 1. Start Engine in background
-    engine.start()
-
-    # 2. Start Pokémon image downloader in background
-    def download_task():
-        poke_dir = os.path.join("static", "pokemon")
-        if not os.path.exists(poke_dir) or len(os.listdir(poke_dir)) < 100:
-            logger.log_event("Pokémon images missing or incomplete. Starting background download...", "info")
-            try:
-                subprocess.run([sys.executable, "download_pokemon.py"])
-                logger.log_event("Background Pokémon image download complete.", "success")
-            except Exception as e:
-                logger.log_event(f"Background download failed: {e}", "error")
-    threading.Thread(target=download_task, daemon=True, name="ImageDownloader").start()
-
-    # 3. Optional: Open browser only if local
-    if "RENDER" not in os.environ:
-        def _open():
-            time.sleep(2)
-            port = int(os.environ.get("PORT", 8085))
-            webbrowser.open(f"http://127.0.0.1:{port}")
-        threading.Thread(target=_open, daemon=True).start()
-
-    # 4. Start Flask in MAIN thread (Blocking)
-    from keep_alive import run_flask
-    run_flask()
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Project Kaizer K5 shutting down...")

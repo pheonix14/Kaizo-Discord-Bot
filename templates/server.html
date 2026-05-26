@@ -4223,12 +4223,99 @@
 
     let activeLayoutData = null;
 
+    // Lightweight fallback: use simple /roles + /channels endpoints to populate dropdowns
+    // when the full server_export fails (e.g. timeout) or resContainer is missing.
+    async function populateDropdownsFallback() {
+      try {
+        const [rolesRes, channelsRes] = await Promise.all([
+          fetch(`/api/guild/${guildId}/roles`),
+          fetch(`/api/guild/${guildId}/channels`)
+        ]);
+        const roles = rolesRes.ok ? await rolesRes.json() : [];
+        const allChannels = channelsRes.ok ? await channelsRes.json() : [];
+
+        // Build a minimal activeLayoutData structure so all populate* functions work
+        const textChannels = allChannels.filter(c => c.type === 'text' || c.type.includes('text'));
+        const voiceChannels = allChannels.filter(c => c.type === 'voice' || c.type.includes('voice'));
+        const categoryChannels = allChannels.filter(c => c.type === 'category' || c.type.includes('category'));
+
+        // Build categories map
+        const catMap = {};
+        categoryChannels.forEach(c => { catMap[c.id] = { id: c.id, name: c.name, channels: [] }; });
+        const uncategorized = { id: 'none', name: 'Uncategorized', channels: [] };
+
+        // Assign channels to categories (Discord API doesn't give parent_id here, so flat-assign)
+        [...textChannels, ...voiceChannels].forEach(c => {
+          uncategorized.channels.push({ id: c.id, name: c.name, type: (c.type.includes('voice') ? 'voice' : 'text') });
+        });
+
+        const categories = Object.values(catMap);
+        if (uncategorized.channels.length > 0) categories.unshift(uncategorized);
+
+        activeLayoutData = { roles: roles.filter(r => r.name !== '@everyone'), categories };
+
+        // Now populate all dropdowns with this data
+        const layoutRoles = activeLayoutData.roles;
+        populateLevelingRolesDropdowns(layoutRoles);
+        populateTicketsDropdowns(layoutRoles);
+        populateCustomCommandsRoles(layoutRoles);
+        populateGiveawayRolesSelect(layoutRoles);
+        populateModerationDropdowns(layoutRoles);
+        populateBotSettingsRoles(layoutRoles);
+
+        // Populate channel dropdowns manually
+        const selectors = {
+          embed_channel_id: '-- Select Channel --',
+          welcome_channel: '-- Select Channel --',
+          goodbye_channel: '-- Select Channel --',
+          gw_channel_id: '-- Select Channel --',
+          log_channel: '-- Choose Log Channel --'
+        };
+        Object.entries(selectors).forEach(([id, placeholder]) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const oldVal = el.value;
+          el.innerHTML = `<option value="">${placeholder}</option>`;
+          textChannels.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.innerText = `# ${c.name}`;
+            el.appendChild(opt);
+          });
+          if (oldVal) el.value = oldVal;
+        });
+
+        // Populate bulk role select
+        const bulkRoleSelect = document.getElementById('bulk_role_id');
+        if (bulkRoleSelect) {
+          bulkRoleSelect.innerHTML = '<option value="">-- Select Role --</option>';
+          layoutRoles.forEach(role => {
+            const opt = document.createElement('option');
+            opt.value = role.id;
+            opt.innerText = role.name;
+            opt.dataset.color = role.color || '#99aab5';
+            bulkRoleSelect.appendChild(opt);
+          });
+          if (typeof updateBulkPermissionPreview === 'function') updateBulkPermissionPreview();
+        }
+
+        loadCustomCommands();
+        loadGuildSettings();
+        console.log('[Kaizer] Dropdowns populated via fallback API (roles+channels).');
+      } catch (e) {
+        console.error('[Kaizer] Fallback dropdown population failed:', e);
+      }
+    }
+
     async function fetchServerLayout() {
       const resContainer = document.getElementById('layout-results');
       const editorContainer = document.getElementById('layout-editor-container');
       const saveBtn = document.getElementById('save-layout-btn');
       
-      resContainer.innerHTML = 'Fetching server layout...';
+      // Guard: resContainer only exists in the Server Builder tab.
+      // If missing (e.g. called from DOMContentLoaded before the tab renders),
+      // skip UI updates but still run the API call for dropdown population.
+      if (resContainer) resContainer.innerHTML = 'Fetching server layout...';
       try {
         const res = await fetch(`/api/guild/${guildId}/server-action`, {
           method: 'POST',
@@ -4238,9 +4325,9 @@
         const data = await res.json().catch(() => ({}));
         if (data.success && data.export_data) {
           activeLayoutData = data.export_data;
-          resContainer.innerHTML = 'Layout loaded.';
-          editorContainer.style.display = 'block';
-          saveBtn.style.display = 'block';
+          if (resContainer) resContainer.innerHTML = 'Layout loaded.';
+          if (editorContainer) editorContainer.style.display = 'block';
+          if (saveBtn) saveBtn.style.display = 'block';
           
           let html = '';
           const roles = activeLayoutData.roles || [];
@@ -4342,7 +4429,7 @@
             });
             html += `</div></div>`;
           });
-          editorContainer.innerHTML = html;
+          if (editorContainer) editorContainer.innerHTML = html;
           
           // Re-trigger live preview so role options populate inside card buttons
           updateLiveEmbedPreview();
@@ -4356,10 +4443,13 @@
           loadCustomCommands();
           loadGuildSettings();
         } else {
-          resContainer.innerHTML = 'Failed to fetch layout.';
+          if (resContainer) resContainer.innerHTML = 'Failed to fetch layout. Using fallback...';
+          await populateDropdownsFallback();
         }
       } catch (e) {
-        resContainer.innerHTML = 'Network error.';
+        console.error('[Kaizer] fetchServerLayout error:', e);
+        if (resContainer) resContainer.innerHTML = 'Network error. Using fallback...';
+        await populateDropdownsFallback();
       }
     }
 

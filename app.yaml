@@ -1,9 +1,10 @@
 kind: wasmer.io/App.v0
-package: dark-watchdog
-jobs:
-  - name: keep-alive-pulse
-    trigger: '*/1 * * * *'
-    action:
-      fetch:
-        path: /api/cron-pulse
-        timeout: 55s
+name: kaizer-x
+description: KAIZER X Ultimate Discord Bot & Dashboard
+package: .
+config:
+  engine: python
+  main: dashboard/app.py
+  env:
+    PORT: "8080"
+    PYTHONPATH: "."
