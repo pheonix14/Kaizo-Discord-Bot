@@ -555,3 +555,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-26] feat(stats): update member count updater
 - [2026-05-26] refactor(giveaways): refactor random winner picker
 - [2026-05-26] refactor(perf): streamline query index optimization
+- [2026-05-26] perf(config): optimize default fallbacks
