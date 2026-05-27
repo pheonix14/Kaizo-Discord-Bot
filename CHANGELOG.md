@@ -562,3 +562,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-26] refactor(welcome): streamline auto role assignment
 - [2026-05-27] refactor(reaction-roles): refactor role assignment toggle
 - [2026-05-27] style(perf): polish query index optimization
+- [2026-05-27] fix(giveaways): fix UTC/Local synced countdown
