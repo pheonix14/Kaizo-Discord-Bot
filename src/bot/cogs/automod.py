@@ -4,11 +4,97 @@ from discord import app_commands
 from src.db import client as db_client
 from src import config
 
+class AutomodHelpView(discord.ui.View):
+    def __init__(self, author_id: int):
+        super().__init__(timeout=60.0)
+        self.author_id = author_id
+        self.current_page = 0
+        
+        self.pages = [
+            # Page 1
+            {
+                "title": "🛡️ KAIZER K5 - Anti-Nuke Status & Logs (Page 1/3)",
+                "description": "Monitor and log anti-nuke protection alerts.",
+                "fields": [
+                    {"name": "• automod_status", "value": "Checks the bot protection status for the server.\n*Usage:* `.automod_status` or `/automod_status`"},
+                    {"name": "• automod_logs", "value": "Gets the recent anti-nuke actions for this server.\n*Usage:* `.automod_logs` or `/automod_logs`"}
+                ]
+            },
+            # Page 2
+            {
+                "title": "🛡️ KAIZER K5 - Whitelist Configuration (Page 2/3)",
+                "description": "Manage users immune to anti-nuke enforcement.",
+                "fields": [
+                    {"name": "• automod_whitelist <member> [reason]", "value": "Whitelists a user, making them immune to anti-nuke actions.\n*Usage:* `.automod_whitelist @User [reason]` or `/automod_whitelist member:@User reason:[reason]`"},
+                    {"name": "• automod_unwhitelist <member>", "value": "Removes a user from the whitelist.\n*Usage:* `.automod_unwhitelist @User` or `/automod_unwhitelist member:@User`"}
+                ]
+            },
+            # Page 3
+            {
+                "title": "🛡️ KAIZER K5 - K4 Defense System (Page 3/3)",
+                "description": "Advanced anti-spam and anti-raid parameters.",
+                "fields": [
+                    {"name": "• k4defence enable", "value": "Enable the K4 Defense anti-spam/anti-raid system.\n*Usage:* `.k4defence enable` or `/k4defence enable`"},
+                    {"name": "• k4defence disable", "value": "Disable the K4 Defense anti-spam/anti-raid system.\n*Usage:* `.k4defence disable` or `/k4defence disable`"},
+                    {"name": "• k4defence status", "value": "Check the status and logs of the K4 Defense system.\n*Usage:* `.k4defence status` or `/k4defence status`"}
+                ]
+            }
+        ]
+
+    def make_embed(self) -> discord.Embed:
+        page_data = self.pages[self.current_page]
+        embed = discord.Embed(
+            title=page_data["title"],
+            description=page_data["description"],
+            color=0x3B82F6
+        )
+        for f in page_data["fields"]:
+            embed.add_field(name=f["name"], value=f["value"], inline=False)
+        embed.set_footer(text="KAIZER K5 • Use the buttons below to navigate pages")
+        return embed
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the person who ran the command can use these buttons.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
+        try:
+            if hasattr(self, 'message') and self.message:
+                await self.message.edit(view=self)
+        except:
+            pass
+
+    @discord.ui.button(label="◀ Previous", style=discord.ButtonStyle.primary)
+    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page > 0:
+            self.current_page -= 1
+        else:
+            self.current_page = len(self.pages) - 1
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.secondary)
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page < len(self.pages) - 1:
+            self.current_page += 1
+        else:
+            self.current_page = 0
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
 class AutomodCog(commands.Cog, name="Automod"):
     """Security and Anti-Nuke commands."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    @commands.hybrid_command(name="automod", description="Show AutoMod & Security configuration help.")
+    async def automod_command(self, ctx: commands.Context):
+        view = AutomodHelpView(ctx.author.id)
+        msg = await ctx.send(embed=view.make_embed(), view=view)
+        view.message = msg
 
     @commands.hybrid_command(name="automod_status", description="Checks the bot protection status for the server.")
     @commands.has_permissions(manage_guild=True)

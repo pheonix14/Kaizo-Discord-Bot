@@ -389,11 +389,95 @@ async def generate_welcome_goodbye_card(
 # ---------------------------------------------------------------------------
 # Cog Class Implementation
 # ---------------------------------------------------------------------------
+class WelcomeHelpView(discord.ui.View):
+    def __init__(self, author_id: int):
+        super().__init__(timeout=60.0)
+        self.author_id = author_id
+        self.current_page = 0
+        
+        self.pages = [
+            # Page 1
+            {
+                "title": "👋 KAIZER K5 - Welcome & Goodbye System (Page 1/2)",
+                "description": "Greet or send off members with fully customizable graphics and text.",
+                "fields": [
+                    {"name": "• Configuration Dashboard", "value": "Welcome and Goodbye channels, enable switches, and custom raw JSON templates are managed via the web dashboard at: `http://localhost:8000` (or host IP)."},
+                    {"name": "• Placeholders Supported", "value": "Use these placeholders in your custom welcome/goodbye messages:\n"
+                                                      "- `{user}`: Mentions the joining/leaving member.\n"
+                                                      "- `{username}`: The member's Discord username.\n"
+                                                      "- `{server}`: The server's name.\n"
+                                                      "- `{member_count}`: The updated member count.\n"
+                                                      "- `{avatar_url}`: URL of the member's profile picture."}
+                ]
+            },
+            # Page 2
+            {
+                "title": "🎨 KAIZER K5 - Image Cards & Themes (Page 2/2)",
+                "description": "Customize procedural image cards dynamically generated for alerts.",
+                "fields": [
+                    {"name": "• Color Themes", "value": "Available color themes: `cyan_neon`, `red_hot`, `emerald_green`, `golden_hour`, `electric_purple`, `synthwave_pink`, `dark_space`, `ice_blue`"},
+                    {"name": "• Procedural Layout Styles", "value": "Choose from 10 abstract background styles:\n"
+                                                    "`plain_gradient`, `tech_grid`, `cosmic_stars`, `geometric_wires`, `wave_lines`, `circular_aura`, `circuit_board`, `retro_synthwave`, `minimalist_frame`, `abstract_splatter`"},
+                    {"name": "• Custom Backdrops", "value": "Provide a direct image URL under `custom_bg_url` in your dashboard config to use a custom background image."}
+                ]
+            }
+        ]
+
+    def make_embed(self) -> discord.Embed:
+        page_data = self.pages[self.current_page]
+        embed = discord.Embed(
+            title=page_data["title"],
+            description=page_data["description"],
+            color=0xEC4899
+        )
+        for f in page_data["fields"]:
+            embed.add_field(name=f["name"], value=f["value"], inline=False)
+        embed.set_footer(text="KAIZER K5 • Use the buttons below to navigate pages")
+        return embed
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the person who ran the command can use these buttons.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
+        try:
+            if hasattr(self, 'message') and self.message:
+                await self.message.edit(view=self)
+        except:
+            pass
+
+    @discord.ui.button(label="◀ Previous", style=discord.ButtonStyle.primary)
+    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page > 0:
+            self.current_page -= 1
+        else:
+            self.current_page = len(self.pages) - 1
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.secondary)
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page < len(self.pages) - 1:
+            self.current_page += 1
+        else:
+            self.current_page = 0
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+
 class WelcomeGoodbyeCog(commands.Cog, name="WelcomeGoodbye"):
     """Handles sending highly customized welcome/goodbye channel alerts, generated cards, and DMs."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    @commands.hybrid_command(name="welcome", description="Show welcome & goodbye configuration help.")
+    async def welcome_command(self, ctx: commands.Context):
+        view = WelcomeHelpView(ctx.author.id)
+        msg = await ctx.send(embed=view.make_embed(), view=view)
+        view.message = msg
 
     def replace_placeholders(self, text: str, member: discord.Member) -> str:
         if not text:

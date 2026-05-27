@@ -708,12 +708,19 @@ def api_guild_settings(guild_id):
                 if isinstance(tvc, dict):
                     for k, v in tvc.items():
                         data[k] = v
+            if "music" in warn_th:
+                mus = warn_th["music"]
+                if isinstance(mus, dict):
+                    for k, v in mus.items():
+                        data[k] = v
         # Map DB columns to UI expected IDs
         data["tempvc_join_channel"] = data.get("temp_vc_lobby") or ""
         data["tempvc_category"] = data.get("temp_vc_category") or ""
         data["tempvc_name_template"] = data.get("temp_vc_name_format") or "{user}'s Channel"
         data["tempvc_default_limit"] = data.get("temp_vc_limit") or 0
         data["mod_mute_role"] = data.get("mute_role") or ""
+        data["music_dj_role"] = data.get("dj_role") or ""
+        data["stats_interval_val"] = data.get("counter_refresh_interval") or 10
         if "warn_thresholds" in data and isinstance(data["warn_thresholds"], dict) and "tempvc" in data["warn_thresholds"]:
             data["tempvc_enabled"] = data["warn_thresholds"]["tempvc"].get("tempvc_enabled", data.get("temp_vc_lobby") is not None)
         else:
@@ -863,6 +870,57 @@ def api_guild_settings(guild_id):
         # Map UI mod_mute_role to DB mute_role
         if "mod_mute_role" in payload:
             payload["mute_role"] = payload.pop("mod_mute_role")
+
+        # Map UI music_dj_role to DB dj_role
+        if "music_dj_role" in payload:
+            payload["dj_role"] = payload.pop("music_dj_role")
+
+        # Map UI stats_interval_val to DB counter_refresh_interval
+        if "stats_interval_val" in payload:
+            val = payload.pop("stats_interval_val")
+            try:
+                payload["counter_refresh_interval"] = int(val)
+            except (ValueError, TypeError):
+                payload["counter_refresh_interval"] = 10
+            
+            from src.bot.engine import bot
+            cog = bot.get_cog("Stats")
+            if cog and hasattr(cog.stats_loop, "change_interval"):
+                try:
+                    cog.stats_loop.change_interval(minutes=payload["counter_refresh_interval"])
+                except Exception as loop_err:
+                    logger.warning(f"Failed to change stats loop interval: {loop_err}")
+
+        # Pack music settings into warn_thresholds["music"]
+        music_keys = [
+            "music_channel", "music_voice_channel", "music_djmode", "music_autoplay", 
+            "music_announce", "music_default_volume", "music_bassboost_level", 
+            "music_max_queue", "music_max_duration", "music_voteskip_enabled", "music_voteskip_percent",
+            "filter_8d", "filter_bassboost", "filter_nightcore", "filter_vaporwave",
+            "filter_karaoke", "filter_tremolo", "filter_vibrato", "filter_chipmunk",
+            "filter_slowed", "filter_echo"
+        ]
+        music_data = {}
+        for key in music_keys:
+            if key in payload:
+                music_data[key] = payload.pop(key)
+                
+        if music_data or category == "music_general" or (category and category.startswith("music_")):
+            existing_warn_th = {}
+            resp = supabase.from_("guild_settings").select("warn_thresholds").eq("guild_id", guild_id).execute()
+            if resp.data:
+                existing_warn_th = resp.data[0].get("warn_thresholds") or {}
+                if isinstance(existing_warn_th, str):
+                    try:
+                        existing_warn_th = json.loads(existing_warn_th)
+                    except:
+                        existing_warn_th = {}
+            if not isinstance(existing_warn_th, dict):
+                existing_warn_th = {}
+            if "music" not in existing_warn_th or not isinstance(existing_warn_th["music"], dict):
+                existing_warn_th["music"] = {}
+            existing_warn_th["music"].update(music_data)
+            payload["warn_thresholds"] = existing_warn_th
 
         # Safely deserialize JSON string fields from client to write properly to JSONB or array columns
         for key in ["level_roles", "level_permissions", "automod_rules", "admin_roles", "mod_roles"]:
@@ -1329,6 +1387,181 @@ def api_guild_server_action(guild_id):
         try:
             results = future.result(timeout=10)
             return jsonify({"success": True, "results": results}), 200
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+            
+    elif action == "stats_add":
+        stat_type = payload.get("stat_type")
+        stat_format = payload.get("stat_format")
+        voice_channel_id = payload.get("voice_channel_id")
+        category_id = payload.get("category_id") or None
+        
+        if not stat_type or stat_type not in ["total", "online", "offline", "invc"]:
+            return jsonify({"success": False, "error": "Invalid stat type"}), 400
+        if not stat_format or ("{value}" not in stat_format and "{count}" not in stat_format):
+            return jsonify({"success": False, "error": "Format must contain {value} or {count}"}), 400
+            
+        async def do_add():
+            guild = bot.get_guild(int(guild_id))
+            if not guild: return {"success": False, "error": "Guild not found"}
+            
+            chan = None
+            if voice_channel_id == "new":
+                # Create a new voice channel
+                overwrites = {
+                    guild.default_role: discord.PermissionOverwrite(connect=False)
+                }
+                cat = None
+                if category_id:
+                    cat = guild.get_channel(int(category_id))
+                else:
+                    cat = discord.utils.find(lambda c: c.name.upper() in ["SERVER STATS", "STATS"], guild.categories)
+                    if not cat:
+                        try:
+                            cat = await guild.create_category("SERVER STATS")
+                        except Exception as cat_err:
+                            logger.warning(f"Could not create stats category: {cat_err}")
+                
+                # Fetch initial count
+                count = 0
+                if stat_type == "total":
+                    count = guild.member_count or 0
+                elif stat_type == "online":
+                    count = sum(1 for m in guild.members if m.status != discord.Status.offline)
+                elif stat_type == "offline":
+                    count = sum(1 for m in guild.members if m.status == discord.Status.offline)
+                elif stat_type == "invc":
+                    count = sum(1 for m in guild.members if m.voice)
+                
+                chan_name = stat_format.replace("{value}", str(count)).replace("{count}", str(count))
+                chan = await guild.create_voice_channel(
+                    chan_name,
+                    category=cat,
+                    overwrites=overwrites,
+                    reason="Live Stats channel created via Dashboard"
+                )
+            else:
+                # Use existing voice channel
+                chan = guild.get_channel(int(voice_channel_id))
+                if not chan or not isinstance(chan, discord.VoiceChannel):
+                    return {"success": False, "error": "Voice channel not found"}
+                
+                # Update its name immediately
+                count = 0
+                if stat_type == "total":
+                    count = guild.member_count or 0
+                elif stat_type == "online":
+                    count = sum(1 for m in guild.members if m.status != discord.Status.offline)
+                elif stat_type == "offline":
+                    count = sum(1 for m in guild.members if m.status == discord.Status.offline)
+                elif stat_type == "invc":
+                    count = sum(1 for m in guild.members if m.voice)
+                
+                chan_name = stat_format.replace("{value}", str(count)).replace("{count}", str(count))
+                await chan.edit(name=chan_name, reason="Live Stats channel configured via Dashboard")
+                
+            # Update settings
+            db_payload = {
+                f"counter_{stat_type}_chan_id": str(chan.id),
+                f"counter_{stat_type}_fmt": stat_format
+            }
+            supabase.from_("guild_settings").update(db_payload).eq("guild_id", guild_id).execute()
+            from src.db.client import clear_guild_cache
+            clear_guild_cache(guild_id)
+            
+            return {"success": True, "channel_id": str(chan.id), "name": chan.name}
+            
+        future = asyncio.run_coroutine_threadsafe(do_add(), bot.loop)
+        try:
+            res = future.result(timeout=20)
+            if res.get("success"):
+                return jsonify({"success": True, "channel": res}), 200
+            else:
+                return jsonify({"success": False, "error": res.get("error")}), 400
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    elif action == "stats_remove":
+        stat_type = payload.get("stat_type")
+        if not stat_type or stat_type not in ["total", "online", "offline", "invc"]:
+            return jsonify({"success": False, "error": "Invalid stat type"}), 400
+            
+        db_payload = {
+            f"counter_{stat_type}_chan_id": None,
+            f"counter_{stat_type}_fmt": None
+        }
+        try:
+            supabase.from_("guild_settings").update(db_payload).eq("guild_id", guild_id).execute()
+            from src.db.client import clear_guild_cache
+            clear_guild_cache(guild_id)
+            return jsonify({"success": True, "message": f"Successfully removed {stat_type} configuration."}), 200
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
+
+    elif action == "stats_refresh_all":
+        async def do_refresh():
+            guild = bot.get_guild(int(guild_id))
+            if not guild: return {"success": False, "error": "Guild not found"}
+            
+            from src.db import client as db_client
+            settings = db_client.get_guild_settings(guild.id)
+            if not settings:
+                return {"success": False, "error": "No settings found for this guild"}
+                
+            updated = 0
+            # Total Members
+            if settings.get("counter_total_chan_id"):
+                chan = guild.get_channel(int(settings["counter_total_chan_id"]))
+                if chan:
+                    fmt = settings.get("counter_total_fmt", "Total: {count}")
+                    val = guild.member_count
+                    new_name = fmt.replace("{count}", str(val)).replace("{value}", str(val))
+                    if chan.name != new_name:
+                        await chan.edit(name=new_name)
+                        updated += 1
+
+            # Online Members
+            if settings.get("counter_online_chan_id"):
+                chan = guild.get_channel(int(settings["counter_online_chan_id"]))
+                if chan:
+                    online = sum(1 for m in guild.members if m.status != discord.Status.offline)
+                    fmt = settings.get("counter_online_fmt", "Online: {count}")
+                    new_name = fmt.replace("{count}", str(online)).replace("{value}", str(online))
+                    if chan.name != new_name:
+                        await chan.edit(name=new_name)
+                        updated += 1
+
+            # Offline Members
+            if settings.get("counter_offline_chan_id"):
+                chan = guild.get_channel(int(settings["counter_offline_chan_id"]))
+                if chan:
+                    offline = sum(1 for m in guild.members if m.status == discord.Status.offline)
+                    fmt = settings.get("counter_offline_fmt", "Offline: {count}")
+                    new_name = fmt.replace("{count}", str(offline)).replace("{value}", str(offline))
+                    if chan.name != new_name:
+                        await chan.edit(name=new_name)
+                        updated += 1
+
+            # In VC
+            if settings.get("counter_invc_chan_id"):
+                chan = guild.get_channel(int(settings["counter_invc_chan_id"]))
+                if chan:
+                    in_vc = sum(1 for m in guild.members if m.voice)
+                    fmt = settings.get("counter_invc_fmt", "In VC: {count}")
+                    new_name = fmt.replace("{count}", str(in_vc)).replace("{value}", str(in_vc))
+                    if chan.name != new_name:
+                        await chan.edit(name=new_name)
+                        updated += 1
+                        
+            return {"success": True, "message": f"Refreshed stats. Updated {updated} channels."}
+            
+        future = asyncio.run_coroutine_threadsafe(do_refresh(), bot.loop)
+        try:
+            res = future.result(timeout=20)
+            if res.get("success"):
+                return jsonify(res), 200
+            else:
+                return jsonify({"success": False, "error": res.get("error")}), 400
         except Exception as e:
             return jsonify({"success": False, "error": str(e)}), 500
             

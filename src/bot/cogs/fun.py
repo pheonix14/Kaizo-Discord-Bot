@@ -161,6 +161,102 @@ class TriviaView(discord.ui.View):
         except Exception:
             pass
 
+class FunHelpView(discord.ui.View):
+    def __init__(self, author_id: int):
+        super().__init__(timeout=60.0)
+        self.author_id = author_id
+        self.current_page = 0
+        
+        self.pages = [
+            # Page 1
+            {
+                "title": "🎉 KAIZER K5 - General Fun & RNG (Page 1/3)",
+                "description": "Fun activities, quotes, memes, and random choice generators.",
+                "fields": [
+                    {"name": "• 8ball <question>", "value": "Ask the magic 8-ball a question.\n*Usage:* `.8ball Will I win?` or `/fun 8ball question:Will I win?`"},
+                    {"name": "• compliment <user>", "value": "Send a sweet compliment to a user.\n*Usage:* `.compliment @User` or `/fun compliment user:@User`"},
+                    {"name": "• roast <user>", "value": "Send a lighthearted roast to a user.\n*Usage:* `.roast @User` or `/fun roast user:@User`"},
+                    {"name": "• rate <thing>", "value": "Rate a specific item/subject out of 100.\n*Usage:* `.rate coffee` or `/fun rate thing:coffee`"},
+                    {"name": "• ship <user1> <user2>", "value": "Calculate compatibility percentage between two users.\n*Usage:* `.ship @User1 @User2` or `/fun ship user1:@User1 user2:@User2`"},
+                    {"name": "• dice [sides] [count]", "value": "Roll dice with a specific side count.\n*Usage:* `.dice 6 2` or `/fun dice sides:6 count:2`"},
+                    {"name": "• joke [category]", "value": "Fetch a random joke from JokeAPI.\n*Usage:* `.joke` or `/fun joke category:Any`"},
+                    {"name": "• fact", "value": "Get a random useless fact.\n*Usage:* `.fact` or `/fun fact`"},
+                    {"name": "• quote", "value": "Get a random inspirational quote.\n*Usage:* `.quote` or `/fun quote`"},
+                    {"name": "• meme [subreddit]", "value": "Get a random hot meme from Reddit.\n*Usage:* `.meme` or `/fun meme`"}
+                ]
+            },
+            # Page 2
+            {
+                "title": "🎮 KAIZER K5 - Interactive Games (Page 2/3)",
+                "description": "Challenge others, play Wordle, Hangman, Trivia, and challenges.",
+                "fields": [
+                    {"name": "• rps <choice>", "value": "Play Rock Paper Scissors (rock, paper, or scissors).\n*Usage:* `.rps rock` or `/games rps choice:rock`"},
+                    {"name": "• tictactoe <user>", "value": "Play Tic-Tac-Toe with another member.\n*Usage:* `.tictactoe @User` or `/games tictactoe user:@User`"},
+                    {"name": "• trivia", "value": "Answer a multiple-choice trivia question.\n*Usage:* `.trivia` or `/games trivia`"},
+                    {"name": "• wordle", "value": "Start a game of Wordle in the channel.\n*Usage:* `.wordle` or `/games wordle`"},
+                    {"name": "• hangman", "value": "Start a game of Hangman in the channel.\n*Usage:* `.hangman` or `/games hangman`"},
+                    {"name": "• dare", "value": "Get a random dare challenge.\n*Usage:* `.dare` or `/fun dare`"},
+                    {"name": "• truth", "value": "Get a random truth question.\n*Usage:* `.truth` or `/fun truth`"},
+                    {"name": "• wouldyourather", "value": "Get a random Would You Rather scenario.\n*Usage:* `.wouldyourather` or `/fun wouldyourather`"}
+                ]
+            },
+            # Page 3
+            {
+                "title": "🔤 KAIZER K5 - Text Manipulators (Page 3/3)",
+                "description": "Convert, mock, reverse, or stylize your text.",
+                "fields": [
+                    {"name": "• ascii <text>", "value": "Convert text into large ASCII bubble/banner art.\n*Usage:* `.ascii K5` or `/fun ascii text:K5`"},
+                    {"name": "• emojify <text>", "value": "Convert letters into regional indicator emojis.\n*Usage:* `.emojify win` or `/fun emojify text:win`"},
+                    {"name": "• mock <text>", "value": "Converts text into MoCkEd sPnGeBoB casing.\n*Usage:* `.mock hello` or `/fun mock text:hello`"},
+                    {"name": "• reverse <text>", "value": "Sends back the input text in reverse.\n*Usage:* `.reverse hello` or `/fun reverse text:hello`"}
+                ]
+            }
+        ]
+
+    def make_embed(self) -> discord.Embed:
+        page_data = self.pages[self.current_page]
+        embed = discord.Embed(
+            title=page_data["title"],
+            description=page_data["description"],
+            color=0x9B59B6
+        )
+        for f in page_data["fields"]:
+            embed.add_field(name=f["name"], value=f["value"], inline=False)
+        embed.set_footer(text="KAIZER K5 • Use the buttons below to navigate pages")
+        return embed
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the person who ran the command can use these buttons.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        # Disable all buttons on timeout
+        for item in self.children:
+            item.disabled = True
+        try:
+            if hasattr(self, 'message') and self.message:
+                await self.message.edit(view=self)
+        except:
+            pass
+
+    @discord.ui.button(label="◀ Previous", style=discord.ButtonStyle.primary)
+    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page > 0:
+            self.current_page -= 1
+        else:
+            self.current_page = len(self.pages) - 1
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.secondary)
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page < len(self.pages) - 1:
+            self.current_page += 1
+        else:
+            self.current_page = 0
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
 
 class FunCog(commands.Cog, name="Fun"):
     """Entertainment, games, and fun commands."""
@@ -203,12 +299,17 @@ class FunCog(commands.Cog, name="Fun"):
     @commands.hybrid_group(name="fun", description="Fun commands.", fallback="help")
     async def fun(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx.command)
+            view = FunHelpView(ctx.author.id)
+            msg = await ctx.send(embed=view.make_embed(), view=view)
+            view.message = msg
 
     @commands.hybrid_group(name="games", description="Minigames.", fallback="help")
     async def games(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx.command)
+            view = FunHelpView(ctx.author.id)
+            view.current_page = 1  # Start on Page 2 (Games)
+            msg = await ctx.send(embed=view.make_embed(), view=view)
+            view.message = msg
 
     # ── Basic RNG ────────────────────────────────────────────────────────────
 
@@ -542,6 +643,97 @@ class FunCog(commands.Cog, name="Fun"):
                 return await ctx.send(f"{stages[6]}\n💀 **Game Over!** The word was **{secret}**.")
                 
             await ctx.send(f"{stages[6-lives]}\nWord: `{disp}`\nGuessed: {', '.join(sorted(guessed))}")
+
+    # ── Direct Top-Level Text Commands ──────────────────────────────────────────
+
+    @commands.command(name="8ball", aliases=["8b"], description="Ask the magic 8-ball a question.")
+    async def top_eightball(self, ctx: commands.Context, *, question: str):
+        await self.eightball(ctx, question=question)
+
+    @commands.command(name="compliment", description="Send a compliment to a member.")
+    async def top_compliment(self, ctx: commands.Context, user: discord.Member):
+        await self.compliment(ctx, user)
+
+    @commands.command(name="roast", description="Send a harmless roast to a member.")
+    async def top_roast(self, ctx: commands.Context, user: discord.Member):
+        await self.roast(ctx, user)
+
+    @commands.command(name="dare", description="Get a random dare challenge.")
+    async def top_dare(self, ctx: commands.Context):
+        await self.dare(ctx)
+
+    @commands.command(name="truth", description="Get a random truth question.")
+    async def top_truth(self, ctx: commands.Context):
+        await self.truth(ctx)
+
+    @commands.command(name="wouldyourather", aliases=["wyr"], description="Get a Would You Rather scenario.")
+    async def top_wouldyourather(self, ctx: commands.Context):
+        await self.wouldyourather(ctx)
+
+    @commands.command(name="rate", description="Rate something out of 100.")
+    async def top_rate(self, ctx: commands.Context, *, thing: str):
+        await self.rate(ctx, thing=thing)
+
+    @commands.command(name="ship", description="Calculate ship compatibility between two users.")
+    async def top_ship(self, ctx: commands.Context, user1: discord.Member, user2: discord.Member):
+        await self.ship(ctx, user1, user2)
+
+    @commands.command(name="dice", aliases=["roll"], description="Roll one or more dice.")
+    async def top_dice(self, ctx: commands.Context, sides: int = 6, count: int = 1):
+        await self.dice(ctx, sides, count)
+
+    @commands.command(name="ascii", description="Convert text into ASCII art.")
+    async def top_ascii_text(self, ctx: commands.Context, *, text: str):
+        await self.ascii_text(ctx, text=text)
+
+    @commands.command(name="emojify", description="Convert text to regional indicator emojis.")
+    async def top_emojify(self, ctx: commands.Context, *, text: str):
+        await self.emojify(ctx, text=text)
+
+    @commands.command(name="mock", description="MoCk AnY tExT lIkE tHiS.")
+    async def top_mock(self, ctx: commands.Context, *, text: str):
+        await self.mock(ctx, text=text)
+
+    @commands.command(name="reverse", description="Reverse input text.")
+    async def top_reverse(self, ctx: commands.Context, *, text: str):
+        await self.reverse(ctx, text=text)
+
+    @commands.command(name="joke", description="Get a random joke.")
+    async def top_joke(self, ctx: commands.Context, category: str = "Any"):
+        await self.joke(ctx, category)
+
+    @commands.command(name="fact", description="Get a random fact.")
+    async def top_fact(self, ctx: commands.Context):
+        await self.fact(ctx)
+
+    @commands.command(name="quote", description="Get a random quote.")
+    async def top_quote(self, ctx: commands.Context):
+        await self.quote(ctx)
+
+    @commands.command(name="meme", description="Get a random meme from Reddit.")
+    async def top_meme(self, ctx: commands.Context, subreddit: str = None):
+        await self.meme(ctx, subreddit)
+
+    @commands.command(name="rps", description="Play Rock Paper Scissors.")
+    async def top_rps(self, ctx: commands.Context, choice: str):
+        await self.rps(ctx, choice)
+
+    @commands.command(name="tictactoe", aliases=["ttt"], description="Play TicTacToe with another user.")
+    async def top_tictactoe(self, ctx: commands.Context, user: discord.Member):
+        await self.tictactoe(ctx, user)
+
+    @commands.command(name="trivia", description="Answer a trivia question.")
+    async def top_trivia(self, ctx: commands.Context):
+        await self.trivia(ctx)
+
+    @commands.command(name="wordle", description="Play Wordle in Discord.")
+    async def top_wordle(self, ctx: commands.Context):
+        await self.wordle(ctx)
+
+    @commands.command(name="hangman", description="Play Hangman in Discord.")
+    async def top_hangman(self, ctx: commands.Context):
+        await self.hangman(ctx)
+
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(FunCog(bot))

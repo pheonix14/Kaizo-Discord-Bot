@@ -116,7 +116,28 @@ class LevelingCog(commands.Cog, name="Leveling"):
                     description=f"Congratulations {message.author.mention}, you reached level **{new_level}**!\n\nAs a reward, you received **{reward:,}** 🪙 coins!{role_awarded_text}", 
                     color=discord.Color.gold()
                 )
-                await message.channel.send(embed=embed)
+                
+                # Determine where to send the level-up message
+                level_up_channel_setting = settings.get("level_up_channel", "")
+                
+                if level_up_channel_setting == "dm":
+                    # DM the user
+                    try:
+                        await message.author.send(embed=embed)
+                    except discord.Forbidden:
+                        # Fall back to same channel if DMs are closed
+                        await message.channel.send(embed=embed)
+                elif level_up_channel_setting and level_up_channel_setting != "":
+                    # Send to specific channel by ID
+                    target_channel = message.guild.get_channel(int(level_up_channel_setting))
+                    if target_channel:
+                        await target_channel.send(embed=embed)
+                    else:
+                        # Channel not found, fall back to same channel
+                        await message.channel.send(embed=embed)
+                else:
+                    # Default: same channel where user chatted
+                    await message.channel.send(embed=embed)
             except discord.Forbidden:
                 pass
 

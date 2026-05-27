@@ -12,16 +12,16 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 
 async def get_dynamic_prefix(bot, message):
     if not message.guild:
-        prefixes = ["k!", "!"]
+        prefixes = ["k!", "!", ".", "/"]
     else:
         settings = db_client.get_guild_settings(message.guild.id)
-        prefix_val = settings.get("prefix", "k!, !")
+        prefix_val = settings.get("prefix", "k!, !, ., /")
         if isinstance(prefix_val, list):
             prefixes = prefix_val
         elif isinstance(prefix_val, str):
             prefixes = [p.strip() for p in prefix_val.split(",") if p.strip()]
         else:
-            prefixes = ["k!", "!"]
+            prefixes = ["k!", "!", ".", "/"]
     return commands.when_mentioned_or(*prefixes)(bot, message)
 
 class KaizerBot(commands.Bot):

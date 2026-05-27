@@ -86,12 +86,127 @@ class BlackjackView(discord.ui.View):
         await self.update_message(interaction, game_over=True)
 
 
+class EconomyHelpView(discord.ui.View):
+    def __init__(self, author_id: int):
+        super().__init__(timeout=60.0)
+        self.author_id = author_id
+        self.current_page = 0
+        
+        self.pages = [
+            # Page 1
+            {
+                "title": "🪙 KAIZER K5 - Basic Economy (Page 1/4)",
+                "description": "Manage your wallet, check balances, transfer funds, or view the richest members.",
+                "fields": [
+                    {"name": "• balance [user]", "value": "Check your or another member's current balance.\n*Aliases:* `money`, `bal`\n*Usage:* `.bal @User` or `/balance user:@User`"},
+                    {"name": "• deposit <amount>", "value": "Deposit coins from your wallet into your bank.\n*Aliases:* `dep`\n*Usage:* `.deposit 500` or `.dep all` or `/deposit amount:500`"},
+                    {"name": "• withdraw <amount>", "value": "Withdraw coins from your bank into your wallet.\n*Aliases:* `with`\n*Usage:* `.withdraw 500` or `.with all` or `/withdraw amount:500`"},
+                    {"name": "• transfer <user> <amount>", "value": "Send coins directly from your wallet to another user.\n*Aliases:* `pay`, `send`\n*Usage:* `.transfer @User 1000` or `/transfer user:@User amount:1000`"},
+                    {"name": "• leaderboard", "value": "View the richest server members.\n*Aliases:* `lb`, `rich`\n*Usage:* `.leaderboard` or `/leaderboard`"}
+                ]
+            },
+            # Page 2
+            {
+                "title": "💼 KAIZER K5 - Income & Earning (Page 2/4)",
+                "description": "Earn coins through jobs, daily payouts, hunting, fishing, mining, and mini-games.",
+                "fields": [
+                    {"name": "• daily / weekly / monthly", "value": "Claim free periodic coin rewards.\n*Usage:* `.daily`, `.weekly`, `.monthly`"},
+                    {"name": "• work", "value": "Work a random job to earn coins.\n*Usage:* `.work`"},
+                    {"name": "• crime", "value": "Commit a crime for high rewards, but risk a fine.\n*Usage:* `.crime`"},
+                    {"name": "• rob <user> / bankrob", "value": "Steal coins from a user's wallet or attempt a heist.\n*Usage:* `.rob @User` or `.bankrob`"},
+                    {"name": "• fish / hunt / mine", "value": "Go fishing, hunting, or mining for valuable materials.\n*Usage:* `.fish`, `.hunt`, `.mine`"},
+                    {"name": "• beg", "value": "Beg strangers or bots for spare coins.\n*Usage:* `.beg`"},
+                    {"name": "• search", "value": "Search specific locations for hidden coins.\n*Usage:* `.search`"},
+                    {"name": "• highlow", "value": "Guess if a secret number is higher/lower than a hint number.\n*Aliases:* `hl`\n*Usage:* `.highlow`"}
+                ]
+            },
+            # Page 3
+            {
+                "title": "🎰 KAIZER K5 - Gambling & Shop (Page 3/4)",
+                "description": "Risk your coins in games, buy/sell shop items, and manage your inventory.",
+                "fields": [
+                    {"name": "• gamble <bet>", "value": "50/50 chance to double your bet.\n*Aliases:* `bet`\n*Usage:* `.gamble 100` or `/gamble bet:100`"},
+                    {"name": "• coinflip <heads/tails> <bet>", "value": "Bet on coinflip outcomes.\n*Aliases:* `cf`\n*Usage:* `.cf heads 100`"},
+                    {"name": "• slots <bet>", "value": "Play the slot machine.\n*Aliases:* `slot`\n*Usage:* `.slots 100`"},
+                    {"name": "• blackjack <bet>", "value": "Play blackjack against the dealer.\n*Aliases:* `bj`\n*Usage:* `.bj 100`"},
+                    {"name": "• shop", "value": "Browse the server shop.\n*Usage:* `.shop`"},
+                    {"name": "• buy <[qty] item> / sell <[qty] item>", "value": "Buy items from the shop or sell inventory items at half price.\n*Usage:* `.buy 5 apple`, `.sell apple`"},
+                    {"name": "• inventory [user]", "value": "View your inventory items.\n*Aliases:* `inv`\n*Usage:* `.inv`"},
+                    {"name": "• trade <user> <[qty] item>", "value": "Gift inventory items to another member.\n*Aliases:* `gift`\n*Usage:* `.trade @User apple`"},
+                    {"name": "• use <item> / equip <item> / unequip <item>", "value": "Consume items or equip/unequip equippable roles.\n*Usage:* `.use apple`, `.equip Member role`"}
+                ]
+            },
+            # Page 4
+            {
+                "title": "⚙️ KAIZER K5 - Admin Controls (Page 4/4)",
+                "description": "Server administrator economy configurations. Requires administrator permissions.",
+                "fields": [
+                    {"name": "• give <user> <amount>", "value": "Add coins to a user's wallet.\n*Usage:* `.give @User 5000` or `/give user:@User amount:5000`"},
+                    {"name": "• remove <user> <amount>", "value": "Remove coins from a user's wallet.\n*Usage:* `.remove @User 5000` or `/remove user:@User amount:5000`"},
+                    {"name": "• reset <user>", "value": "Reset a user's economy database record completely.\n*Usage:* `.reset @User`"},
+                    {"name": "• additem <name> <price> [emoji] [desc]", "value": "Add a new item to the server shop.\n*Usage:* `.additem Apple 100 🍎 \"A sweet fruit\"`"},
+                    {"name": "• removeitem <name>", "value": "Remove an item from the server shop.\n*Usage:* `.removeitem Apple`"}
+                ]
+            }
+        ]
+
+    def make_embed(self) -> discord.Embed:
+        page_data = self.pages[self.current_page]
+        embed = discord.Embed(
+            title=page_data["title"],
+            description=page_data["description"],
+            color=0xF1C40F
+        )
+        for f in page_data["fields"]:
+            embed.add_field(name=f["name"], value=f["value"], inline=False)
+        embed.set_footer(text="KAIZER K5 • Use the buttons below to navigate pages")
+        return embed
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the person who ran the command can use these buttons.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        # Disable all buttons on timeout
+        for item in self.children:
+            item.disabled = True
+        try:
+            if hasattr(self, 'message') and self.message:
+                await self.message.edit(view=self)
+        except:
+            pass
+
+    @discord.ui.button(label="◀ Previous", style=discord.ButtonStyle.primary)
+    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page > 0:
+            self.current_page -= 1
+        else:
+            self.current_page = len(self.pages) - 1
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.secondary)
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page < len(self.pages) - 1:
+            self.current_page += 1
+        else:
+            self.current_page = 0
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+
 class EconomyCog(commands.Cog, name="Economy"):
     """Economy and currency commands."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
         self.command_rewards_cooldown = {}
+
+    @commands.hybrid_command(name="economy", description="List all economy commands.")
+    async def economy(self, ctx: commands.Context):
+        view = EconomyHelpView(ctx.author.id)
+        msg = await ctx.send(embed=view.make_embed(), view=view)
+        view.message = msg
 
     @commands.Cog.listener()
     async def on_command_completion(self, ctx: commands.Context):

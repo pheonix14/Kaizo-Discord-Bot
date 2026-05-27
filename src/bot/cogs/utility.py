@@ -67,6 +67,119 @@ def safe_eval(expr):
         return "Invalid expression."
 
 
+class UtilityHelpView(discord.ui.View):
+    def __init__(self, author_id: int):
+        super().__init__(timeout=60.0)
+        self.author_id = author_id
+        self.current_page = 0
+        
+        self.pages = [
+            # Page 1
+            {
+                "title": "⚙️ KAIZER K5 - Utility Help (Page 1/4)",
+                "description": "General purpose utility commands. Available using `.` or `/` prefix.",
+                "fields": [
+                    {"name": "• ping", "value": "Show bot WebSocket latency.\n*Usage:* `.ping` or `/ping`"},
+                    {"name": "• calc <expression>", "value": "Safely evaluate a math expression.\n*Usage:* `.calc 5+5`"},
+                    {"name": "• color <hex_code>", "value": "Preview a hex color code.\n*Usage:* `.color #ff0000`"},
+                    {"name": "• charinfo <character>", "value": "Show info about a unicode character.\n*Usage:* `.charinfo 🔍`"},
+                    {"name": "• snipe", "value": "Show the last deleted message in the channel.\n*Usage:* `.snipe`"},
+                    {"name": "• editsnipe", "value": "Show the last edited message in the channel.\n*Usage:* `.editsnipe`"},
+                    {"name": "• weather <city>", "value": "Check current weather for a city.\n*Usage:* `.weather London`"},
+                    {"name": "• translate <lang> <text>", "value": "Translate text using Google Translate.\n*Usage:* `.translate es Hello`"},
+                    {"name": "• qr <text>", "value": "Generate a QR code from text or URL.\n*Usage:* `.qr https://google.com`"},
+                    {"name": "• paste <text>", "value": "Create a Hastebin-style paste link.\n*Usage:* `.paste my text`"}
+                ]
+            },
+            # Page 2
+            {
+                "title": "⏱️ KAIZER K5 - Reminders & Timers (Page 2/4)",
+                "description": "Timers, notifications, and interactive announcement commands.",
+                "fields": [
+                    {"name": "• reminder <minutes> <message>", "value": "Set a personal reminder that DMs you.\n*Usage:* `.reminder 10 buy milk`"},
+                    {"name": "• reminders", "value": "List your active reminders.\n*Usage:* `.reminders`"},
+                    {"name": "• announce <channel> <message>", "value": "Send an announcement embed to a channel.\n*Permissions Required:* `Manage Messages`"},
+                    {"name": "• say <message>", "value": "Make the bot say something and delete your message.\n*Permissions Required:* `Manage Messages`"},
+                    {"name": "• timestamp", "value": "Generate Discord timestamp codes for current time.\n*Usage:* `.timestamp`"},
+                    {"name": "• time", "value": "Show the current time in UTC.\n*Usage:* `.time`"},
+                    {"name": "• afk [reason]", "value": "Set your AFK status to notify people who mention you.\n*Usage:* `.afk eating`"},
+                    {"name": "• poll <question> <opt1> <opt2> [opt3] [opt4]", "value": "Create a simple reaction-based poll.\n*Usage:* `.poll \"game?\" \"Valorant\" \"Minecraft\"`"},
+                    {"name": "• countdown <event> <days>", "value": "Create a countdown timer embed for an event.\n*Usage:* `.countdown birthday 5`"}
+                ]
+            },
+            # Page 3
+            {
+                "title": "📊 KAIZER K5 - Info Lookup (Page 3/4)",
+                "description": "Lookup stats and details about users, channels, roles, and emojis.",
+                "fields": [
+                    {"name": "• bot", "value": "Show detailed stats, ping, and framework info of KAIZER K5.\n*Usage:* `.bot`"},
+                    {"name": "• server", "value": "Get detailed info and stats about this server.\n*Usage:* `.server`"},
+                    {"name": "• user [user]", "value": "Get detailed info, join dates, and roles of a member.\n*Usage:* `.user @User`"},
+                    {"name": "• channel [channel]", "value": "Get info and settings of a text or voice channel.\n*Usage:* `.channel #general`"},
+                    {"name": "• role <role>", "value": "Get details, color, members count, and creation date of a role.\n*Usage:* `.role @Member`"},
+                    {"name": "• emoji <emoji>", "value": "Get details and direct image link of a custom emoji.\n*Usage:* `.emoji :happy:`"}
+                ]
+            },
+            # Page 4
+            {
+                "title": "🛠️ KAIZER K5 - Extra Tools (Page 4/4)",
+                "description": "Profile media, asset management, and extra commands.",
+                "fields": [
+                    {"name": "• avatar [user]", "value": "Get a user's full-size avatar image and link.\n*Usage:* `.avatar @User`"},
+                    {"name": "• banner [user]", "value": "Get a user's profile banner image and link.\n*Usage:* `.banner @User`"},
+                    {"name": "• servericon", "value": "Get the server's icon image and link.\n*Usage:* `.servericon`"},
+                    {"name": "• serverbanner", "value": "Get the server's banner image and link.\n*Usage:* `.serverbanner`"},
+                    {"name": "• firstmsg [channel]", "value": "Get a direct jump link to the first message in a channel.\n*Usage:* `.firstmsg #general`"},
+                    {"name": "• steal <emoji> [name]", "value": "Steal an emoji from another server and add it here.\n*Permissions Required:* `Manage Expressions`"}
+                ]
+            }
+        ]
+
+    def make_embed(self) -> discord.Embed:
+        page_data = self.pages[self.current_page]
+        embed = discord.Embed(
+            title=page_data["title"],
+            description=page_data["description"],
+            color=0x3498DB
+        )
+        for f in page_data["fields"]:
+            embed.add_field(name=f["name"], value=f["value"], inline=False)
+        embed.set_footer(text="KAIZER K5 • Use the buttons below to navigate pages")
+        return embed
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the person who ran the command can use these buttons.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        # Disable all buttons on timeout
+        for item in self.children:
+            item.disabled = True
+        try:
+            if hasattr(self, 'message') and self.message:
+                await self.message.edit(view=self)
+        except:
+            pass
+
+    @discord.ui.button(label="◀ Previous", style=discord.ButtonStyle.primary)
+    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page > 0:
+            self.current_page -= 1
+        else:
+            self.current_page = len(self.pages) - 1
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.secondary)
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page < len(self.pages) - 1:
+            self.current_page += 1
+        else:
+            self.current_page = 0
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+
 class UtilityCog(commands.Cog, name="Utility"):
     """General-purpose utility commands for server members."""
 
@@ -76,10 +189,12 @@ class UtilityCog(commands.Cog, name="Utility"):
         self.editsnipe_cache = {} # channel_id -> (old_content, author, avatar, time)
         self.reminders = []
 
-    @commands.hybrid_group(name="util", description="Utility commands.", fallback="help")
+    @commands.hybrid_group(name="util", aliases=["utility"], description="Utility commands.", fallback="help")
     async def util(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx.command)
+            view = UtilityHelpView(ctx.author.id)
+            msg = await ctx.send(embed=view.make_embed(), view=view)
+            view.message = msg
             
     @commands.hybrid_group(name="tools", description="Extra tools commands.", fallback="help")
     async def tools(self, ctx: commands.Context):
@@ -109,9 +224,9 @@ class UtilityCog(commands.Cog, name="Utility"):
             "time": discord.utils.utcnow()
         }
 
-    # ── Basic Utility ──────────────────────────────────────────────────────
+    # ── Basic Utility (Top-Level & Subcommands) ──────────────────────────────
 
-    @util.command(name="ping", description="Show bot latency.")
+    @commands.command(name="ping", description="Show bot latency.")
     async def ping(self, ctx: commands.Context):
         latency = round(self.bot.latency * 1000)
         embed = discord.Embed(title="Pong!", color=0x3498DB)
@@ -119,8 +234,11 @@ class UtilityCog(commands.Cog, name="Utility"):
         embed.set_footer(text="KAIZER K5")
         await ctx.send(embed=embed)
 
-    @util.command(name="calc", description="Safely evaluate a math expression.")
-    @app_commands.describe(expression="The math expression (e.g. 5+5)")
+    @util.command(name="ping", description="Show bot latency.")
+    async def util_ping(self, ctx: commands.Context):
+        await self.ping(ctx)
+
+    @commands.command(name="calc", description="Safely evaluate a math expression.")
     async def calc(self, ctx: commands.Context, *, expression: str):
         result = safe_eval(expression)
         embed = discord.Embed(title="Calculator", color=0x3498DB)
@@ -128,8 +246,12 @@ class UtilityCog(commands.Cog, name="Utility"):
         embed.add_field(name="Result", value=f"```\n{result}\n```", inline=False)
         await ctx.send(embed=embed)
 
-    @util.command(name="color", description="Show a color preview.")
-    @app_commands.describe(hex_code="The hex color code (e.g. #FF0000)")
+    @util.command(name="calc", description="Safely evaluate a math expression.")
+    @app_commands.describe(expression="The math expression (e.g. 5+5)")
+    async def util_calc(self, ctx: commands.Context, *, expression: str):
+        await self.calc(ctx, expression=expression)
+
+    @commands.command(name="color", description="Show a color preview.")
     async def color(self, ctx: commands.Context, hex_code: str):
         hex_code = hex_code.strip('#')
         if len(hex_code) != 6:
@@ -146,7 +268,12 @@ class UtilityCog(commands.Cog, name="Utility"):
         embed.set_thumbnail(url=f"https://singlecolorimage.com/get/{hex_code}/200x200")
         await ctx.send(embed=embed)
 
-    @util.command(name="charinfo", description="Show info about a unicode character.")
+    @util.command(name="color", description="Show a color preview.")
+    @app_commands.describe(hex_code="The hex color code (e.g. #FF0000)")
+    async def util_color(self, ctx: commands.Context, hex_code: str):
+        await self.color(ctx, hex_code=hex_code)
+
+    @commands.command(name="charinfo", description="Show info about a unicode character.")
     async def charinfo(self, ctx: commands.Context, character: str):
         if len(character) > 10:
             return await ctx.send("Please provide fewer characters.")
@@ -161,9 +288,13 @@ class UtilityCog(commands.Cog, name="Utility"):
             lines.append(f"`{c}` - **{name}** ({code})")
         await ctx.send("\n".join(lines))
 
-    # ── Snipe ──────────────────────────────────────────────────────────────
+    @util.command(name="charinfo", description="Show info about a unicode character.")
+    async def util_charinfo(self, ctx: commands.Context, character: str):
+        await self.charinfo(ctx, character=character)
 
-    @util.command(name="snipe", description="Show the last deleted message.")
+    # ── Snipe (Top-Level & Subcommands) ────────────────────────────────────
+
+    @commands.command(name="snipe", description="Show the last deleted message.")
     async def snipe(self, ctx: commands.Context):
         data = self.snipe_cache.get(ctx.channel.id)
         if not data:
@@ -173,7 +304,11 @@ class UtilityCog(commands.Cog, name="Utility"):
         embed.set_footer(text="Deleted message")
         await ctx.send(embed=embed)
 
-    @util.command(name="editsnipe", description="Show the last edited message before its edit.")
+    @util.command(name="snipe", description="Show the last deleted message.")
+    async def util_snipe(self, ctx: commands.Context):
+        await self.snipe(ctx)
+
+    @commands.command(name="editsnipe", description="Show the last edited message before its edit.")
     async def editsnipe(self, ctx: commands.Context):
         data = self.editsnipe_cache.get(ctx.channel.id)
         if not data:
@@ -183,9 +318,13 @@ class UtilityCog(commands.Cog, name="Utility"):
         embed.set_footer(text="Original message before edit")
         await ctx.send(embed=embed)
 
-    # ── APIs (Weather, Translate, Paste, QR) ───────────────────────────────
+    @util.command(name="editsnipe", description="Show the last edited message before its edit.")
+    async def util_editsnipe(self, ctx: commands.Context):
+        await self.editsnipe(ctx)
 
-    @util.command(name="weather", description="Check current weather for a city.")
+    # ── APIs (Weather, Translate, Paste, QR) (Top-Level & Subcommands) ──────
+
+    @commands.command(name="weather", description="Check current weather for a city.")
     async def weather(self, ctx: commands.Context, *, city: str):
         url = f"https://wttr.in/{urllib.parse.quote(city)}?format=j1"
         try:
@@ -207,8 +346,11 @@ class UtilityCog(commands.Cog, name="Utility"):
         except Exception:
             await ctx.send("Error fetching weather.")
 
-    @util.command(name="translate", description="Translate text using Google Translate.")
-    @app_commands.describe(lang="Target language code (e.g. 'en', 'es', 'fr')", text="Text to translate")
+    @util.command(name="weather", description="Check current weather for a city.")
+    async def util_weather(self, ctx: commands.Context, *, city: str):
+        await self.weather(ctx, city=city)
+
+    @commands.command(name="translate", description="Translate text using Google Translate.")
     async def translate(self, ctx: commands.Context, lang: str, *, text: str):
         url = f"https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl={lang}&dt=t&q={urllib.parse.quote(text)}"
         try:
@@ -227,14 +369,23 @@ class UtilityCog(commands.Cog, name="Utility"):
         except Exception:
             await ctx.send("Error translating text.")
 
-    @util.command(name="qr", description="Generate a QR code from text or URL.")
+    @util.command(name="translate", description="Translate text using Google Translate.")
+    @app_commands.describe(lang="Target language code (e.g. 'en', 'es', 'fr')", text="Text to translate")
+    async def util_translate(self, ctx: commands.Context, lang: str, *, text: str):
+        await self.translate(ctx, lang=lang, text=text)
+
+    @commands.command(name="qr", description="Generate a QR code from text or URL.")
     async def qr(self, ctx: commands.Context, *, text: str):
         url = f"https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={urllib.parse.quote(text)}"
         embed = discord.Embed(title="QR Code", color=0x3498DB)
         embed.set_image(url=url)
         await ctx.send(embed=embed)
 
-    @util.command(name="paste", description="Create a hastebin-style paste.")
+    @util.command(name="qr", description="Generate a QR code from text or URL.")
+    async def util_qr(self, ctx: commands.Context, *, text: str):
+        await self.qr(ctx, text=text)
+
+    @commands.command(name="paste", description="Create a hastebin-style paste.")
     async def paste(self, ctx: commands.Context, *, text: str):
         try:
             async with aiohttp.ClientSession() as session:
@@ -247,10 +398,13 @@ class UtilityCog(commands.Cog, name="Utility"):
         except Exception:
             await ctx.send("Error connecting to paste service.")
 
-    # ── Reminders ──────────────────────────────────────────────────────────
+    @util.command(name="paste", description="Create a hastebin-style paste.")
+    async def util_paste(self, ctx: commands.Context, *, text: str):
+        await self.paste(ctx, text=text)
 
-    @util.command(name="reminder", description="Set a personal reminder.")
-    @app_commands.describe(minutes="Minutes to wait", message="What to remind you about")
+    # ── Reminders (Top-Level & Subcommands) ────────────────────────────────
+
+    @commands.command(name="reminder", description="Set a personal reminder.")
     async def reminder(self, ctx: commands.Context, minutes: int, *, message: str):
         if minutes <= 0:
             return await ctx.send("Time must be greater than 0.")
@@ -260,8 +414,6 @@ class UtilityCog(commands.Cog, name="Utility"):
         future_time = discord.utils.utcnow() + datetime.timedelta(minutes=minutes)
         await ctx.send(f"✅ I will remind you: **{message}** (in {minutes} minutes).")
         
-        # Simple memory reminder using asyncio
-        # (In a production bot with restarts, we'd save this to DB)
         self.reminders.append({"user": ctx.author.id, "time": future_time, "message": message})
         
         async def wait_and_remind():
@@ -273,7 +425,12 @@ class UtilityCog(commands.Cog, name="Utility"):
                 
         self.bot.loop.create_task(wait_and_remind())
 
-    @util.command(name="reminders", description="List your active reminders.")
+    @util.command(name="reminder", description="Set a personal reminder.")
+    @app_commands.describe(minutes="Minutes to wait", message="What to remind you about")
+    async def util_reminder(self, ctx: commands.Context, minutes: int, *, message: str):
+        await self.reminder(ctx, minutes=minutes, message=message)
+
+    @commands.command(name="reminders", description="List your active reminders.")
     async def reminders(self, ctx: commands.Context):
         active = [r for r in self.reminders if r["user"] == ctx.author.id and r["time"] > discord.utils.utcnow()]
         if not active:
@@ -286,9 +443,13 @@ class UtilityCog(commands.Cog, name="Utility"):
             
         await ctx.send(embed=discord.Embed(title="Your Reminders", description=desc, color=0x3498DB))
 
-    # ── Moderation/Admin Utilities ─────────────────────────────────────────
+    @util.command(name="reminders", description="List your active reminders.")
+    async def util_reminders(self, ctx: commands.Context):
+        await self.reminders(ctx)
 
-    @util.command(name="announce", description="Send an announcement embed.")
+    # ── Announcement/Say (Top-Level & Subcommands) ──────────────────────────
+
+    @commands.command(name="announce", description="Send an announcement embed.")
     @commands.has_permissions(manage_messages=True)
     async def announce(self, ctx: commands.Context, channel: discord.TextChannel, *, message: str):
         embed = discord.Embed(title="📢 Announcement", description=message, color=0x3498DB)
@@ -299,25 +460,36 @@ class UtilityCog(commands.Cog, name="Utility"):
         except discord.Forbidden:
             await ctx.send("I don't have permission to send messages in that channel.")
 
-    @util.command(name="say", description="Make the bot say something.")
+    @util.command(name="announce", description="Send an announcement embed.")
+    @commands.has_permissions(manage_messages=True)
+    async def util_announce(self, ctx: commands.Context, channel: discord.TextChannel, *, message: str):
+        await self.announce(ctx, channel=channel, message=message)
+
+    @commands.command(name="say", description="Make the bot say something.")
     @commands.has_permissions(manage_messages=True)
     async def say(self, ctx: commands.Context, *, message: str):
         try: await ctx.message.delete()
         except: pass
         await ctx.send(message)
 
+    @util.command(name="say", description="Make the bot say something.")
+    @commands.has_permissions(manage_messages=True)
+    async def util_say(self, ctx: commands.Context, *, message: str):
+        await self.say(ctx, message=message)
+
     @app_commands.command(name="embed", description="Launch an interactive embed builder.")
     @app_commands.default_permissions(manage_messages=True)
     async def embed_builder(self, interaction: discord.Interaction):
         await interaction.response.send_modal(EmbedBuilderModal())
 
-    # ── Info Commands ──────────────────────────────────────────────────────
+    # ── Info Commands (Group & Subcommands & Top Level) ─────────────────────
 
     @commands.hybrid_group(name="info", description="Get info about various entities.", fallback="help")
     async def info(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
             await ctx.send_help(ctx.command)
 
+    # Info subcommands actual implementations
     @info.command(name="bot", description="Show detailed bot info.")
     async def info_bot(self, ctx: commands.Context):
         embed = discord.Embed(title="KAIZER K5 — Bot Info", color=0x2C2F33)
@@ -388,14 +560,45 @@ class UtilityCog(commands.Cog, name="Utility"):
         embed.add_field(name="Created", value=discord.utils.format_dt(emoji.created_at, "R"), inline=True)
         await ctx.send(embed=embed)
 
-    @tools.command(name="avatar", description="Get a user's full-size avatar.")
+    # Info top-level delegating commands (Text Commands)
+    @commands.command(name="bot", description="Show detailed bot info.")
+    async def top_bot(self, ctx: commands.Context):
+        await self.info_bot(ctx)
+
+    @commands.command(name="server", description="Get detailed info about the server.")
+    async def top_server(self, ctx: commands.Context):
+        await self.info_server(ctx)
+
+    @commands.command(name="user", description="Get detailed info about a user.")
+    async def top_user(self, ctx: commands.Context, user: discord.Member = None):
+        await self.info_user(ctx, user=user)
+
+    @commands.command(name="channel", description="Get info about a channel.")
+    async def top_channel(self, ctx: commands.Context, channel: discord.abc.GuildChannel = None):
+        await self.info_channel(ctx, channel=channel)
+
+    @commands.command(name="role", description="Get info about a role.")
+    async def top_role(self, ctx: commands.Context, role: discord.Role):
+        await self.info_role(ctx, role=role)
+
+    @commands.command(name="emoji", description="Get info about a custom emoji.")
+    async def top_emoji(self, ctx: commands.Context, emoji: discord.Emoji):
+        await self.info_emoji(ctx, emoji=emoji)
+
+    # ── Extra Tools (Top-Level & Subcommands) ──────────────────────────────
+
+    @commands.command(name="avatar", description="Get a user's full-size avatar.")
     async def avatar(self, ctx: commands.Context, user: discord.Member = None):
         user = user or ctx.author
         embed = discord.Embed(title=f"{user.display_name}'s Avatar", color=user.color or 0x3498DB)
         embed.set_image(url=user.display_avatar.replace(size=1024).url)
         await ctx.send(embed=embed)
 
-    @tools.command(name="banner", description="Get a user's profile banner.")
+    @tools.command(name="avatar", description="Get a user's full-size avatar.")
+    async def tools_avatar(self, ctx: commands.Context, user: discord.Member = None):
+        await self.avatar(ctx, user=user)
+
+    @commands.command(name="banner", description="Get a user's profile banner.")
     async def banner(self, ctx: commands.Context, user: discord.Member = None):
         user = user or ctx.author
         fetched = await self.bot.fetch_user(user.id)
@@ -405,7 +608,11 @@ class UtilityCog(commands.Cog, name="Utility"):
         embed.set_image(url=fetched.banner.replace(size=1024).url)
         await ctx.send(embed=embed)
 
-    @tools.command(name="servericon", description="Get the server's icon.")
+    @tools.command(name="banner", description="Get a user's profile banner.")
+    async def tools_banner(self, ctx: commands.Context, user: discord.Member = None):
+        await self.banner(ctx, user=user)
+
+    @commands.command(name="servericon", description="Get the server's icon.")
     async def servericon(self, ctx: commands.Context):
         if not ctx.guild.icon:
             return await ctx.send(embed=discord.Embed(description="This server has no icon.", color=0xE74C3C))
@@ -413,7 +620,11 @@ class UtilityCog(commands.Cog, name="Utility"):
         embed.set_image(url=ctx.guild.icon.replace(size=1024).url)
         await ctx.send(embed=embed)
 
-    @tools.command(name="serverbanner", description="Get the server's banner.")
+    @tools.command(name="servericon", description="Get the server's icon.")
+    async def tools_servericon(self, ctx: commands.Context):
+        await self.servericon(ctx)
+
+    @commands.command(name="serverbanner", description="Get the server's banner.")
     async def serverbanner(self, ctx: commands.Context):
         if not ctx.guild.banner:
             return await ctx.send(embed=discord.Embed(description="This server has no banner.", color=0xE74C3C))
@@ -421,7 +632,11 @@ class UtilityCog(commands.Cog, name="Utility"):
         embed.set_image(url=ctx.guild.banner.replace(size=1024).url)
         await ctx.send(embed=embed)
 
-    @tools.command(name="firstmsg", description="Get a link to the first message in the channel.")
+    @tools.command(name="serverbanner", description="Get the server's banner.")
+    async def tools_serverbanner(self, ctx: commands.Context):
+        await self.serverbanner(ctx)
+
+    @commands.command(name="firstmsg", description="Get a link to the first message in the channel.")
     async def firstmsg(self, ctx: commands.Context, channel: discord.TextChannel = None):
         channel = channel or ctx.channel
         try:
@@ -432,7 +647,11 @@ class UtilityCog(commands.Cog, name="Utility"):
         except Exception:
             await ctx.send("Could not fetch message history.")
 
-    @tools.command(name="timestamp", description="Generate Discord timestamps.")
+    @tools.command(name="firstmsg", description="Get a link to the first message in the channel.")
+    async def tools_firstmsg(self, ctx: commands.Context, channel: discord.TextChannel = None):
+        await self.firstmsg(ctx, channel=channel)
+
+    @commands.command(name="timestamp", description="Generate Discord timestamps.")
     async def timestamp(self, ctx: commands.Context):
         now = discord.utils.utcnow()
         t = int(now.timestamp())
@@ -447,18 +666,28 @@ class UtilityCog(commands.Cog, name="Utility"):
         )
         await ctx.send(embed=discord.Embed(title="Timestamp Formats (Current Time)", description=desc, color=0x3498DB))
 
-    @tools.command(name="time", description="Show the current time (UTC).")
+    @tools.command(name="timestamp", description="Generate Discord timestamps.")
+    async def tools_timestamp(self, ctx: commands.Context):
+        await self.timestamp(ctx)
+
+    @commands.command(name="time", description="Show the current time (UTC).")
     async def time(self, ctx: commands.Context):
         now = discord.utils.utcnow()
         await ctx.send(f"The current time in UTC is: **{now.strftime('%Y-%m-%d %H:%M:%S')}**")
 
-    @tools.command(name="afk", description="Set your AFK status.")
+    @tools.command(name="time", description="Show the current time (UTC).")
+    async def tools_time(self, ctx: commands.Context):
+        await self.time(ctx)
+
+    @commands.command(name="afk", description="Set your AFK status.")
     async def afk(self, ctx: commands.Context, *, reason: str = "AFK"):
         await ctx.send(f"✅ I set your AFK: {reason}")
-        # Full AFK intercept logic typically requires a message listener in the engine or utility cog.
-        # This registers the intent. A real implementation would cache this and check mentions.
 
-    @tools.command(name="steal", description="Steal an emoji from another server.")
+    @tools.command(name="afk", description="Set your AFK status.")
+    async def tools_afk(self, ctx: commands.Context, *, reason: str = "AFK"):
+        await self.afk(ctx, reason=reason)
+
+    @commands.command(name="steal", description="Steal an emoji from another server.")
     @commands.has_permissions(manage_expressions=True)
     async def steal(self, ctx: commands.Context, emoji: discord.PartialEmoji, name: str = None):
         name = name or emoji.name
@@ -469,8 +698,12 @@ class UtilityCog(commands.Cog, name="Utility"):
         except Exception as e:
             await ctx.send(f"Failed to steal emoji: {e}")
 
-    @tools.command(name="poll", description="Create a reaction poll.")
-    @app_commands.describe(question="The poll question", opt1="Option 1", opt2="Option 2")
+    @tools.command(name="steal", description="Steal an emoji from another server.")
+    @commands.has_permissions(manage_expressions=True)
+    async def tools_steal(self, ctx: commands.Context, emoji: discord.PartialEmoji, name: str = None):
+        await self.steal(ctx, emoji, name)
+
+    @commands.command(name="poll", description="Create a reaction poll.")
     async def poll(self, ctx: commands.Context, question: str, opt1: str, opt2: str, opt3: str = None, opt4: str = None):
         options = [opt1, opt2]
         if opt3: options.append(opt3)
@@ -488,8 +721,12 @@ class UtilityCog(commands.Cog, name="Utility"):
         for i in range(len(options)):
             await msg.add_reaction(emojis[i])
 
-    @tools.command(name="countdown", description="Create a countdown timer.")
-    @app_commands.describe(event="Name of the event", days="Days from now")
+    @tools.command(name="poll", description="Create a reaction poll.")
+    @app_commands.describe(question="The poll question", opt1="Option 1", opt2="Option 2")
+    async def tools_poll(self, ctx: commands.Context, question: str, opt1: str, opt2: str, opt3: str = None, opt4: str = None):
+        await self.poll(ctx, question, opt1, opt2, opt3, opt4)
+
+    @commands.command(name="countdown", description="Create a countdown timer.")
     async def countdown(self, ctx: commands.Context, event: str, days: int):
         future = discord.utils.utcnow() + datetime.timedelta(days=days)
         t = int(future.timestamp())
@@ -497,6 +734,11 @@ class UtilityCog(commands.Cog, name="Utility"):
         embed.add_field(name="Event", value=event, inline=False)
         embed.add_field(name="Time", value=f"<t:{t}:R> (<t:{t}:F>)", inline=False)
         await ctx.send(embed=embed)
+
+    @tools.command(name="countdown", description="Create a countdown timer.")
+    @app_commands.describe(event="Name of the event", days="Days from now")
+    async def tools_countdown(self, ctx: commands.Context, event: str, days: int):
+        await self.countdown(ctx, event, days)
 
 async def setup(bot: commands.Bot):
     await bot.add_cog(UtilityCog(bot))

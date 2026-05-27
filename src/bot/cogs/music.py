@@ -156,6 +156,92 @@ class ServerMusicPlayer:
         return ",".join(active) if active else None
 
 
+class MusicHelpView(discord.ui.View):
+    def __init__(self, author_id: int):
+        super().__init__(timeout=60.0)
+        self.author_id = author_id
+        self.current_page = 0
+        
+        self.pages = [
+            # Page 1
+            {
+                "title": "🎵 KAIZER K5 - Music Playback (Page 1/2)",
+                "description": "Control audio playback in your voice channels.",
+                "fields": [
+                    {"name": "• join", "value": "Make the bot join your current voice channel.\n*Usage:* `.music join` or `/music join`"},
+                    {"name": "• leave", "value": "Disconnect the bot from VC and clear the queue.\n*Usage:* `.music leave` or `/music leave`"},
+                    {"name": "• play <query>", "value": "Play a track from YouTube (searches or direct URL).\n*Usage:* `.music play chill beats`"},
+                    {"name": "• pause / resume", "value": "Pause or resume the current playing track.\n*Usage:* `.music pause`, `.music resume`"},
+                    {"name": "• stop", "value": "Stop playback and clear the guild queue.\n*Usage:* `.music stop`"},
+                    {"name": "• skip", "value": "Skip the currently playing song.\n*Usage:* `.music skip`"},
+                    {"name": "• nowplaying", "value": "Display details about the currently playing song.\n*Aliases:* `np`"},
+                    {"name": "• queue", "value": "List the upcoming tracks in the queue."},
+                    {"name": "• volume <level>", "value": "Adjust the bot playback volume (1-200).\n*Usage:* `.music volume 80`"},
+                    {"name": "• loop <off/song/queue>", "value": "Set loop mode for the current song or entire queue.\n*Usage:* `.music loop song`"}
+                ]
+            },
+            # Page 2
+            {
+                "title": "⚙️ KAIZER K5 - Audio Filters & Download (Page 2/2)",
+                "description": "Apply advanced DSP filters and download songs directly.",
+                "fields": [
+                    {"name": "• 8d <state>", "value": "Toggle the 8D audio rotation filter.\n*Usage:* `.music 8d true`"},
+                    {"name": "• bassboost [level]", "value": "Apply bass boost filter (level 1-30, or 0 to disable).\n*Usage:* `.music bassboost 15`"},
+                    {"name": "• nightcore <state> / vaporwave <state>", "value": "Apply speed/pitch-shifting filters.\n*Usage:* `.music nightcore true`"},
+                    {"name": "• filter_off", "value": "Clear all active audio filters."},
+                    {"name": "• playlist_save <name> / playlist_load <name>", "value": "Save your current queue or load a saved playlist.\n*Usage:* `.music playlist_save mylist`"},
+                    {"name": "• playlist_list", "value": "List all your saved music playlists."},
+                    {"name": "• download <query>", "value": "Search and download any YouTube song directly to Discord as an MP3.\n*Usage:* `.music download lofi hiphop`"},
+                    {"name": "• quality <kbps>", "value": "Set session download audio quality (e.g. 192, 320)."},
+                    {"name": "• search <query>", "value": "Search YouTube for top 5 results and choose which one to play."}
+                ]
+            }
+        ]
+
+    def make_embed(self) -> discord.Embed:
+        page_data = self.pages[self.current_page]
+        embed = discord.Embed(
+            title=page_data["title"],
+            description=page_data["description"],
+            color=0x3498DB
+        )
+        for f in page_data["fields"]:
+            embed.add_field(name=f["name"], value=f["value"], inline=False)
+        embed.set_footer(text="KAIZER K5 • Use the buttons below to navigate pages")
+        return embed
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the person who ran the command can use these buttons.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
+        try:
+            if hasattr(self, 'message') and self.message:
+                await self.message.edit(view=self)
+        except:
+            pass
+
+    @discord.ui.button(label="◀ Previous", style=discord.ButtonStyle.primary)
+    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page > 0:
+            self.current_page -= 1
+        else:
+            self.current_page = len(self.pages) - 1
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.secondary)
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page < len(self.pages) - 1:
+            self.current_page += 1
+        else:
+            self.current_page = 0
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+
 class MusicCog(commands.Cog, name="Music"):
     """Music playback and advanced audio filters."""
 
@@ -200,7 +286,9 @@ class MusicCog(commands.Cog, name="Music"):
     @commands.hybrid_group(name="music", description="Music commands.", fallback="help")
     async def music(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx.command)
+            view = MusicHelpView(ctx.author.id)
+            msg = await ctx.send(embed=view.make_embed(), view=view)
+            view.message = msg
 
     # ── Core Controls ────────────────────────────────────────────────────────
 

@@ -46,6 +46,79 @@ class TicketPanel(discord.ui.View):
         embed = discord.Embed(title="Ticket Support", description="Please describe your issue here. Support staff will be with you shortly.", color=0x3498DB)
         await channel.send(f"Welcome {interaction.user.mention}!", embed=embed, view=TicketView())
 
+class TicketHelpView(discord.ui.View):
+    def __init__(self, author_id: int):
+        super().__init__(timeout=60.0)
+        self.author_id = author_id
+        self.current_page = 0
+        
+        self.pages = [
+            # Page 1
+            {
+                "title": "🎟️ KAIZER K5 - Tickets Overview & Setup (Page 1/2)",
+                "description": "Create support ticket panels in your guild.",
+                "fields": [
+                    {"name": "• ticket setup", "value": "Configure and spawn the Ticket Panel button in the current channel.\n*Permissions Required:* `Administrator`\n*Usage:* `.ticket setup` or `/ticket setup`"},
+                    {"name": "• Panel Button: Create Ticket", "value": "Once setup, members click the blurple **Create Ticket** button. The bot automatically creates a dedicated channel `#ticket-<username>` inside the category **Tickets**."}
+                ]
+            },
+            # Page 2
+            {
+                "title": "🛠️ KAIZER K5 - Ticket Management (Page 2/2)",
+                "description": "Manage access, export, or close the active ticket.",
+                "fields": [
+                    {"name": "• ticket add <member>", "value": "Add a user to the current ticket channel overrides.\n*Permissions Required:* `Manage Channels`\n*Usage:* `.ticket add @Member`"},
+                    {"name": "• ticket remove <member>", "value": "Remove a user from the ticket overrides.\n*Permissions Required:* `Manage Channels`\n*Usage:* `.ticket remove @Member`"},
+                    {"name": "• ticket transcript", "value": "Generate a text file transcript of the last 500 ticket chat logs.\n*Permissions Required:* `Manage Messages`\n*Usage:* `.ticket transcript`"},
+                    {"name": "• ticket close", "value": "Permanently close and delete the ticket channel.\n*Usage:* `.ticket close` or click the red **Close Ticket** button."}
+                ]
+            }
+        ]
+
+    def make_embed(self) -> discord.Embed:
+        page_data = self.pages[self.current_page]
+        embed = discord.Embed(
+            title=page_data["title"],
+            description=page_data["description"],
+            color=0x3498DB
+        )
+        for f in page_data["fields"]:
+            embed.add_field(name=f["name"], value=f["value"], inline=False)
+        embed.set_footer(text="KAIZER K5 • Use the buttons below to navigate pages")
+        return embed
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the person who ran the command can use these buttons.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
+        try:
+            if hasattr(self, 'message') and self.message:
+                await self.message.edit(view=self)
+        except:
+            pass
+
+    @discord.ui.button(label="◀ Previous", style=discord.ButtonStyle.primary)
+    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page > 0:
+            self.current_page -= 1
+        else:
+            self.current_page = len(self.pages) - 1
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.secondary)
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page < len(self.pages) - 1:
+            self.current_page += 1
+        else:
+            self.current_page = 0
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+
 class TicketsCog(commands.Cog, name="Tickets"):
     """Ticket system commands."""
 
@@ -55,7 +128,15 @@ class TicketsCog(commands.Cog, name="Tickets"):
     @commands.hybrid_group(name="ticket", description="Ticket system commands.", fallback="help")
     async def ticket_group(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx.command)
+            view = TicketHelpView(ctx.author.id)
+            msg = await ctx.send(embed=view.make_embed(), view=view)
+            view.message = msg
+
+    @commands.hybrid_command(name="tickets", description="Show ticket help paginated list.")
+    async def tickets_command(self, ctx: commands.Context):
+        view = TicketHelpView(ctx.author.id)
+        msg = await ctx.send(embed=view.make_embed(), view=view)
+        view.message = msg
 
     @ticket_group.command(name="setup", description="Setup the ticket panel in the current channel.")
     @commands.has_permissions(administrator=True)

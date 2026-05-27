@@ -3,6 +3,85 @@ from discord.ext import commands
 from discord import app_commands
 from src.db import client as db_client
 
+class VoiceHelpView(discord.ui.View):
+    def __init__(self, author_id: int):
+        super().__init__(timeout=60.0)
+        self.author_id = author_id
+        self.current_page = 0
+        
+        self.pages = [
+            # Page 1
+            {
+                "title": "🔊 KAIZER K5 - User VC Commands (Page 1/2)",
+                "description": "Manage your temporary voice channel. You must own the channel to use these.",
+                "fields": [
+                    {"name": "• vc lock", "value": "Lock your voice channel so default members cannot join.\n*Usage:* `.vc lock` or `/vc lock`"},
+                    {"name": "• vc unlock", "value": "Unlock your voice channel.\n*Usage:* `.vc unlock` or `/vc unlock`"},
+                    {"name": "• vc name <new_name>", "value": "Rename your voice channel.\n*Usage:* `.vc name Chill Lounge`"},
+                    {"name": "• vc limit <count>", "value": "Set a user limit for your channel (0 for unlimited, max 99).\n*Usage:* `.vc limit 5`"},
+                    {"name": "• vc kick <member>", "value": "Kick a member out of your voice channel.\n*Usage:* `.vc kick @Member`"},
+                    {"name": "• vc ban <member> / vc unban <member>", "value": "Ban or unban a member from entering your channel.\n*Usage:* `.vc ban @Member`"},
+                    {"name": "• vc hide / vc unhide", "value": "Hide your channel from the channel list or make it visible again.\n*Usage:* `.vc hide`"},
+                    {"name": "• vc invite <member>", "value": "Permit a user to join your locked/hidden voice channel.\n*Usage:* `.vc invite @Member`"},
+                    {"name": "• vc claim", "value": "Claim ownership of the voice channel if the previous owner left."}
+                ]
+            },
+            # Page 2
+            {
+                "title": "⚙️ KAIZER K5 - Admin VC Setup (Page 2/2)",
+                "description": "Administrator setup and management commands.",
+                "fields": [
+                    {"name": "• vc setup", "value": "Automatically setup Creator Lobby Voice Channel and Category.\n*Permissions Required:* `Administrator`\n*Usage:* `.vc setup`"},
+                    {"name": "• tempvc list", "value": "List all active temporary voice channels and owners.\n*Permissions Required:* `Administrator`"},
+                    {"name": "• tempvc forceclose <channel>", "value": "Force delete an active temporary voice channel.\n*Permissions Required:* `Administrator`"}
+                ]
+            }
+        ]
+
+    def make_embed(self) -> discord.Embed:
+        page_data = self.pages[self.current_page]
+        embed = discord.Embed(
+            title=page_data["title"],
+            description=page_data["description"],
+            color=0x2ECC71
+        )
+        for f in page_data["fields"]:
+            embed.add_field(name=f["name"], value=f["value"], inline=False)
+        embed.set_footer(text="KAIZER K5 • Use the buttons below to navigate pages")
+        return embed
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the person who ran the command can use these buttons.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
+        try:
+            if hasattr(self, 'message') and self.message:
+                await self.message.edit(view=self)
+        except:
+            pass
+
+    @discord.ui.button(label="◀ Previous", style=discord.ButtonStyle.primary)
+    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page > 0:
+            self.current_page -= 1
+        else:
+            self.current_page = len(self.pages) - 1
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.secondary)
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page < len(self.pages) - 1:
+            self.current_page += 1
+        else:
+            self.current_page = 0
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+
 class TempVCCog(commands.Cog, name="Temp VC"):
     """Temporary Voice Channels commands."""
 
@@ -70,7 +149,15 @@ class TempVCCog(commands.Cog, name="Temp VC"):
     @commands.hybrid_group(name="vc", description="Temp VC management commands.", fallback="help")
     async def vc_group(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx.command)
+            view = VoiceHelpView(ctx.author.id)
+            msg = await ctx.send(embed=view.make_embed(), view=view)
+            view.message = msg
+
+    @commands.hybrid_command(name="voice", aliases=["temp_vc"], description="Show temporary voice channel help.")
+    async def voice_command(self, ctx: commands.Context):
+        view = VoiceHelpView(ctx.author.id)
+        msg = await ctx.send(embed=view.make_embed(), view=view)
+        view.message = msg
 
     @vc_group.command(name="setup", description="Setup the Temp VC system.")
     @commands.has_permissions(administrator=True)
@@ -197,7 +284,10 @@ class TempVCCog(commands.Cog, name="Temp VC"):
     @commands.has_permissions(administrator=True)
     async def tempvc_group(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx.command)
+            view = VoiceHelpView(ctx.author.id)
+            view.current_page = 1  # Start on Page 2 (Admin setup)
+            msg = await ctx.send(embed=view.make_embed(), view=view)
+            view.message = msg
             
     @tempvc_group.command(name="list", description="List all active Temp VCs.")
     async def tempvc_list(self, ctx: commands.Context):

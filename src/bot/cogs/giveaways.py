@@ -125,6 +125,78 @@ class GiveawayView(discord.ui.View):
             except:
                 pass
 
+class GiveawayHelpView(discord.ui.View):
+    def __init__(self, author_id: int):
+        super().__init__(timeout=60.0)
+        self.author_id = author_id
+        self.current_page = 0
+        
+        self.pages = [
+            # Page 1
+            {
+                "title": "🎉 KAIZER K5 - Giveaway Host Commands (Page 1/2)",
+                "description": "Manage active giveaways inside your server.",
+                "fields": [
+                    {"name": "• giveaway start <duration> <winners> <prize>", "value": "Starts a new giveaway in the current channel.\n*Usage:* `.giveaway start 60 1 Discord Nitro` or `/giveaway start duration:60 winners:1 prize:Discord Nitro`"},
+                    {"name": "• giveaway end <message_id>", "value": "Ends an active giveaway early.\n*Usage:* `.giveaway end 123456789012345678` or `/giveaway end message_id:123456789012345678`"},
+                    {"name": "• giveaway reroll <message_id>", "value": "Rerolls a winner for an ended giveaway.\n*Usage:* `.giveaway reroll 123456789012345678` or `/giveaway reroll message_id:123456789012345678`"}
+                ]
+            },
+            # Page 2
+            {
+                "title": "⚙️ KAIZER K5 - Dashboard Configurations (Page 2/2)",
+                "description": "Customize parameters via the Web Dashboard.",
+                "fields": [
+                    {"name": "• Role Restrictions", "value": "Configure allowed or blacklisted roles so only specific members can participate in your giveaways."},
+                    {"name": "• Real-Time GMT & UTC Clock Selector", "value": "Set precise start and end dates/times with a visual calendar date/time picker, aligned with a GMT real-time clock indicator."},
+                    {"name": "• Custom Embed Styling", "value": "Customize colors, set thumbnail/image URLs, and configure custom footers/headers via the web panel."}
+                ]
+            }
+        ]
+
+    def make_embed(self) -> discord.Embed:
+        page_data = self.pages[self.current_page]
+        embed = discord.Embed(
+            title=page_data["title"],
+            description=page_data["description"],
+            color=0x9B59B6
+        )
+        for f in page_data["fields"]:
+            embed.add_field(name=f["name"], value=f["value"], inline=False)
+        embed.set_footer(text="KAIZER K5 • Use the buttons below to navigate pages")
+        return embed
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the person who ran the command can use these buttons.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
+        try:
+            if hasattr(self, 'message') and self.message:
+                await self.message.edit(view=self)
+        except:
+            pass
+
+    @discord.ui.button(label="◀ Previous", style=discord.ButtonStyle.primary)
+    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page > 0:
+            self.current_page -= 1
+        else:
+            self.current_page = len(self.pages) - 1
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.secondary)
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page < len(self.pages) - 1:
+            self.current_page += 1
+        else:
+            self.current_page = 0
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
 class GiveawaysCog(commands.Cog, name="Giveaways"):
     """Giveaway system commands."""
 
@@ -363,11 +435,19 @@ class GiveawaysCog(commands.Cog, name="Giveaways"):
         except Exception as e:
             print(f"Error executing end phase of giveaway {db_id}: {e}")
 
+    @commands.hybrid_command(name="giveaways", description="Show giveaway help paginated list.")
+    async def giveaways_command(self, ctx: commands.Context):
+        view = GiveawayHelpView(ctx.author.id)
+        msg = await ctx.send(embed=view.make_embed(), view=view)
+        view.message = msg
+
     @commands.hybrid_group(name="giveaway", description="Giveaway system commands.", fallback="help")
     @commands.has_permissions(manage_events=True)
     async def giveaway_group(self, ctx: commands.Context):
         if ctx.invoked_subcommand is None:
-            await ctx.send_help(ctx.command)
+            view = GiveawayHelpView(ctx.author.id)
+            msg = await ctx.send(embed=view.make_embed(), view=view)
+            view.message = msg
 
     @giveaway_group.command(name="start", description="Start a new giveaway.")
     @app_commands.describe(duration="Duration in seconds", winners="Number of winners", prize="The prize to give away")

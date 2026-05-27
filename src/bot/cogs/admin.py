@@ -3,11 +3,89 @@ from discord.ext import commands
 from discord import app_commands
 from src.db import client as db_client
 
+class LoggingHelpView(discord.ui.View):
+    def __init__(self, author_id: int):
+        super().__init__(timeout=60.0)
+        self.author_id = author_id
+        self.current_page = 0
+        
+        self.pages = [
+            # Page 1
+            {
+                "title": "📜 KAIZER K5 - Server Event Logs (Page 1/2)",
+                "description": "Configure channels to track server occurrences dynamically.",
+                "fields": [
+                    {"name": "• config logs <channel>", "value": "Configure a logging channel for server events (e.g. invites, member updates, role creations).\n"
+                                                                "*Usage:* `.config logs #mod-logs` or `/config logs channel:#mod-logs`"},
+                    {"name": "• Logged Actions", "value": "Once a channel is assigned, Kaizer K5 records member joins/leaves, role edits, message deletions, and server configurations."}
+                ]
+            },
+            # Page 2
+            {
+                "title": "🚨 KAIZER K5 - AutoMod & Modlogs (Page 2/2)",
+                "description": "Incident history and security logging.",
+                "fields": [
+                    {"name": "• automod_logs", "value": "Fetch the 5 most recent anti-nuke / security logs.\n*Usage:* `.automod_logs` or `/automod_logs`"},
+                    {"name": "• Modlog Channel", "value": "Used by the AutoMod/Security system to print warnings, permanent mutes (K4 Defence), and administrative blocks. Setup is managed via the dashboard."}
+                ]
+            }
+        ]
+
+    def make_embed(self) -> discord.Embed:
+        page_data = self.pages[self.current_page]
+        embed = discord.Embed(
+            title=page_data["title"],
+            description=page_data["description"],
+            color=0x34495E
+        )
+        for f in page_data["fields"]:
+            embed.add_field(name=f["name"], value=f["value"], inline=False)
+        embed.set_footer(text="KAIZER K5 • Use the buttons below to navigate pages")
+        return embed
+
+    async def interaction_check(self, interaction: discord.Interaction) -> bool:
+        if interaction.user.id != self.author_id:
+            await interaction.response.send_message("Only the person who ran the command can use these buttons.", ephemeral=True)
+            return False
+        return True
+
+    async def on_timeout(self):
+        for item in self.children:
+            item.disabled = True
+        try:
+            if hasattr(self, 'message') and self.message:
+                await self.message.edit(view=self)
+        except:
+            pass
+
+    @discord.ui.button(label="◀ Previous", style=discord.ButtonStyle.primary)
+    async def prev_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page > 0:
+            self.current_page -= 1
+        else:
+            self.current_page = len(self.pages) - 1
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+    @discord.ui.button(label="Next ▶", style=discord.ButtonStyle.secondary)
+    async def next_button(self, interaction: discord.Interaction, button: discord.ui.Button):
+        if self.current_page < len(self.pages) - 1:
+            self.current_page += 1
+        else:
+            self.current_page = 0
+        await interaction.response.edit_message(embed=self.make_embed(), view=self)
+
+
 class AdminCog(commands.Cog, name="Admin"):
     """Server configuration and admin commands."""
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
+
+    @commands.hybrid_command(name="logging", aliases=["logs", "log"], description="Show server logging configurations & help.")
+    async def logging_command(self, ctx: commands.Context):
+        view = LoggingHelpView(ctx.author.id)
+        msg = await ctx.send(embed=view.make_embed(), view=view)
+        view.message = msg
 
     @commands.hybrid_group(name="config", description="Configure server settings.", fallback="help")
     @commands.has_permissions(manage_guild=True)
