@@ -560,3 +560,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-26] feat(ui): add giveaway clocks
 - [2026-05-26] feat(stats): harden active voice count
 - [2026-05-26] refactor(welcome): streamline auto role assignment
+- [2026-05-27] refactor(reaction-roles): refactor role assignment toggle
