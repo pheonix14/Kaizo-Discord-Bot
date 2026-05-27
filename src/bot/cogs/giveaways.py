@@ -25,7 +25,7 @@ class GiveawayView(discord.ui.View):
     async def enter_giveaway_callback(self, interaction: discord.Interaction):
         try:
             # Fetch latest giveaway status from Supabase
-            res = db_client.supabase.table("giveaways").select("*").eq("id", self.db_id).execute()
+            res = await asyncio.to_thread(db_client.supabase.table("giveaways").select("*").eq("id", self.db_id).execute)
             if not res.data:
                 return await interaction.response.send_message("This giveaway has ended or does not exist.", ephemeral=True)
             
@@ -83,7 +83,7 @@ class GiveawayView(discord.ui.View):
             embed_config["participants"] = participants
             
             # Sync back to Supabase
-            db_client.supabase.table("giveaways").update({"embed_config": embed_config}).eq("id", self.db_id).execute()
+            await asyncio.to_thread(db_client.supabase.table("giveaways").update({"embed_config": embed_config}).eq("id", self.db_id).execute)
             
             # Send positive feedback to user
             await interaction.response.send_message("🎉 You have successfully entered the giveaway!", ephemeral=True)
@@ -206,12 +206,12 @@ class GiveawaysCog(commands.Cog, name="Giveaways"):
 
     async def cog_load(self):
         # Schedule startup load task
-        self.bot.loop.create_task(self._load_active_giveaways())
+        asyncio.create_task(self._load_active_giveaways())
 
     async def _load_active_giveaways(self):
         await self.bot.wait_until_ready()
         try:
-            res = db_client.supabase.table("giveaways").select("*").execute()
+            res = await asyncio.to_thread(db_client.supabase.table("giveaways").select("*").execute)
             if not res.data:
                 return
                 
@@ -237,20 +237,20 @@ class GiveawaysCog(commands.Cog, name="Giveaways"):
                 delay = (end_dt - now_dt).total_seconds()
                 
                 if delay <= 0:
-                    self.bot.loop.create_task(self._end_giveaway_persistent(db_id, 0))
+                    asyncio.create_task(self._end_giveaway_persistent(db_id, 0))
                 else:
                     if data["message_id"] == "pending":
-                        self.bot.loop.create_task(self.start_dashboard_giveaway(db_id))
+                        asyncio.create_task(self.start_dashboard_giveaway(db_id))
                     else:
                         msg_id = int(data["message_id"])
-                        task = self.bot.loop.create_task(self._end_giveaway_persistent(db_id, delay))
+                        task = asyncio.create_task(self._end_giveaway_persistent(db_id, delay))
                         self.active_giveaways[msg_id] = task
         except Exception as e:
             print("Error loading active giveaways on startup:", e)
 
     async def start_dashboard_giveaway(self, db_id: str):
         try:
-            res = db_client.supabase.table("giveaways").select("*").eq("id", db_id).execute()
+            res = await asyncio.to_thread(db_client.supabase.table("giveaways").select("*").eq("id", db_id).execute)
             if not res.data:
                 return
             data = res.data[0]
@@ -268,7 +268,7 @@ class GiveawaysCog(commands.Cog, name="Giveaways"):
             if "participants" not in embed_config:
                 embed_config["participants"] = []
                 # Sync back to Supabase
-                db_client.supabase.table("giveaways").update({"embed_config": embed_config}).eq("id", db_id).execute()
+                await asyncio.to_thread(db_client.supabase.table("giveaways").update({"embed_config": embed_config}).eq("id", db_id).execute)
                 
             title = embed_config.get("title") or "🎉 GIVEAWAY 🎉"
             end_dt = datetime.datetime.fromisoformat(data["end_time"].replace("Z", "+00:00"))
@@ -304,7 +304,7 @@ class GiveawaysCog(commands.Cog, name="Giveaways"):
             self.bot.add_view(view)
             
             # Save message ID
-            db_client.supabase.table("giveaways").update({"message_id": str(msg.id)}).eq("id", db_id).execute()
+            await asyncio.to_thread(db_client.supabase.table("giveaways").update({"message_id": str(msg.id)}).eq("id", db_id).execute)
             
             # Setup delay ending task
             now_dt = datetime.datetime.utcnow().replace(tzinfo=datetime.timezone.utc)
@@ -312,7 +312,7 @@ class GiveawaysCog(commands.Cog, name="Giveaways"):
             if delay < 0:
                 delay = 0
                 
-            task = self.bot.loop.create_task(self._end_giveaway_persistent(db_id, delay))
+            task = asyncio.create_task(self._end_giveaway_persistent(db_id, delay))
             self.active_giveaways[msg.id] = task
         except Exception as e:
             print("Error starting dashboard giveaway:", e)
@@ -320,7 +320,7 @@ class GiveawaysCog(commands.Cog, name="Giveaways"):
     async def _end_giveaway_persistent(self, db_id: str, delay: float):
         await asyncio.sleep(delay)
         try:
-            res = db_client.supabase.table("giveaways").select("*").eq("id", db_id).execute()
+            res = await asyncio.to_thread(db_client.supabase.table("giveaways").select("*").eq("id", db_id).execute)
             if not res.data:
                 return
             data = res.data[0]
@@ -429,7 +429,7 @@ class GiveawaysCog(commands.Cog, name="Giveaways"):
                 # Mark as ended in DB instead of deleting row to allow rerolls
                 try:
                     embed_config["ended"] = True
-                    db_client.supabase.table("giveaways").update({"embed_config": embed_config}).eq("id", db_id).execute()
+                    await asyncio.to_thread(db_client.supabase.table("giveaways").update({"embed_config": embed_config}).eq("id", db_id).execute)
                 except Exception as ex:
                     print(f"Error updating ended state for giveaway {db_id}: {ex}")
         except Exception as e:
@@ -481,7 +481,7 @@ class GiveawaysCog(commands.Cog, name="Giveaways"):
         }
         
         try:
-            db_client.supabase.table("giveaways").insert(db_payload).execute()
+            await asyncio.to_thread(db_payload_insert := db_client.supabase.table("giveaways").insert(db_payload).execute)
             await ctx.send("Starting giveaway...", ephemeral=True)
             await self.start_dashboard_giveaway(db_id)
         except Exception as e:
@@ -495,7 +495,7 @@ class GiveawaysCog(commands.Cog, name="Giveaways"):
         except ValueError:
             return await ctx.send("Invalid message ID.")
             
-        res = db_client.supabase.table("giveaways").select("id").eq("message_id", str(msg_id)).execute()
+        res = await asyncio.to_thread(db_client.supabase.table("giveaways").select("id").eq("message_id", str(msg_id)).execute)
         if res.data:
             db_id = res.data[0]["id"]
             task = self.active_giveaways.pop(msg_id, None)
@@ -514,7 +514,7 @@ class GiveawaysCog(commands.Cog, name="Giveaways"):
         except ValueError:
             return await ctx.send("Invalid message ID.")
             
-        res = db_client.supabase.table("giveaways").select("*").eq("message_id", str(msg_id)).execute()
+        res = await asyncio.to_thread(db_client.supabase.table("giveaways").select("*").eq("message_id", str(msg_id)).execute)
         if not res.data:
             return await ctx.send("Could not find a giveaway with that message ID in the database.")
             

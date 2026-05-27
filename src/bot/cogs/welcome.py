@@ -292,61 +292,56 @@ def draw_procedural_background(style: str, color_theme: str) -> Image.Image:
 
     return bg
 
-async def generate_welcome_goodbye_card(
-    avatar_url: str,
+def _generate_card_sync(
+    avatar_img: Image.Image,
+    bg_img: Image.Image,
     username: str,
     server_name: str,
     member_count: str,
     custom_text: str,
     config: dict
 ) -> io.BytesIO:
-    """Generate the complete customized Image Card as a Byte buffer."""
+    """Synchronously perform all PIL drawing, card building, and PNG encoding operations."""
     image_style = config.get("image_style", "plain_gradient")
     image_color = config.get("image_color", "cyan_neon")
-    custom_bg_url = config.get("custom_bg_url", "")
-    
-    bg_img = None
-    if custom_bg_url:
-        bg_img = await fetch_custom_bg(custom_bg_url)
-        
+
     if bg_img is None:
         bg_img = draw_procedural_background(image_style, image_color)
-        
+
     # Get active elements flags
     elements = config.get("image_elements", {})
     show_avatar = elements.get("avatar", True)
     show_username = elements.get("username", True)
     show_server = elements.get("server_name", True)
     show_count = elements.get("member_count", True)
-    
+
     draw = ImageDraw.Draw(bg_img)
     theme = THEMES.get(image_color, THEMES["cyan_neon"])
     primary_color = theme["primary"]
-    
+
     # Draw Avatar
     avatar_y = 140
-    if show_avatar and avatar_url:
-        avatar_img = await fetch_avatar(avatar_url)
+    if show_avatar and avatar_img:
         avatar_img = avatar_img.convert("RGBA").resize((120, 120))
         mask = Image.new("L", (120, 120), 0)
         mask_draw = ImageDraw.Draw(mask)
         mask_draw.ellipse([0, 0, 120, 120], fill=255)
-        
+
         round_avatar = ImageOps.fit(avatar_img, (120, 120), centering=(0.5, 0.5))
         round_avatar.putalpha(mask)
         bg_img.paste(round_avatar, (340, avatar_y - 60), round_avatar)
-        
+
         # Glow Ring and Border
         draw.ellipse([338, avatar_y - 62, 462, avatar_y + 62], outline=(primary_color[0], primary_color[1], primary_color[2], 255), width=3)
         draw.ellipse([334, avatar_y - 66, 466, avatar_y + 66], outline=(primary_color[0], primary_color[1], primary_color[2], 60), width=1)
-        
+
     # Draw Text Layers
     title_font = get_card_font("bold", 30)
     sub_font = get_card_font("regular", 20)
     minor_font = get_card_font("regular", 15)
-    
+
     current_y = avatar_y + 80 if show_avatar else 100
-    
+
     if show_username and username:
         try:
             w = draw.textlength(username, font=title_font)
@@ -354,7 +349,7 @@ async def generate_welcome_goodbye_card(
             w = len(username) * 14
         draw.text((400 - w/2, current_y), username, fill=(255, 255, 255, 255), font=title_font)
         current_y += 45
-        
+
     if show_server and server_name:
         server_text = f"Welcome to {server_name}"
         try:
@@ -363,7 +358,7 @@ async def generate_welcome_goodbye_card(
             w = len(server_text) * 9
         draw.text((400 - w/2, current_y), server_text, fill=(primary_color[0], primary_color[1], primary_color[2], 230), font=sub_font)
         current_y += 30
-        
+
     if show_count and member_count:
         count_text = f"Member #{member_count}"
         try:
@@ -372,18 +367,53 @@ async def generate_welcome_goodbye_card(
             w = len(count_text) * 7
         draw.text((400 - w/2, current_y), count_text, fill=(200, 200, 200, 180), font=minor_font)
         current_y += 25
-        
+
     if custom_text:
         try:
             w = draw.textlength(custom_text, font=minor_font)
         except AttributeError:
             w = len(custom_text) * 7
         draw.text((400 - w/2, current_y), custom_text, fill=(primary_color[0], primary_color[1], primary_color[2], 255), font=minor_font)
-        
+
     img_byte_arr = io.BytesIO()
     bg_img.save(img_byte_arr, format="PNG")
     img_byte_arr.seek(0)
     return img_byte_arr
+
+
+async def generate_welcome_goodbye_card(
+    avatar_url: str,
+    username: str,
+    server_name: str,
+    member_count: str,
+    custom_text: str,
+    config: dict
+) -> io.BytesIO:
+    """Generate the complete customized Image Card asynchronously by calling the sync renderer in a thread."""
+    elements = config.get("image_elements", {})
+    show_avatar = elements.get("avatar", True)
+    custom_bg_url = config.get("custom_bg_url", "")
+
+    avatar_img = None
+    if show_avatar and avatar_url:
+        avatar_img = await fetch_avatar(avatar_url)
+
+    bg_img = None
+    if custom_bg_url:
+        bg_img = await fetch_custom_bg(custom_bg_url)
+
+    # Offload the synchronous rendering to a thread pool
+    return await asyncio.to_thread(
+        _generate_card_sync,
+        avatar_img,
+        bg_img,
+        username,
+        server_name,
+        member_count,
+        custom_text,
+        config
+    )
+
 
 
 # ---------------------------------------------------------------------------

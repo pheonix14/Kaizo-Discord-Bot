@@ -479,7 +479,7 @@ class MusicCog(commands.Cog, name="Music"):
         tracks.extend(player.queue)
         
         from src.db import client as db_client
-        success = db_client.save_playlist(str(ctx.guild.id), str(ctx.author.id), name, tracks)
+        success = await asyncio.to_thread(db_client.save_playlist, str(ctx.guild.id), str(ctx.author.id), name, tracks)
         if success:
             await ctx.send(embed=discord.Embed(description=f"Saved playlist **{name}** with {len(tracks)} tracks.", color=discord.Color.green()))
         else:
@@ -488,7 +488,7 @@ class MusicCog(commands.Cog, name="Music"):
     @music.command(name="playlist_list", description="List your saved playlists.")
     async def playlist_list(self, ctx: commands.Context):
         from src.db import client as db_client
-        playlists = db_client.list_playlists(str(ctx.guild.id), str(ctx.author.id))
+        playlists = await asyncio.to_thread(db_client.list_playlists, str(ctx.guild.id), str(ctx.author.id))
         if not playlists:
             return await ctx.send("You have no saved playlists.")
             
@@ -498,7 +498,7 @@ class MusicCog(commands.Cog, name="Music"):
     @music.command(name="playlist_load", description="Load a saved playlist into your queue.")
     async def playlist_load(self, ctx: commands.Context, name: str):
         from src.db import client as db_client
-        playlist = db_client.get_playlist(str(ctx.guild.id), name, str(ctx.author.id))
+        playlist = await asyncio.to_thread(db_client.get_playlist, str(ctx.guild.id), name, str(ctx.author.id))
         
         if not playlist:
             return await ctx.send("Playlist not found.")

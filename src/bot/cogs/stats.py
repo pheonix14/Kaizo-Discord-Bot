@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands, tasks
 from discord import app_commands
+import asyncio
 from src.db import client as db_client
 
 class StatsHelpView(discord.ui.View):
@@ -87,7 +88,7 @@ class StatsCog(commands.Cog, name="Stats"):
     async def stats_loop(self):
         for guild in self.bot.guilds:
             try:
-                settings = db_client.get_guild_settings(guild.id)
+                settings = await asyncio.to_thread(db_client.get_guild_settings, guild.id)
                 if not settings:
                     continue
 
@@ -161,7 +162,7 @@ class StatsCog(commands.Cog, name="Stats"):
         online_vc = await ctx.guild.create_voice_channel(f"Online: {online}", category=category)
         await online_vc.set_permissions(ctx.guild.default_role, connect=False)
         
-        db_client.update_guild_settings(ctx.guild.id, {
+        await asyncio.to_thread(db_client.update_guild_settings, ctx.guild.id, {
             "counter_category_id": str(category.id),
             "counter_total_chan_id": str(total_vc.id),
             "counter_online_chan_id": str(online_vc.id)
@@ -173,7 +174,7 @@ class StatsCog(commands.Cog, name="Stats"):
     async def stats_refresh(self, ctx: commands.Context):
         await ctx.send("Forcing stats refresh...")
         guild = ctx.guild
-        settings = db_client.get_guild_settings(guild.id)
+        settings = await asyncio.to_thread(db_client.get_guild_settings, guild.id)
         updated = 0
         
         if settings:
@@ -229,7 +230,7 @@ class StatsCog(commands.Cog, name="Stats"):
         if "{count}" not in fmt and "{value}" not in fmt:
             return await ctx.send("Format must include `{count}` or `{value}`.")
             
-        db_client.update_guild_settings(ctx.guild.id, {f"counter_{stat_type}_fmt": fmt})
+        await asyncio.to_thread(db_client.update_guild_settings, ctx.guild.id, {f"counter_{stat_type}_fmt": fmt})
         await ctx.send(embed=discord.Embed(description=f"✅ Format for `{stat_type}` updated to `{fmt}`.\nRun `/stats refresh` to apply it immediately.", color=discord.Color.green()))
 
     @stats.command(name="interval", description="Set how often stats refresh (1-60 mins).")
@@ -237,7 +238,7 @@ class StatsCog(commands.Cog, name="Stats"):
         if minutes < 1 or minutes > 60:
             return await ctx.send("Interval must be between 1 and 60 minutes.")
             
-        db_client.update_guild_settings(ctx.guild.id, {"counter_refresh_interval": minutes})
+        await asyncio.to_thread(db_client.update_guild_settings, ctx.guild.id, {"counter_refresh_interval": minutes})
         self.stats_loop.change_interval(minutes=minutes)
         await ctx.send(embed=discord.Embed(description=f"✅ Stats will now refresh every {minutes} minutes.", color=discord.Color.green()))
 

@@ -1,3 +1,4 @@
+import asyncio
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -99,7 +100,7 @@ class AutomodCog(commands.Cog, name="Automod"):
     @commands.hybrid_command(name="automod_status", description="Checks the bot protection status for the server.")
     @commands.has_permissions(manage_guild=True)
     async def automod_status(self, ctx: commands.Context):
-        settings = db_client.get_guild_settings(ctx.guild.id, ctx.guild.name)
+        settings = await asyncio.to_thread(db_client.get_guild_settings, ctx.guild.id, ctx.guild.name)
         status_emoji = "Active" if settings.get("is_active") else "Disabled"
         
         embed = discord.Embed(title="Kaizer K5 Security Engine Status", color=discord.Color.blue())
@@ -120,12 +121,10 @@ class AutomodCog(commands.Cog, name="Automod"):
         if member.bot:
             return await ctx.send("Bots cannot be whitelisted.")
             
-        success = db_client.add_to_whitelist(
-            guild_id=ctx.guild.id, 
+        success = await asyncio.to_thread(db_client.add_to_whitelist, guild_id=ctx.guild.id, 
             user_id=member.id, 
             reason=reason,
-            executor_tag=str(ctx.author)
-        )
+            executor_tag=str(ctx.author))
         if success:
             await ctx.send(embed=discord.Embed(description=f"✅ Successfully whitelisted **{member.name}**. Reason: {reason}", color=discord.Color.green()))
         else:
@@ -135,7 +134,7 @@ class AutomodCog(commands.Cog, name="Automod"):
     @app_commands.describe(member="The user to unwhitelist")
     @commands.has_permissions(manage_guild=True)
     async def automod_unwhitelist(self, ctx: commands.Context, member: discord.Member):
-        success = db_client.remove_from_whitelist(guild_id=ctx.guild.id, user_id=member.id)
+        success = await asyncio.to_thread(db_client.remove_from_whitelist, guild_id=ctx.guild.id, user_id=member.id)
         if success:
             await ctx.send(embed=discord.Embed(description=f"✅ Successfully removed **{member.name}** from the whitelist.", color=discord.Color.green()))
         else:
@@ -144,7 +143,7 @@ class AutomodCog(commands.Cog, name="Automod"):
     @commands.hybrid_command(name="automod_logs", description="Gets the recent anti-nuke actions for this server.")
     @commands.has_permissions(manage_guild=True)
     async def automod_logs(self, ctx: commands.Context):
-        logs = db_client.get_protection_logs(ctx.guild.id, limit=5)
+        logs = await asyncio.to_thread(db_client.get_protection_logs, ctx.guild.id, limit=5)
         if not logs:
             return await ctx.send("No protection events logged for this server yet.")
             

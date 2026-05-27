@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+import asyncio
 from src.db import client as db_client
 
 class CustomCommandsCog(commands.Cog, name="Custom Commands"):
@@ -25,9 +26,9 @@ class CustomCommandsCog(commands.Cog, name="Custom Commands"):
                 "trigger_word": trigger,
                 "response_text": response
             }
-            res = db_client.supabase.table("custom_commands").upsert(data, on_conflict="guild_id,trigger_word").execute()
+            res = await asyncio.to_thread(db_client.supabase.table("custom_commands").upsert(data, on_conflict="guild_id,trigger_word").execute)
             if res.data:
-                db_client.clear_guild_cache(str(ctx.guild.id))
+                await asyncio.to_thread(db_client.clear_guild_cache, str(ctx.guild.id))
                 await ctx.send(embed=discord.Embed(description=f"✅ Added custom command: `{trigger}`", color=discord.Color.green()))
             else:
                 await ctx.send("Failed to add custom command.")
@@ -39,9 +40,9 @@ class CustomCommandsCog(commands.Cog, name="Custom Commands"):
     async def cc_remove(self, ctx: commands.Context, trigger: str):
         trigger = trigger.lower()
         try:
-            res = db_client.supabase.table("custom_commands").delete().eq("guild_id", str(ctx.guild.id)).eq("trigger_word", trigger).execute()
+            res = await asyncio.to_thread(db_client.supabase.table("custom_commands").delete().eq("guild_id", str(ctx.guild.id)).eq("trigger_word", trigger).execute)
             if res.data:
-                db_client.clear_guild_cache(str(ctx.guild.id))
+                await asyncio.to_thread(db_client.clear_guild_cache, str(ctx.guild.id))
                 await ctx.send(embed=discord.Embed(description=f"✅ Removed custom command: `{trigger}`", color=discord.Color.green()))
             else:
                 await ctx.send("Custom command not found.")
@@ -51,7 +52,7 @@ class CustomCommandsCog(commands.Cog, name="Custom Commands"):
     @cc_group.command(name="list", description="List all custom commands.")
     async def cc_list(self, ctx: commands.Context):
         try:
-            res = db_client.supabase.table("custom_commands").select("trigger_word").eq("guild_id", str(ctx.guild.id)).execute()
+            res = await asyncio.to_thread(db_client.supabase.table("custom_commands").select("trigger_word").eq("guild_id", str(ctx.guild.id)).execute)
             if not res.data:
                 return await ctx.send("No custom commands found for this server.")
             
@@ -68,7 +69,8 @@ class CustomCommandsCog(commands.Cog, name="Custom Commands"):
             
         trigger = message.content.lower().split(" ")[0]
         try:
-            custom_cmds = db_client.get_custom_commands(str(message.guild.id))
+            import asyncio
+            custom_cmds = await asyncio.to_thread(db_client.get_custom_commands, str(message.guild.id))
             if trigger in custom_cmds:
                 cmd_data = custom_cmds[trigger]
                 permission_level = cmd_data.get("permission_level", "Everyone")

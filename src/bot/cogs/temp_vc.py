@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 from discord import app_commands
+import asyncio
 from src.db import client as db_client
 
 class VoiceHelpView(discord.ui.View):
@@ -95,7 +96,7 @@ class TempVCCog(commands.Cog, name="Temp VC"):
 
         # Check if they joined the creator channel
         if after.channel:
-            settings = db_client.get_guild_settings(member.guild.id)
+            settings = await asyncio.to_thread(db_client.get_guild_settings, member.guild.id)
             # Default to checking tempvc_join_channel from UI, fallback to temp_vc_lobby from setup command
             lobby_id = settings.get("tempvc_join_channel") or settings.get("temp_vc_lobby")
             
@@ -119,29 +120,31 @@ class TempVCCog(commands.Cog, name="Temp VC"):
                 try:
                     new_vc = await member.guild.create_voice_channel(name=vc_name, category=category, user_limit=user_limit)
                     await member.move_to(new_vc)
-                    db_client.supabase.table("temp_voice_channels").insert({
-                        "channel_id": str(new_vc.id),
-                        "guild_id": str(member.guild.id),
-                        "owner_id": str(member.id)
-                    }).execute()
+                    await asyncio.to_thread(
+                        db_client.supabase.table("temp_voice_channels").insert({
+                            "channel_id": str(new_vc.id),
+                            "guild_id": str(member.guild.id),
+                            "owner_id": str(member.id)
+                        }).execute
+                    )
                 except discord.Forbidden:
                     pass
 
         # Check if they left a temp VC and it's empty
         if before.channel:
-            vc_data = db_client.supabase.table("temp_voice_channels").select("*").eq("channel_id", str(before.channel.id)).execute()
+            vc_data = await asyncio.to_thread(db_client.supabase.table("temp_voice_channels").select("*").eq("channel_id", str(before.channel.id)).execute)
             if vc_data.data:
                 if len(before.channel.members) == 0:
                     try:
                         await before.channel.delete()
-                        db_client.supabase.table("temp_voice_channels").delete().eq("channel_id", str(before.channel.id)).execute()
+                        await asyncio.to_thread(db_client.supabase.table("temp_voice_channels").delete().eq("channel_id", str(before.channel.id)).execute)
                     except discord.Forbidden:
                         pass
 
-    def get_user_vc(self, member: discord.Member):
+    async def get_user_vc(self, member: discord.Member):
         if not member.voice or not member.voice.channel:
             return None
-        res = db_client.supabase.table("temp_voice_channels").select("*").eq("channel_id", str(member.voice.channel.id)).execute()
+        res = await asyncio.to_thread(db_client.supabase.table("temp_voice_channels").select("*").eq("channel_id", str(member.voice.channel.id)).execute)
         if res.data and res.data[0]["owner_id"] == str(member.id):
             return member.voice.channel
         return None
@@ -164,7 +167,7 @@ class TempVCCog(commands.Cog, name="Temp VC"):
     async def vc_setup(self, ctx: commands.Context):
         category = await ctx.guild.create_category("Temporary Channels")
         creator = await ctx.guild.create_voice_channel("Join to Create", category=category)
-        db_client.update_guild_settings(ctx.guild.id, {
+        await asyncio.to_thread(db_client.update_guild_settings, ctx.guild.id, {
             "temp_vc_lobby": str(creator.id),
             "temp_vc_category": str(category.id)
         })
@@ -172,7 +175,7 @@ class TempVCCog(commands.Cog, name="Temp VC"):
 
     @vc_group.command(name="lock", description="Lock your Temp VC.")
     async def vc_lock(self, ctx: commands.Context):
-        vc = self.get_user_vc(ctx.author)
+        vc = await self.get_user_vc(ctx.author)
         if not vc:
             return await ctx.send("You don't own the Temp VC you are in.", ephemeral=True)
         await vc.set_permissions(ctx.guild.default_role, connect=False)
@@ -180,7 +183,7 @@ class TempVCCog(commands.Cog, name="Temp VC"):
 
     @vc_group.command(name="unlock", description="Unlock your Temp VC.")
     async def vc_unlock(self, ctx: commands.Context):
-        vc = self.get_user_vc(ctx.author)
+        vc = await self.get_user_vc(ctx.author)
         if not vc:
             return await ctx.send("You don't own the Temp VC you are in.", ephemeral=True)
         await vc.set_permissions(ctx.guild.default_role, connect=None)
@@ -189,7 +192,7 @@ class TempVCCog(commands.Cog, name="Temp VC"):
     @vc_group.command(name="name", description="Change your Temp VC name.")
     @app_commands.describe(name="New VC name")
     async def vc_name(self, ctx: commands.Context, name: str):
-        vc = self.get_user_vc(ctx.author)
+        vc = await self.get_user_vc(ctx.author)
         if not vc:
             return await ctx.send("You don't own the Temp VC you are in.", ephemeral=True)
         await vc.edit(name=name)
@@ -198,7 +201,7 @@ class TempVCCog(commands.Cog, name="Temp VC"):
     @vc_group.command(name="limit", description="Set user limit for your Temp VC.")
     @app_commands.describe(limit="User limit (0 for unlimited)")
     async def vc_limit(self, ctx: commands.Context, limit: int):
-        vc = self.get_user_vc(ctx.author)
+        vc = await self.get_user_vc(ctx.author)
         if not vc:
             return await ctx.send("You don't own the Temp VC you are in.", ephemeral=True)
         if limit < 0 or limit > 99:
@@ -209,7 +212,7 @@ class TempVCCog(commands.Cog, name="Temp VC"):
     @vc_group.command(name="kick", description="Kick a user from your Temp VC.")
     @app_commands.describe(member="Member to kick")
     async def vc_kick(self, ctx: commands.Context, member: discord.Member):
-        vc = self.get_user_vc(ctx.author)
+        vc = await self.get_user_vc(ctx.author)
         if not vc:
             return await ctx.send("You don't own the Temp VC you are in.", ephemeral=True)
         if member not in vc.members:
@@ -219,7 +222,7 @@ class TempVCCog(commands.Cog, name="Temp VC"):
 
     @vc_group.command(name="hide", description="Hide your Temp VC from others.")
     async def vc_hide(self, ctx: commands.Context):
-        vc = self.get_user_vc(ctx.author)
+        vc = await self.get_user_vc(ctx.author)
         if not vc:
             return await ctx.send("You don't own the Temp VC you are in.", ephemeral=True)
         await vc.set_permissions(ctx.guild.default_role, view_channel=False)
@@ -227,7 +230,7 @@ class TempVCCog(commands.Cog, name="Temp VC"):
 
     @vc_group.command(name="unhide", description="Unhide your Temp VC.")
     async def vc_unhide(self, ctx: commands.Context):
-        vc = self.get_user_vc(ctx.author)
+        vc = await self.get_user_vc(ctx.author)
         if not vc:
             return await ctx.send("You don't own the Temp VC you are in.", ephemeral=True)
         await vc.set_permissions(ctx.guild.default_role, view_channel=None)
@@ -235,7 +238,7 @@ class TempVCCog(commands.Cog, name="Temp VC"):
 
     @vc_group.command(name="ban", description="Ban a user from your Temp VC.")
     async def vc_ban(self, ctx: commands.Context, member: discord.Member):
-        vc = self.get_user_vc(ctx.author)
+        vc = await self.get_user_vc(ctx.author)
         if not vc:
             return await ctx.send("You don't own the Temp VC you are in.", ephemeral=True)
         await vc.set_permissions(member, connect=False, view_channel=False)
@@ -245,7 +248,7 @@ class TempVCCog(commands.Cog, name="Temp VC"):
 
     @vc_group.command(name="unban", description="Unban a user from your Temp VC.")
     async def vc_unban(self, ctx: commands.Context, member: discord.Member):
-        vc = self.get_user_vc(ctx.author)
+        vc = await self.get_user_vc(ctx.author)
         if not vc:
             return await ctx.send("You don't own the Temp VC you are in.", ephemeral=True)
         await vc.set_permissions(member, overwrite=None)
@@ -253,7 +256,7 @@ class TempVCCog(commands.Cog, name="Temp VC"):
 
     @vc_group.command(name="invite", description="Invite a user to your locked Temp VC.")
     async def vc_invite(self, ctx: commands.Context, member: discord.Member):
-        vc = self.get_user_vc(ctx.author)
+        vc = await self.get_user_vc(ctx.author)
         if not vc:
             return await ctx.send("You don't own the Temp VC you are in.", ephemeral=True)
         await vc.set_permissions(member, connect=True, view_channel=True)
@@ -265,7 +268,7 @@ class TempVCCog(commands.Cog, name="Temp VC"):
             return await ctx.send("You are not in a Temp VC.", ephemeral=True)
             
         vc = ctx.author.voice.channel
-        res = db_client.supabase.table("temp_voice_channels").select("*").eq("channel_id", str(vc.id)).execute()
+        res = await asyncio.to_thread(db_client.supabase.table("temp_voice_channels").select("*").eq("channel_id", str(vc.id)).execute)
         if not res.data:
             return await ctx.send("This is not a Temp VC.", ephemeral=True)
             
@@ -275,7 +278,7 @@ class TempVCCog(commands.Cog, name="Temp VC"):
         if owner and owner in vc.members:
             return await ctx.send("The owner is still in the VC.", ephemeral=True)
             
-        db_client.supabase.table("temp_voice_channels").update({"owner_id": str(ctx.author.id)}).eq("channel_id", str(vc.id)).execute()
+        await asyncio.to_thread(db_client.supabase.table("temp_voice_channels").update({"owner_id": str(ctx.author.id)}).eq("channel_id", str(vc.id)).execute)
         await ctx.send(embed=discord.Embed(description=f"{ctx.author.mention} is now the owner of this Temp VC.", color=discord.Color.gold()))
 
     # ── Admin Temp VC ────────────────────────────────────────────────────────
@@ -291,7 +294,7 @@ class TempVCCog(commands.Cog, name="Temp VC"):
             
     @tempvc_group.command(name="list", description="List all active Temp VCs.")
     async def tempvc_list(self, ctx: commands.Context):
-        res = db_client.supabase.table("temp_voice_channels").select("*").eq("guild_id", str(ctx.guild.id)).execute()
+        res = await asyncio.to_thread(db_client.supabase.table("temp_voice_channels").select("*").eq("guild_id", str(ctx.guild.id)).execute)
         if not res.data:
             return await ctx.send("There are no active Temp VCs.")
             
@@ -306,12 +309,12 @@ class TempVCCog(commands.Cog, name="Temp VC"):
 
     @tempvc_group.command(name="forceclose", description="Force delete an active Temp VC.")
     async def tempvc_close(self, ctx: commands.Context, channel: discord.VoiceChannel):
-        res = db_client.supabase.table("temp_voice_channels").select("*").eq("channel_id", str(channel.id)).execute()
+        res = await asyncio.to_thread(db_client.supabase.table("temp_voice_channels").select("*").eq("channel_id", str(channel.id)).execute)
         if not res.data:
             return await ctx.send("That is not a Temp VC.")
             
         await channel.delete()
-        db_client.supabase.table("temp_voice_channels").delete().eq("channel_id", str(channel.id)).execute()
+        await asyncio.to_thread(db_client.supabase.table("temp_voice_channels").delete().eq("channel_id", str(channel.id)).execute)
         await ctx.send(embed=discord.Embed(description="✅ Force closed Temp VC.", color=discord.Color.green()))
 
 async def setup(bot: commands.Bot):

@@ -3,6 +3,7 @@ from discord.ext import commands
 from discord import app_commands
 import time
 import hashlib
+import asyncio
 from typing import Dict, List, Tuple
 from src.db import client as db_client
 
@@ -30,7 +31,7 @@ class K4DefenceCog(commands.Cog, name="K4 Defence"):
 
     async def punish_user(self, member: discord.Member, guild: discord.Guild, reason: str):
         """Mutes the user permanently and logs to modlog."""
-        settings = db_client.get_guild_settings(str(guild.id))
+        settings = await asyncio.to_thread(db_client.get_guild_settings, str(guild.id))
         mute_role_id = settings.get("mute_role")
         
         # 1. Assign Mute Role
@@ -59,11 +60,11 @@ class K4DefenceCog(commands.Cog, name="K4 Defence"):
                     pass
                     
         # 3. Log to DB Protection Logs
-        db_client.log_protection_event(str(guild.id), "k4_defence", str(self.bot.user.id), "System", "Muted", f"Target: {member.id}. Reason: {reason}")
+        await asyncio.to_thread(db_client.log_protection_event, str(guild.id), "k4_defence", str(self.bot.user.id), "System", "Muted", f"Target: {member.id}. Reason: {reason}")
 
     async def execute_automod_action(self, member: discord.Member, guild: discord.Guild, channel: discord.TextChannel, action: str, reason: str, user_id: str):
         """Execute action for custom AutoMod rule trigger."""
-        settings = db_client.get_guild_settings(str(guild.id))
+        settings = await asyncio.to_thread(db_client.get_guild_settings, str(guild.id))
         mute_role_id = settings.get("mute_role")
         modlog_id = settings.get("mod_log_channel")
         
@@ -129,7 +130,8 @@ class K4DefenceCog(commands.Cog, name="K4 Defence"):
                     pass
                     
         # 4. Log to DB Protection Logs
-        db_client.log_protection_event(
+        await asyncio.to_thread(
+            db_client.log_protection_event,
             str(guild.id),
             "automod",
             str(self.bot.user.id),
@@ -147,7 +149,7 @@ class K4DefenceCog(commands.Cog, name="K4 Defence"):
         user_id = str(message.author.id)
         current_time = time.time()
         
-        settings = db_client.get_guild_settings(guild_id)
+        settings = await asyncio.to_thread(db_client.get_guild_settings, guild_id)
         
         # 1. Evaluate custom AutoMod rules (Creator Studio)
         automod_rules = settings.get("automod_rules", {})
@@ -283,7 +285,7 @@ class K4DefenceCog(commands.Cog, name="K4 Defence"):
     async def enable(self, ctx: commands.Context):
         # We need to gracefully handle if the DB column isn't added yet
         try:
-            db_client.update_guild_settings(ctx.guild.id, {"k4_defence_enabled": True})
+            await asyncio.to_thread(db_client.update_guild_settings, ctx.guild.id, {"k4_defence_enabled": True})
             await ctx.send(embed=discord.Embed(description="✅ **K4 Defence has been ENABLED.**", color=discord.Color.green()))
         except Exception as e:
             await ctx.send(embed=discord.Embed(description="⚠️ Database error. Ensure `k4_defence_enabled` column exists in Supabase.", color=discord.Color.red()))
@@ -292,7 +294,7 @@ class K4DefenceCog(commands.Cog, name="K4 Defence"):
     @commands.has_permissions(administrator=True)
     async def disable(self, ctx: commands.Context):
         try:
-            db_client.update_guild_settings(ctx.guild.id, {"k4_defence_enabled": False})
+            await asyncio.to_thread(db_client.update_guild_settings, ctx.guild.id, {"k4_defence_enabled": False})
             await ctx.send(embed=discord.Embed(description="❌ **K4 Defence has been DISABLED.**", color=discord.Color.red()))
         except Exception as e:
             await ctx.send(embed=discord.Embed(description="⚠️ Database error.", color=discord.Color.red()))
@@ -300,7 +302,7 @@ class K4DefenceCog(commands.Cog, name="K4 Defence"):
     @k4defence.command(name="status", description="Check if K4 Defence is currently active.")
     @commands.has_permissions(administrator=True)
     async def status(self, ctx: commands.Context):
-        settings = db_client.get_guild_settings(str(ctx.guild.id))
+        settings = await asyncio.to_thread(db_client.get_guild_settings, str(ctx.guild.id))
         is_enabled = settings.get("k4_defence_enabled", False)
         
         status_text = "🟢 **ENABLED**" if is_enabled else "🔴 **DISABLED**"

@@ -44,14 +44,14 @@ class BlackjackView(discord.ui.View):
                 embed.color = discord.Color.red()
             elif d_score > 21 or p_score > d_score:
                 win = self.bet * 2
-                db_client.add_economy_balance(str(self.ctx.guild.id), str(self.ctx.author.id), wallet_delta=win)
+                await asyncio.to_thread(db_client.add_economy_balance, str(self.ctx.guild.id), str(self.ctx.author.id), wallet_delta=win)
                 embed.description = f"You won! Payout: **{win}** coins."
                 embed.color = discord.Color.green()
             elif p_score < d_score:
                 embed.description = f"Dealer wins! You lost **{self.bet}** coins."
                 embed.color = discord.Color.red()
             else:
-                db_client.add_economy_balance(str(self.ctx.guild.id), str(self.ctx.author.id), wallet_delta=self.bet)
+                await asyncio.to_thread(db_client.add_economy_balance, str(self.ctx.guild.id), str(self.ctx.author.id), wallet_delta=self.bet)
                 embed.description = "Push! Your bet was returned."
                 embed.color = discord.Color.gold()
                 
@@ -222,7 +222,7 @@ class EconomyCog(commands.Cog, name="Economy"):
             # 60 second cooldown per user to prevent spam farming
             if current_time - last_time > 60:
                 reward = random.randint(10, 30)
-                db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), wallet_delta=reward)
+                await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), wallet_delta=reward)
                 self.command_rewards_cooldown[ctx.author.id] = current_time
                 
                 try:
@@ -232,12 +232,12 @@ class EconomyCog(commands.Cog, name="Economy"):
 
     # ── Cooldown Helpers ──────────────────────────────────────────────────────
 
-    def check_db_cooldown(self, guild_id: str, user_id: str, field: str, duration_seconds: int) -> Optional[float]:
+    async def check_db_cooldown(self, guild_id: str, user_id: str, field: str, duration_seconds: int) -> Optional[float]:
         """
         Checks if a user is on a database-persisted cooldown.
         Returns the remaining seconds if on cooldown, or None if available.
         """
-        data = db_client.get_economy_user(guild_id, user_id)
+        data = await asyncio.to_thread(db_client.get_economy_user, guild_id, user_id)
         last_time_str = data.get(field)
         if not last_time_str:
             return None
@@ -253,10 +253,10 @@ class EconomyCog(commands.Cog, name="Economy"):
             return duration_seconds - elapsed
         return None
 
-    def update_db_cooldown(self, guild_id: str, user_id: str, field: str):
+    async def update_db_cooldown(self, guild_id: str, user_id: str, field: str):
         """Updates the database-persisted cooldown timestamp for a user."""
         now_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        db_client.update_economy_user(guild_id, user_id, {field: now_str})
+        await asyncio.to_thread(db_client.update_economy_user, guild_id, user_id, {field: now_str})
 
     async def send_cooldown_error(self, ctx: commands.Context, seconds: float):
         """Sends a beautiful cooldown error embed."""
@@ -282,12 +282,12 @@ class EconomyCog(commands.Cog, name="Economy"):
     @app_commands.describe(user="The user to check")
     async def balance(self, ctx: commands.Context, user: discord.Member = None):
         user = user or ctx.author
-        data = db_client.get_economy_user(str(ctx.guild.id), str(user.id))
+        data = await asyncio.to_thread(db_client.get_economy_user, str(ctx.guild.id), str(user.id))
         wallet = data.get("wallet", 0)
         bank = data.get("bank", 0)
         net_worth = wallet + bank
         
-        settings = db_client.get_guild_settings(str(ctx.guild.id))
+        settings = await asyncio.to_thread(db_client.get_guild_settings, str(ctx.guild.id))
         c_icon = settings.get("economy_currency_emoji", "🪙")
         
         embed = discord.Embed(title=f"Balance - {user.display_name}", color=0xF1C40F)
@@ -305,7 +305,7 @@ class EconomyCog(commands.Cog, name="Economy"):
     @commands.hybrid_command(name="deposit", aliases=["dep"], description="Deposit coins into your bank.")
     @app_commands.describe(amount="Amount to deposit (or 'all')")
     async def deposit(self, ctx: commands.Context, amount: str):
-        data = db_client.get_economy_user(str(ctx.guild.id), str(ctx.author.id))
+        data = await asyncio.to_thread(db_client.get_economy_user, str(ctx.guild.id), str(ctx.author.id))
         wallet = data.get("wallet", 0)
         
         if amount.lower() == "all":
@@ -321,13 +321,13 @@ class EconomyCog(commands.Cog, name="Economy"):
         if amount_to_deposit > wallet:
             return await ctx.send("You don't have that much in your wallet.")
             
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), -amount_to_deposit, amount_to_deposit)
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), -amount_to_deposit, amount_to_deposit)
         await ctx.send(f"✅ Deposited **{amount_to_deposit:,}** coins into your bank.")
 
     @commands.hybrid_command(name="withdraw", aliases=["with"], description="Withdraw coins from your bank.")
     @app_commands.describe(amount="Amount to withdraw (or 'all')")
     async def withdraw(self, ctx: commands.Context, amount: str):
-        data = db_client.get_economy_user(str(ctx.guild.id), str(ctx.author.id))
+        data = await asyncio.to_thread(db_client.get_economy_user, str(ctx.guild.id), str(ctx.author.id))
         bank = data.get("bank", 0)
         
         if amount.lower() == "all":
@@ -343,7 +343,7 @@ class EconomyCog(commands.Cog, name="Economy"):
         if amount_to_withdraw > bank:
             return await ctx.send("You don't have that much in your bank.")
             
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), amount_to_withdraw, -amount_to_withdraw)
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), amount_to_withdraw, -amount_to_withdraw)
         await ctx.send(f"✅ Withdrew **{amount_to_withdraw:,}** coins from your bank.")
 
     @commands.hybrid_command(name="transfer", aliases=["pay", "send"], description="Send coins to another user.")
@@ -354,17 +354,17 @@ class EconomyCog(commands.Cog, name="Economy"):
         if user == ctx.author:
             return await ctx.send("You cannot send coins to yourself.")
             
-        data = db_client.get_economy_user(str(ctx.guild.id), str(ctx.author.id))
+        data = await asyncio.to_thread(db_client.get_economy_user, str(ctx.guild.id), str(ctx.author.id))
         if data.get("wallet", 0) < amount:
             return await ctx.send("You don't have enough coins in your wallet.")
             
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), -amount, 0)
-        db_client.add_economy_balance(str(ctx.guild.id), str(user.id), amount, 0)
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), -amount, 0)
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(user.id), amount, 0)
         await ctx.send(f"💸 You sent **{amount:,}** coins to {user.mention}.")
 
     @commands.hybrid_command(name="leaderboard", aliases=["lb", "rich"], description="View the server economy leaderboard.")
     async def leaderboard(self, ctx: commands.Context):
-        users = db_client.get_economy_leaderboard(str(ctx.guild.id), limit=10)
+        users = await asyncio.to_thread(db_client.get_economy_leaderboard, str(ctx.guild.id), limit=10)
         if not users:
             return await ctx.send("No economy data for this server.")
             
@@ -383,11 +383,11 @@ class EconomyCog(commands.Cog, name="Economy"):
 
     @commands.hybrid_command(name="daily", description="Claim your daily coins.")
     async def daily(self, ctx: commands.Context):
-        cooldown = self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_daily", 86400)
+        cooldown = await self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_daily", 86400)
         if cooldown:
             return await self.send_cooldown_error(ctx, cooldown)
             
-        settings = db_client.get_guild_settings(str(ctx.guild.id))
+        settings = await asyncio.to_thread(db_client.get_guild_settings, str(ctx.guild.id))
         c_name = settings.get("economy_currency_name", "coins")
         c_icon = settings.get("economy_currency_emoji", "🪙")
         
@@ -396,42 +396,42 @@ class EconomyCog(commands.Cog, name="Economy"):
         except (ValueError, TypeError):
             reward = random.randint(500, 1000)
             
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), reward, 0)
-        self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_daily")
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), reward, 0)
+        await self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_daily")
         
         await ctx.send(embed=discord.Embed(description=f"📅 You claimed your daily reward of **{reward:,}** {c_icon} {c_name}!", color=discord.Color.green()))
 
     @commands.hybrid_command(name="weekly", description="Claim your weekly coins.")
     async def weekly(self, ctx: commands.Context):
-        cooldown = self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_weekly", 604800)
+        cooldown = await self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_weekly", 604800)
         if cooldown:
             return await self.send_cooldown_error(ctx, cooldown)
             
         reward = random.randint(3000, 7000)
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), reward, 0)
-        self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_weekly")
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), reward, 0)
+        await self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_weekly")
         
         await ctx.send(embed=discord.Embed(description=f"📅 You claimed your weekly reward of **{reward:,}** coins!", color=discord.Color.green()))
 
     @commands.hybrid_command(name="monthly", description="Claim your monthly coins.")
     async def monthly(self, ctx: commands.Context):
-        cooldown = self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_monthly", 2592000)
+        cooldown = await self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_monthly", 2592000)
         if cooldown:
             return await self.send_cooldown_error(ctx, cooldown)
             
         reward = random.randint(15000, 30000)
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), reward, 0)
-        self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_monthly")
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), reward, 0)
+        await self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_monthly")
         
         await ctx.send(embed=discord.Embed(description=f"📅 You claimed your monthly reward of **{reward:,}** coins!", color=discord.Color.green()))
 
     @commands.hybrid_command(name="work", description="Work a job to earn coins.")
     async def work(self, ctx: commands.Context):
-        cooldown = self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_work", 3600)
+        cooldown = await self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_work", 3600)
         if cooldown:
             return await self.send_cooldown_error(ctx, cooldown)
             
-        settings = db_client.get_guild_settings(str(ctx.guild.id))
+        settings = await asyncio.to_thread(db_client.get_guild_settings, str(ctx.guild.id))
         c_name = settings.get("economy_currency_name", "coins")
         
         try:
@@ -445,25 +445,25 @@ class EconomyCog(commands.Cog, name="Economy"):
             
         jobs = ["developer", "designer", "teacher", "chef", "driver", "streamer", "mechanic", "doctor", "cashier"]
         reward = random.randint(min_work, max(min_work, max_work))
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), reward, 0)
-        self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_work")
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), reward, 0)
+        await self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_work")
         
         await ctx.send(embed=discord.Embed(description=f"💼 You worked as a **{random.choice(jobs)}** and earned **{reward:,}** {c_name}!", color=discord.Color.green()))
 
     @commands.hybrid_command(name="crime", description="Commit a crime for high rewards, but risk a fine.")
     async def crime(self, ctx: commands.Context):
-        cooldown = self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_crime", 7200)
+        cooldown = await self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_crime", 7200)
         if cooldown:
             return await self.send_cooldown_error(ctx, cooldown)
             
-        self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_crime")
+        await self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_crime")
         if random.random() < 0.4:
             reward = random.randint(500, 1500)
-            db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), reward, 0)
+            await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), reward, 0)
             await ctx.send(embed=discord.Embed(description=f"🦹 You successfully committed a crime and stole **{reward:,}** coins!", color=discord.Color.green()))
         else:
             fine = random.randint(200, 800)
-            db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), -fine, 0)
+            await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), -fine, 0)
             await ctx.send(embed=discord.Embed(description=f"🚓 You were caught and fined **{fine:,}** coins.", color=discord.Color.red()))
 
     @commands.hybrid_command(name="rob", description="Attempt to rob someone's wallet.")
@@ -472,76 +472,76 @@ class EconomyCog(commands.Cog, name="Economy"):
         if user == ctx.author:
             return await ctx.send("You can't rob yourself.")
             
-        cooldown = self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_rob", 3600)
+        cooldown = await self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_rob", 3600)
         if cooldown:
             return await self.send_cooldown_error(ctx, cooldown)
             
-        target_data = db_client.get_economy_user(str(ctx.guild.id), str(user.id))
+        target_data = await asyncio.to_thread(db_client.get_economy_user, str(ctx.guild.id), str(user.id))
         if target_data.get("wallet", 0) < 100:
             return await ctx.send(f"{user.display_name} doesn't have enough coins worth stealing (minimum 100).")
             
-        self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_rob")
+        await self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_rob")
         if random.random() < 0.35:
             stolen = int(target_data["wallet"] * random.uniform(0.1, 0.4))
-            db_client.add_economy_balance(str(ctx.guild.id), str(user.id), -stolen, 0)
-            db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), stolen, 0)
+            await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(user.id), -stolen, 0)
+            await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), stolen, 0)
             await ctx.send(embed=discord.Embed(description=f"🥷 You successfully robbed **{stolen:,}** coins from {user.mention}!", color=discord.Color.green()))
         else:
             fine = random.randint(100, 500)
-            db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), -fine, 0)
+            await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), -fine, 0)
             await ctx.send(embed=discord.Embed(description=f"🚓 You were caught trying to rob {user.mention} and fined **{fine:,}** coins.", color=discord.Color.red()))
 
     @commands.hybrid_command(name="bankrob", description="Attempt a massive bank robbery (very hard).")
     async def bankrob(self, ctx: commands.Context):
-        cooldown = self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_crime", 21600)
+        cooldown = await self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_crime", 21600)
         if cooldown:
             return await self.send_cooldown_error(ctx, cooldown)
             
-        self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_crime")
+        await self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_crime")
         if random.random() < 0.1:
             reward = random.randint(5000, 20000)
-            db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), reward, 0)
+            await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), reward, 0)
             await ctx.send(embed=discord.Embed(title="🏦 BANK HEIST SUCCESSFUL!", description=f"You bypassed the vault and stole **{reward:,}** coins!", color=discord.Color.green()))
         else:
             fine = random.randint(1000, 5000)
-            db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), -fine, 0)
+            await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), -fine, 0)
             await ctx.send(embed=discord.Embed(title="🚨 BUSTED!", description=f"The SWAT team caught you. You were fined **{fine:,}** coins.", color=discord.Color.red()))
 
     @commands.hybrid_command(name="fish", description="Go fishing.")
     async def fish(self, ctx: commands.Context):
-        cooldown = self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_fish", 1800)
+        cooldown = await self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_fish", 1800)
         if cooldown:
             return await self.send_cooldown_error(ctx, cooldown)
             
-        self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_fish")
+        await self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_fish")
         fish_types = ["🐟", "🐠", "🐡", "🦈", "🐙", "🦀"]
         amount = random.randint(20, 150)
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), amount, 0)
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), amount, 0)
         await ctx.send(f"🎣 You went fishing and caught a {random.choice(fish_types)}! You sold it for **{amount}** coins.")
 
     @commands.hybrid_command(name="hunt", description="Go hunting.")
     async def hunt(self, ctx: commands.Context):
-        cooldown = self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_hunt", 1800)
+        cooldown = await self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_hunt", 1800)
         if cooldown:
             return await self.send_cooldown_error(ctx, cooldown)
             
-        self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_hunt")
+        await self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_hunt")
         animals = ["🦌", "🐗", "🐇", "🦆", "🐻"]
         amount = random.randint(30, 200)
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), amount, 0)
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), amount, 0)
         await ctx.send(f"🏹 You went hunting and caught a {random.choice(animals)}! You sold it for **{amount}** coins.")
 
     @commands.hybrid_command(name="mine", description="Go mining.")
     async def mine(self, ctx: commands.Context):
-        cooldown = self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_mine", 1800)
+        cooldown = await self.check_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_mine", 1800)
         if cooldown:
             return await self.send_cooldown_error(ctx, cooldown)
             
-        self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_mine")
+        await self.update_db_cooldown(str(ctx.guild.id), str(ctx.author.id), "last_mine")
         ores = ["⛏️ Coal", "⛏️ Iron", "⛏️ Gold", "💎 Diamond"]
         ore = random.choice(ores)
         amount = random.randint(50, 300) if "Diamond" not in ore else random.randint(500, 1000)
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), amount, 0)
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), amount, 0)
         await ctx.send(f"⛏️ You went mining and found **{ore}**! You sold it for **{amount}** coins.")
 
     @commands.hybrid_command(name="beg", description="Beg for some spare coins.")
@@ -549,7 +549,7 @@ class EconomyCog(commands.Cog, name="Economy"):
     async def beg(self, ctx: commands.Context):
         if random.random() < 0.6:
             amount = random.randint(20, 100)
-            db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), amount, 0)
+            await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), amount, 0)
             beggers = ["A kind stranger", "A wealthy businessman", "A generous developer", "A friendly bot"]
             await ctx.send(f"🪙 {random.choice(beggers)} gave you **{amount}** coins!")
         else:
@@ -590,7 +590,7 @@ class EconomyCog(commands.Cog, name="Economy"):
                             
                     if random.random() < 0.7:
                         amount = random.randint(30, 200)
-                        db_client.add_economy_balance(str(self.guild_id), str(self.author.id), amount, 0)
+                        await asyncio.to_thread(db_client.add_economy_balance, str(self.guild_id), str(self.author.id), amount, 0)
                         content = f"🔍 You searched the **{loc}** and found **{amount}** coins!"
                     else:
                         content = f"🔍 You searched the **{loc}** but found nothing."
@@ -658,7 +658,7 @@ class EconomyCog(commands.Cog, name="Economy"):
                 
                 if won:
                     payout = random.randint(50, 150)
-                    db_client.add_economy_balance(str(self.guild_id), str(self.author.id), payout, 0)
+                    await asyncio.to_thread(db_client.add_economy_balance, str(self.guild_id), str(self.author.id), payout, 0)
                     embed.description = f"🎯 The secret number was **{self.secret}** (which is {'higher' if is_higher else 'lower'} than **{self.hint}**).\n\n" \
                                         f"🎉 **You guessed correctly!** You earned **{payout}** coins."
                     embed.color = discord.Color.green()
@@ -691,14 +691,14 @@ class EconomyCog(commands.Cog, name="Economy"):
         if bet < 10:
             return await ctx.send("Minimum bet is 10.")
             
-        data = db_client.get_economy_user(str(ctx.guild.id), str(ctx.author.id))
+        data = await asyncio.to_thread(db_client.get_economy_user, str(ctx.guild.id), str(ctx.author.id))
         if data.get("wallet", 0) < bet:
             return await ctx.send("You don't have enough coins.")
             
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), -bet, 0)
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), -bet, 0)
         if random.random() < 0.48:
             win = bet * 2
-            db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), win, 0)
+            await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), win, 0)
             await ctx.send(embed=discord.Embed(description=f"🎰 You won! Payout: **{win:,}** coins.", color=discord.Color.green()))
         else:
             await ctx.send(embed=discord.Embed(description=f"🎰 You lost **{bet:,}** coins. Better luck next time!", color=discord.Color.red()))
@@ -712,18 +712,18 @@ class EconomyCog(commands.Cog, name="Economy"):
         if bet < 10:
             return await ctx.send("Minimum bet is 10.")
             
-        data = db_client.get_economy_user(str(ctx.guild.id), str(ctx.author.id))
+        data = await asyncio.to_thread(db_client.get_economy_user, str(ctx.guild.id), str(ctx.author.id))
         if data.get("wallet", 0) < bet:
             return await ctx.send("You don't have enough coins.")
             
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), -bet, 0)
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), -bet, 0)
         result = random.choice(["heads", "tails"])
         
         is_win = (choice in ["heads", "h"] and result == "heads") or (choice in ["tails", "t"] and result == "tails")
         
         if is_win:
             win = bet * 2
-            db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), win, 0)
+            await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), win, 0)
             await ctx.send(embed=discord.Embed(description=f"🪙 It landed on **{result}**! You won **{win:,}** coins.", color=discord.Color.green()))
         else:
             await ctx.send(embed=discord.Embed(description=f"🪙 It landed on **{result}**. You lost **{bet:,}** coins.", color=discord.Color.red()))
@@ -734,11 +734,11 @@ class EconomyCog(commands.Cog, name="Economy"):
         if bet < 10:
             return await ctx.send("Minimum bet is 10.")
             
-        data = db_client.get_economy_user(str(ctx.guild.id), str(ctx.author.id))
+        data = await asyncio.to_thread(db_client.get_economy_user, str(ctx.guild.id), str(ctx.author.id))
         if data.get("wallet", 0) < bet:
             return await ctx.send("You don't have enough coins.")
             
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), -bet, 0)
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), -bet, 0)
         
         emojis = ["🍒", "🍇", "🍊", "🍋", "🔔", "💎", "7️⃣"]
         s1, s2, s3 = random.choice(emojis), random.choice(emojis), random.choice(emojis)
@@ -747,12 +747,12 @@ class EconomyCog(commands.Cog, name="Economy"):
         
         if s1 == s2 == s3:
             win = bet * 10
-            db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), win, 0)
+            await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), win, 0)
             embed.description += f"\n\n**JACKPOT!** You won **{win:,}** coins!"
             embed.color = discord.Color.green()
         elif s1 == s2 or s2 == s3 or s1 == s3:
             win = bet * 2
-            db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), win, 0)
+            await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), win, 0)
             embed.description += f"\n\n**Nice!** You won **{win:,}** coins!"
             embed.color = discord.Color.green()
         else:
@@ -767,11 +767,11 @@ class EconomyCog(commands.Cog, name="Economy"):
         if bet < 10:
             return await ctx.send("Minimum bet is 10.")
             
-        data = db_client.get_economy_user(str(ctx.guild.id), str(ctx.author.id))
+        data = await asyncio.to_thread(db_client.get_economy_user, str(ctx.guild.id), str(ctx.author.id))
         if data.get("wallet", 0) < bet:
             return await ctx.send("You don't have enough coins.")
             
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), -bet, 0)
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), -bet, 0)
         
         view = BlackjackView(ctx, self, bet)
         p_score = view.get_score(view.player_hand)
@@ -783,7 +783,7 @@ class EconomyCog(commands.Cog, name="Economy"):
         
         if p_score == 21:
             win = int(bet * 2.5)
-            db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), win, 0)
+            await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), win, 0)
             embed.add_field(name=f"Dealer's Hand ({d_score})", value=" ".join(str(c) for c in view.dealer_hand), inline=False)
             embed.description = f"**BLACKJACK!** You won **{win:,}** coins!"
             embed.color = discord.Color.green()
@@ -796,7 +796,7 @@ class EconomyCog(commands.Cog, name="Economy"):
 
     @commands.hybrid_command(name="shop", description="Browse the server shop.")
     async def shop(self, ctx: commands.Context):
-        items = db_client.get_shop_items(str(ctx.guild.id))
+        items = await asyncio.to_thread(db_client.get_shop_items, str(ctx.guild.id))
         if not items:
             return await ctx.send("The shop is currently empty.")
             
@@ -825,18 +825,18 @@ class EconomyCog(commands.Cog, name="Economy"):
         if quantity <= 0:
             return await ctx.send("Quantity must be at least 1.")
             
-        item = db_client.get_shop_item(str(ctx.guild.id), real_item_name)
+        item = await asyncio.to_thread(db_client.get_shop_item, str(ctx.guild.id), real_item_name)
         if not item:
             return await ctx.send(f"Item `{real_item_name}` not found in the shop.")
             
         total_price = item['price'] * quantity
-        data = db_client.get_economy_user(str(ctx.guild.id), str(ctx.author.id))
+        data = await asyncio.to_thread(db_client.get_economy_user, str(ctx.guild.id), str(ctx.author.id))
         
         if data.get("wallet", 0) < total_price:
             return await ctx.send(f"You need **{total_price:,}** coins to buy {quantity}x {item['name']}.")
             
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), -total_price, 0)
-        db_client.add_to_inventory(str(ctx.guild.id), str(ctx.author.id), item['item_id'], quantity)
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), -total_price, 0)
+        await asyncio.to_thread(db_client.add_to_inventory, str(ctx.guild.id), str(ctx.author.id), item['item_id'], quantity)
         
         emoji = item.get('emoji') or "📦"
         await ctx.send(f"✅ You bought **{quantity}x {item['name']}** {emoji} for **{total_price:,}** coins.")
@@ -855,16 +855,16 @@ class EconomyCog(commands.Cog, name="Economy"):
         if quantity <= 0:
             return await ctx.send("Quantity must be at least 1.")
             
-        item = db_client.get_shop_item(str(ctx.guild.id), real_item_name)
+        item = await asyncio.to_thread(db_client.get_shop_item, str(ctx.guild.id), real_item_name)
         if not item:
             return await ctx.send("That item doesn't exist.")
             
-        success = db_client.remove_from_inventory(str(ctx.guild.id), str(ctx.author.id), item['item_id'], quantity)
+        success = await asyncio.to_thread(db_client.remove_from_inventory, str(ctx.guild.id), str(ctx.author.id), item['item_id'], quantity)
         if not success:
             return await ctx.send("You don't have enough of that item in your inventory.")
             
         sell_price = int(item['price'] * 0.5) * quantity
-        db_client.add_economy_balance(str(ctx.guild.id), str(ctx.author.id), sell_price, 0)
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(ctx.author.id), sell_price, 0)
         
         await ctx.send(f"✅ You sold **{quantity}x {item['name']}** for **{sell_price:,}** coins.")
 
@@ -872,7 +872,7 @@ class EconomyCog(commands.Cog, name="Economy"):
     @app_commands.describe(user="The user to check")
     async def inventory(self, ctx: commands.Context, user: discord.Member = None):
         user = user or ctx.author
-        inv = db_client.get_inventory(str(ctx.guild.id), str(user.id))
+        inv = await asyncio.to_thread(db_client.get_inventory, str(ctx.guild.id), str(user.id))
         
         if not inv:
             return await ctx.send(embed=discord.Embed(description=f"**{user.display_name}** has an empty inventory.", color=0x3498DB))
@@ -890,11 +890,11 @@ class EconomyCog(commands.Cog, name="Economy"):
     @commands.hybrid_command(name="use", description="Use an item from your inventory.")
     @app_commands.describe(item_name="Name of the item to use")
     async def use(self, ctx: commands.Context, *, item_name: str):
-        item = db_client.get_shop_item(str(ctx.guild.id), item_name)
+        item = await asyncio.to_thread(db_client.get_shop_item, str(ctx.guild.id), item_name)
         if not item:
             return await ctx.send("That item doesn't exist.")
             
-        success = db_client.remove_from_inventory(str(ctx.guild.id), str(ctx.author.id), item['item_id'], 1)
+        success = await asyncio.to_thread(db_client.remove_from_inventory, str(ctx.guild.id), str(ctx.author.id), item['item_id'], 1)
         if not success:
             return await ctx.send("You don't have that item.")
             
@@ -917,15 +917,15 @@ class EconomyCog(commands.Cog, name="Economy"):
         if quantity <= 0:
             return await ctx.send("Quantity must be at least 1.")
             
-        item = db_client.get_shop_item(str(ctx.guild.id), real_item_name)
+        item = await asyncio.to_thread(db_client.get_shop_item, str(ctx.guild.id), real_item_name)
         if not item:
             return await ctx.send("That item doesn't exist.")
             
-        success = db_client.remove_from_inventory(str(ctx.guild.id), str(ctx.author.id), item['item_id'], quantity)
+        success = await asyncio.to_thread(db_client.remove_from_inventory, str(ctx.guild.id), str(ctx.author.id), item['item_id'], quantity)
         if not success:
             return await ctx.send("You don't have enough of that item.")
             
-        db_client.add_to_inventory(str(ctx.guild.id), str(user.id), item['item_id'], quantity)
+        await asyncio.to_thread(db_client.add_to_inventory, str(ctx.guild.id), str(user.id), item['item_id'], quantity)
         await ctx.send(f"🎁 You gifted **{quantity}x {item['name']}** to {user.mention}.")
 
     # ── Admin Economy ────────────────────────────────────────────────────────
@@ -933,23 +933,23 @@ class EconomyCog(commands.Cog, name="Economy"):
     @commands.hybrid_command(name="give", description="Give money to a user.")
     @admin_only()
     async def give(self, ctx: commands.Context, user: discord.Member, amount: int):
-        db_client.add_economy_balance(str(ctx.guild.id), str(user.id), amount, 0)
-        settings = db_client.get_guild_settings(str(ctx.guild.id))
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(user.id), amount, 0)
+        settings = await asyncio.to_thread(db_client.get_guild_settings, str(ctx.guild.id))
         c_name = settings.get("economy_currency_name", "coins")
         await ctx.send(embed=discord.Embed(description=f"✅ Added **{amount:,}** {c_name} to {user.mention}'s wallet.", color=discord.Color.green()))
 
     @commands.hybrid_command(name="remove", description="Remove money from a user.")
     @admin_only()
     async def remove(self, ctx: commands.Context, user: discord.Member, amount: int):
-        db_client.add_economy_balance(str(ctx.guild.id), str(user.id), -amount, 0)
-        settings = db_client.get_guild_settings(str(ctx.guild.id))
+        await asyncio.to_thread(db_client.add_economy_balance, str(ctx.guild.id), str(user.id), -amount, 0)
+        settings = await asyncio.to_thread(db_client.get_guild_settings, str(ctx.guild.id))
         c_name = settings.get("economy_currency_name", "coins")
         await ctx.send(embed=discord.Embed(description=f"✅ Removed **{amount:,}** {c_name} from {user.mention}'s wallet.", color=discord.Color.green()))
 
     @commands.hybrid_command(name="reset", description="Reset a user's economy data completely.")
     @admin_only()
     async def reset(self, ctx: commands.Context, user: discord.Member):
-        db_client.delete_economy_user(str(ctx.guild.id), str(user.id))
+        await asyncio.to_thread(db_client.delete_economy_user, str(ctx.guild.id), str(user.id))
         await ctx.send(embed=discord.Embed(description=f"⚠️ Reset economy data for {user.mention}.", color=discord.Color.orange()))
 
     @commands.hybrid_command(name="additem", description="Add an item to the shop.")
@@ -962,9 +962,9 @@ class EconomyCog(commands.Cog, name="Economy"):
             "emoji": emoji,
             "description": desc
         }
-        settings = db_client.get_guild_settings(str(ctx.guild.id))
+        settings = await asyncio.to_thread(db_client.get_guild_settings, str(ctx.guild.id))
         c_name = settings.get("economy_currency_name", "coins")
-        if db_client.add_shop_item(data):
+        if await asyncio.to_thread(db_client.add_shop_item, data):
             await ctx.send(f"✅ Added **{name}** to the shop for **{price}** {c_name}.")
         else:
             await ctx.send("❌ Failed to add item.")
@@ -972,7 +972,7 @@ class EconomyCog(commands.Cog, name="Economy"):
     @commands.hybrid_command(name="removeitem", description="Remove an item from the shop.")
     @admin_only()
     async def removeitem(self, ctx: commands.Context, name: str):
-        if db_client.remove_shop_item(str(ctx.guild.id), name):
+        if await asyncio.to_thread(db_client.remove_shop_item, str(ctx.guild.id), name):
             await ctx.send(f"✅ Removed **{name}** from the shop.")
         else:
             await ctx.send("❌ Failed to remove item.")
@@ -980,13 +980,13 @@ class EconomyCog(commands.Cog, name="Economy"):
     @commands.hybrid_command(name="equip", description="Equip a role item from your inventory.")
     @app_commands.describe(item_name="Name of the role item to equip")
     async def equip(self, ctx: commands.Context, *, item_name: str):
-        item = db_client.get_shop_item(str(ctx.guild.id), item_name)
+        item = await asyncio.to_thread(db_client.get_shop_item, str(ctx.guild.id), item_name)
         if not item:
             return await ctx.send("That item doesn't exist.")
         if item.get("type") != "role" or not item.get("role_id"):
             return await ctx.send("This item cannot be equipped as a role.")
             
-        inv = db_client.get_inventory(str(ctx.guild.id), str(ctx.author.id))
+        inv = await asyncio.to_thread(db_client.get_inventory, str(ctx.guild.id), str(ctx.author.id))
         owns_item = any(row["item_id"] == item["item_id"] for row in inv)
         
         if not owns_item:
@@ -1008,7 +1008,7 @@ class EconomyCog(commands.Cog, name="Economy"):
     @commands.hybrid_command(name="unequip", description="Unequip a role item.")
     @app_commands.describe(item_name="Name of the role item to unequip")
     async def unequip(self, ctx: commands.Context, *, item_name: str):
-        item = db_client.get_shop_item(str(ctx.guild.id), item_name)
+        item = await asyncio.to_thread(db_client.get_shop_item, str(ctx.guild.id), item_name)
         if not item or item.get("type") != "role" or not item.get("role_id"):
             return await ctx.send("This item is not an equippable role.")
             

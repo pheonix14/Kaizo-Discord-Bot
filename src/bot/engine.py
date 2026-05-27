@@ -1,6 +1,7 @@
 import logging
 import os
 import discord
+import asyncio
 from discord.ext import commands
 from src import config
 from src.db import client as db_client
@@ -14,7 +15,7 @@ async def get_dynamic_prefix(bot, message):
     if not message.guild:
         prefixes = ["k!", "!", ".", "/"]
     else:
-        settings = db_client.get_guild_settings(message.guild.id)
+        settings = await asyncio.to_thread(db_client.get_guild_settings, message.guild.id)
         prefix_val = settings.get("prefix", "k!, !, ., /")
         if isinstance(prefix_val, list):
             prefixes = prefix_val
@@ -54,20 +55,23 @@ class KaizerBot(commands.Bot):
                 except Exception as e:
                     logger.error(f"Failed to load cog {cog_path}: {e}")
 
+        # Sync slash commands globally once on startup in setup_hook
+        try:
+            await self.tree.sync()
+            logger.info("Application command tree synced globally in setup_hook.")
+        except Exception as e:
+            logger.error(f"Failed to sync command tree in setup_hook: {e}")
+
     async def on_ready(self):
         logger.info(f"Kaizer K5 Engine connected to Discord as: {self.user} (ID: {self.user.id})")
         
-        # Sync slash commands globally once the client is logged in and ready
-        try:
-            await self.tree.sync()
-            logger.info("Application command tree synced globally in on_ready.")
-        except Exception as e:
-            logger.error(f"Failed to sync command tree in on_ready: {e}")
-            
-        # Verify and sync guild settings in DB for all active guilds
+        # Verify and sync guild settings in DB for all active guilds (offloaded to thread)
         for guild in self.guilds:
-            db_client.get_guild_settings(guild.id, guild.name)
-            logger.info(f"Synced guild settings for {guild.name} (ID: {guild.id})")
+            try:
+                await asyncio.to_thread(db_client.get_guild_settings, guild.id, guild.name)
+                logger.info(f"Synced guild settings for {guild.name} (ID: {guild.id})")
+            except Exception as e:
+                logger.error(f"Failed to sync settings for guild {guild.id}: {e}")
 
 def int_or_none(val):
     try:
@@ -81,7 +85,7 @@ bot = KaizerBot()
 # --- Global Command Checks (Supabase Sync) ---
 async def check_command_access(guild_id: int, command_name: str, author: discord.Member) -> bool:
     """Checks if a command is enabled and if the user has permission to use it."""
-    config = db_client.get_command_config(str(guild_id), command_name)
+    config = await asyncio.to_thread(db_client.get_command_config, str(guild_id), command_name)
     if not config:
         return True # Default to enabled if not found
 
