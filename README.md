@@ -83,6 +83,14 @@ python main.py
 
 ---
 
+## 🚀 Concurrency & Event Loop Optimization (Render Support)
+To ensure high responsiveness and stability when deployed to single-core cloud containers (like Render), all database client calls (Supabase HTTP operations) have been fully refactored:
+- **Non-blocking Operations**: Synchronous postgrest/httpx calls are offloaded using `asyncio.to_thread` to prevent event loop starvation.
+- **WebSocket Gateway Stability**: This offloading prevents database latency from blocking the gateway thread, ensuring that gateway heartbeats are sent consistently and preventing the bot from becoming unresponsive or disconnects on Render.
+- **Concurrent Flask App**: The Flask web dashboard runs on a background OS thread (`asyncio.to_thread(run_web)`) which leaves the main thread completely free for the Discord bot client.
+
+---
+
 ## 💻 Discord Commands
 
 All admin commands require **Administrator** permissions on the target server.
