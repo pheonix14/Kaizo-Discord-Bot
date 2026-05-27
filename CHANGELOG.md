@@ -566,3 +566,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-27] feat(economy): harden gambling dice
 - [2026-05-27] perf(help): tune command argument specs
 - [2026-05-27] feat(config): enhance runtime options
+- [2026-05-27] feat(developer): implement cog hot reloader
