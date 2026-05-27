@@ -1,0 +1,5290 @@
+
+    window.KAIZER_STATE = {
+      user: null,
+      guild_id: null,
+      active_page: "null"
+    };
+  
+
+    const guildId = "null";
+
+    // --- Dynamic Color Bleed Cycling ---
+    const COLORS = [
+        ['#ff2d55', '#0affe4'],
+        ['#ff6b35', '#c7ff3a'],
+        ['#a855f7', '#22d3ee'],
+        ['#f59e0b', '#f43f5e'],
+        ['#10b981', '#6366f1'],
+        ['#ec4899', '#fbbf24']
+    ];
+    let colorIdx = Math.floor(Math.random() * COLORS.length);
+    const colorBleed = document.getElementById('colorBleed');
+
+    function applyColors(i) {
+        const [c1, c2] = COLORS[i % COLORS.length];
+        document.documentElement.style.setProperty('--c1', c1);
+        document.documentElement.style.setProperty('--c2', c2);
+        if (colorBleed) {
+          colorBleed.style.background = `radial-gradient(ellipse at 30% 70%, ${c1}33, transparent 60%), radial-gradient(ellipse at 70% 30%, ${c2}22, transparent 60%)`;
+        }
+    }
+    applyColors(colorIdx);
+    
+    // Cycle colors every 12 seconds
+    setInterval(() => {
+        colorIdx++;
+        applyColors(colorIdx);
+    }, 12000);
+    
+    // Sidebar Navigation
+    const navCategories = document.querySelectorAll('.nav-category');
+    const tabContents = document.querySelectorAll('.content-area .tab-content');
+    
+    navCategories.forEach(nav => {
+      nav.addEventListener('click', () => {
+        navCategories.forEach(n => n.classList.remove('active'));
+        tabContents.forEach(t => t.classList.remove('active'));
+        
+        nav.classList.add('active');
+        const target = nav.getAttribute('data-target');
+        const tabEl = document.getElementById(target);
+        tabEl.classList.add('active');
+        
+        // Re-trigger titleReveal animation on h2 elements inside the active tab
+        const title = tabEl.querySelector('h2');
+        if (title) {
+          title.style.animation = 'none';
+          title.offsetHeight; /* trigger reflow */
+          title.style.animation = '';
+        }
+
+        // Ensure role dropdowns are loaded for each tab that needs them
+        if (target === 'settings') {
+          ensureBotSettingsRoles();
+        }
+        if (target === 'moderation' || target === 'leveling' || target === 'tickets' || target === 'customcmd' || target === 'giveaways') {
+          if (activeLayoutData && activeLayoutData.roles && activeLayoutData.roles.length > 0) {
+            if (target === 'moderation') populateModerationDropdowns(activeLayoutData.roles);
+            if (target === 'leveling') populateLevelingRolesDropdowns(activeLayoutData.roles);
+            if (target === 'tickets') populateTicketsDropdowns(activeLayoutData.roles);
+            if (target === 'customcmd') populateCustomCommandsRoles(activeLayoutData.roles);
+            if (target === 'giveaways') populateGiveawayRolesSelect(activeLayoutData.roles);
+          }
+        }
+        if (target === 'music-settings') {
+          if (activeLayoutData && activeLayoutData.roles) {
+            populateMusicDropdowns(activeLayoutData.roles);
+          }
+        }
+      });
+    });
+
+    // Command Sub-Tabs Navigation
+    const cmdTabs = document.querySelectorAll('.cmd-tab');
+    cmdTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        cmdTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const category = tab.getAttribute('data-sub');
+        loadCommandsForCategory(category);
+      });
+    });
+
+    // ── Full Command Catalog ──────────────────────────────────────────────────
+    const COMMAND_CATALOG = {
+      moderation: [
+        { name:'ban',           desc:'Permanently ban a member from the server' },
+        { name:'unban',         desc:'Unban a previously banned member' },
+        { name:'kick',          desc:'Kick a member from the server' },
+        { name:'timeout',       desc:'Discord-timeout a member for a duration' },
+        { name:'untimeout',     desc:'Remove a timeout from a member' },
+        { name:'purge',         desc:'Bulk-delete messages in a channel' },
+        { name:'slowmode',      desc:'Set slowmode delay on a channel' },
+        { name:'lock',          desc:'Lock a channel so members cannot send messages' },
+        { name:'unlock',        desc:'Unlock a previously locked channel' },
+      ],
+      automod: [
+        { name:'automod rule_add',      desc:'Add a new automod rule' },
+        { name:'automod rule_remove',   desc:'Remove an automod rule' },
+        { name:'automod rule_list',     desc:'List automod rules' },
+        { name:'automod threshold_set', desc:'Set warn thresholds' },
+        { name:'automod modlog_set',    desc:'Set the mod log channel' },
+        { name:'automod info',          desc:'View automod configuration' },
+        { name:'k4defence enable',      desc:'Enable K4 Defence spam protection' },
+        { name:'k4defence disable',     desc:'Disable K4 Defence' },
+        { name:'k4defence status',      desc:'Check K4 Defence status' },
+      ],
+      utility: [
+        { name:'util ping',        desc:'Check bot latency' },
+        { name:'util calc',        desc:'Evaluate a math expression safely' },
+        { name:'util color',       desc:'Preview a hex color' },
+        { name:'util charinfo',    desc:'Show unicode character info' },
+        { name:'util snipe',       desc:'Show the last deleted message' },
+        { name:'util editsnipe',   desc:'Show the last edited message' },
+        { name:'util weather',     desc:'Get current weather for a location' },
+        { name:'util translate',   desc:'Translate text to another language' },
+        { name:'util qr',          desc:'Generate a QR code' },
+        { name:'util paste',       desc:'Create a pastebin' },
+        { name:'util reminder',    desc:'Set a personal reminder' },
+        { name:'util reminders',   desc:'List your active reminders' },
+        { name:'util announce',    desc:'Send an announcement embed' },
+        { name:'util say',         desc:'Make the bot say something' },
+        { name:'embed',            desc:'Interactive embed builder' },
+        { name:'info bot',         desc:'Detailed bot statistics' },
+        { name:'info server',      desc:'View detailed server information' },
+        { name:'info user',        desc:'View detailed information about a user' },
+        { name:'info channel',     desc:'View info about a channel' },
+        { name:'info role',        desc:'View info about a role' },
+        { name:'info emoji',       desc:'View info about a custom emoji' },
+        { name:'tools avatar',     desc:"Get a user's full-size avatar" },
+        { name:'tools banner',     desc:"Get a user's Discord profile banner" },
+        { name:'tools servericon', desc:"Get the server's icon" },
+        { name:'tools serverbanner', desc:"Get the server's banner" },
+        { name:'tools firstmsg',   desc:"Get a link to the first message in the channel" },
+        { name:'tools timestamp',  desc:'Convert a date/time to a Discord timestamp' },
+        { name:'tools time',       desc:'Show the current time in UTC' },
+        { name:'tools afk',        desc:'Set your AFK status' },
+        { name:'tools steal',      desc:'Steal an emoji from another server' },
+        { name:'tools poll',       desc:'Create a reaction poll' },
+        { name:'tools countdown',  desc:'Create a countdown timer' },
+      ],
+      fun: [
+        { name:'fun 8ball',    desc:'Ask the magic 8-ball a yes/no question' },
+        { name:'fun ascii',    desc:'Convert text to ASCII art' },
+        { name:'fun compliment',desc:'Send a sweet compliment' },
+        { name:'fun dare',     desc:'Get a random dare' },
+        { name:'fun truth',    desc:'Get a random truth question' },
+        { name:'fun fact',     desc:'Get a random interesting fact' },
+        { name:'fun flip',     desc:'Flip a coin' },
+        { name:'fun joke',     desc:'Get a random joke' },
+        { name:'fun meme',     desc:'Fetch a random meme from Reddit' },
+        { name:'fun quote',    desc:'Get an inspirational quote' },
+        { name:'fun rate',     desc:'Rate something out of 10' },
+        { name:'fun roast',    desc:'Roast a mentioned user' },
+        { name:'fun roll',     desc:'Roll a dice' },
+        { name:'fun slap',     desc:'Slap someone' },
+        { name:'fun hug',      desc:'Hug someone' },
+        { name:'fun kiss',     desc:'Kiss someone' },
+        { name:'fun pat',      desc:'Pat someone' },
+        { name:'fun cuddle',   desc:'Cuddle someone' },
+        { name:'fun wwe',      desc:'Wrestling move GIF' },
+        { name:'fun kill',     desc:'Fake kill someone' },
+        { name:'games rps',    desc:'Play rock paper scissors' },
+        { name:'games tictactoe', desc:'Play Tic-Tac-Toe' },
+        { name:'games connect4',  desc:'Play Connect 4' },
+        { name:'games hangman',   desc:'Play Hangman' },
+        { name:'games trivia',    desc:'Play Trivia' },
+        { name:'games fasttype',  desc:'Play Fast Type' },
+        { name:'games russianroulette', desc:'Play Russian Roulette' },
+        { name:'games slotmachine', desc:'Play the Slot Machine' },
+        { name:'games minesweeper', desc:'Play Minesweeper' },
+        { name:'games snake',     desc:'Play Snake' },
+        { name:'games higherlower',desc:'Play Higher or Lower' },
+        { name:'games wordle',    desc:'Play Wordle' },
+      ],
+      economy: [
+        { name:'eco balance',           desc:'Check your wallet and bank balance' },
+        { name:'eco deposit',           desc:'Deposit coins into bank' },
+        { name:'eco withdraw',          desc:'Withdraw coins from bank' },
+        { name:'eco transfer',          desc:'Transfer coins to another member' },
+        { name:'eco leaderboard',       desc:'View the economy leaderboard' },
+        { name:'eco daily',             desc:'Claim your daily coin reward' },
+        { name:'eco weekly',            desc:'Claim your weekly reward' },
+        { name:'eco monthly',           desc:'Claim your monthly reward' },
+        { name:'eco work',              desc:'Work to earn some coins' },
+        { name:'eco crime',             desc:'Commit a crime for coins' },
+        { name:'eco rob',               desc:'Attempt to rob a user' },
+        { name:'eco bankrob',           desc:'Attempt a massive bank robbery' },
+        { name:'eco fish',              desc:'Go fishing' },
+        { name:'eco hunt',              desc:'Go hunting' },
+        { name:'eco mine',              desc:'Go mining' },
+        { name:'eco gamble',            desc:'Gamble your coins' },
+        { name:'eco_games coinflip',    desc:'Flip a coin to double your bet' },
+        { name:'eco_games slots',       desc:'Play the slot machine' },
+        { name:'eco_games blackjack',   desc:'Play blackjack against dealer' },
+        { name:'eco_shop shop',         desc:'Browse the server shop' },
+        { name:'eco_shop buy',          desc:'Purchase an item' },
+        { name:'eco_shop sell',         desc:'Sell an item' },
+        { name:'eco_shop inventory',    desc:'View your item inventory' },
+        { name:'eco_shop use',          desc:'Use an item' },
+        { name:'eco_shop gift',         desc:'Gift an item' },
+        { name:'admineco give',         desc:'Admin: give coins' },
+        { name:'admineco remove',       desc:'Admin: remove coins' },
+        { name:'admineco reset',        desc:'Admin: reset user economy' },
+        { name:'admineco additem',      desc:'Admin: add shop item' },
+        { name:'admineco removeitem',   desc:'Admin: remove shop item' },
+      ],
+      leveling: [
+        { name:'rank',              desc:'Check your level and XP' },
+        { name:'leaderboard',       desc:'View leveling leaderboard' },
+        { name:'leveladmin give_xp',desc:'Admin: give XP to a user' },
+        { name:'leveladmin remove_xp',desc:'Admin: remove XP from a user' },
+        { name:'leveladmin set_level',desc:'Admin: set user level' },
+        { name:'leveladmin rewards',desc:'Admin: view role rewards' },
+        { name:'leveladmin add_reward',desc:'Admin: add a role reward' },
+        { name:'leveladmin remove_reward',desc:'Admin: remove a role reward' },
+      ],
+      music: [
+        { name:'music join',     desc:'Make the bot join VC' },
+        { name:'music leave',    desc:'Make the bot leave VC' },
+        { name:'music play',     desc:'Play a song or playlist' },
+        { name:'music pause',    desc:'Pause playback' },
+        { name:'music resume',   desc:'Resume playback' },
+        { name:'music stop',     desc:'Stop playback and clear queue' },
+        { name:'music skip',     desc:'Skip current song' },
+        { name:'music queue',    desc:'View the queue' },
+        { name:'music nowplaying',desc:'Show currently playing song' },
+        { name:'music volume',   desc:'Adjust volume' },
+        { name:'music loop',     desc:'Toggle loop mode' },
+        { name:'music remove',   desc:'Remove song from queue' },
+        { name:'music clear',    desc:'Clear the queue' },
+        { name:'music shuffle',  desc:'Shuffle the queue' },
+        { name:'music filter_8d',desc:'Toggle 8D filter' },
+        { name:'music filter_bassboost',desc:'Toggle Bassboost filter' },
+        { name:'music filter_nightcore',desc:'Toggle Nightcore filter' },
+        { name:'music filter_vaporwave',desc:'Toggle Vaporwave filter' },
+        { name:'music filter_off',desc:'Turn off filters' },
+        { name:'music playlist_save',desc:'Save queue to a playlist' },
+        { name:'music playlist_list',desc:'List saved playlists' },
+        { name:'music playlist_load',desc:'Load a playlist' },
+      ],
+      tickets: [
+        { name:'ticket setup',     desc:'Setup ticket panel' },
+        { name:'ticket add',       desc:'Add user to ticket' },
+        { name:'ticket remove',    desc:'Remove user from ticket' },
+        { name:'ticket close',     desc:'Close the ticket' },
+        { name:'ticket transcript',desc:'Generate transcript' },
+      ],
+      giveaways: [
+        { name:'giveaway start',   desc:'Start a giveaway' },
+        { name:'giveaway end',     desc:'End a giveaway' },
+        { name:'giveaway reroll',  desc:'Reroll a giveaway' },
+        { name:'giveaway list',    desc:'List active giveaways' },
+      ],
+      custom: [
+        { name:'cc add',       desc:'Add a custom command' },
+        { name:'cc remove',    desc:'Remove a custom command' },
+        { name:'cc list',      desc:'List custom commands' },
+        { name:'rr create',    desc:'Create a reaction role' },
+        { name:'rr remove',    desc:'Remove a reaction role' },
+      ],
+      'server-builder': [
+        { name:'server backup_create', desc:'Create a server backup' },
+        { name:'server backup_load',   desc:'Load a server backup' },
+        { name:'server backup_info',   desc:'Info about a backup' },
+        { name:'server backup_list',   desc:'List backups' },
+        { name:'server backup_delete', desc:'Delete a backup' },
+        { name:'server wipe_channels', desc:'Wipe all channels' },
+        { name:'server wipe_roles',    desc:'Wipe all roles' },
+        { name:'server template_export',desc:'Export template string' },
+        { name:'server template_import',desc:'Import template string' },
+        { name:'server audit',         desc:'Run security audit' },
+        { name:'decor apply_theme',    desc:'Apply visual theme' },
+        { name:'decor restore',        desc:'Restore visuals' },
+        { name:'decor randomize_names',desc:'Randomize channel names' },
+        { name:'decor list_themes',    desc:'List visual themes' },
+      ],
+      'live-stats': [
+        { name:'stats setup',      desc:'Setup live stats' },
+        { name:'stats category',   desc:'Set stats category' },
+        { name:'stats online',     desc:'Set online counter' },
+        { name:'stats all_members',desc:'Set members counter' },
+        { name:'stats bots',       desc:'Set bots counter' },
+        { name:'stats custom',     desc:'Create custom counter' },
+        { name:'stats format',     desc:'Format counters' },
+        { name:'stats reset',      desc:'Reset stats' },
+        { name:'stats refresh',    desc:'Refresh stats immediately' },
+      ],
+      'temp-vc': [
+        { name:'vc setup',    desc:'Setup Temp VC system' },
+        { name:'vc lock',     desc:'Lock Temp VC' },
+        { name:'vc unlock',   desc:'Unlock Temp VC' },
+        { name:'vc name',     desc:'Rename Temp VC' },
+        { name:'vc limit',    desc:'Set Temp VC user limit' },
+        { name:'vc kick',     desc:'Kick user from Temp VC' },
+        { name:'vc hide',     desc:'Hide Temp VC' },
+        { name:'vc unhide',   desc:'Unhide Temp VC' },
+        { name:'vc ban',      desc:'Ban user from Temp VC' },
+        { name:'vc unban',    desc:'Unban user from Temp VC' },
+        { name:'vc invite',   desc:'Invite user to Temp VC' },
+        { name:'vc claim',    desc:'Claim Temp VC ownership' },
+        { name:'tempvc list', desc:'List Temp VCs' },
+        { name:'tempvc delete',desc:'Delete a Temp VC' },
+        { name:'tempvc clear',desc:'Clear all Temp VCs' },
+      ]
+    };
+
+    // ── Load Commands ─────────────────────────────────────────────────────────
+    async function loadCommandsForCategory(category) {
+      const container = document.getElementById('command-list-container');
+      container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">Loading <strong>${category}</strong> commands…</div>`;
+
+      let configs = [];
+      try {
+        const res = await fetch(`/api/guild/${guildId}/commands`);
+        if (res.ok) configs = await res.json();
+      } catch (_) {}
+
+      const cmdsToRender = COMMAND_CATALOG[category] || [];
+      if (cmdsToRender.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-muted);">No commands found for this category.</div>`;
+        return;
+      }
+
+      container.innerHTML = cmdsToRender.map(cmd => {
+        const cfg = configs.find(c => c.command_name === cmd.name) || { enabled: true, permission_level: 'Everyone', cooldown: 0 };
+        return `
+          <div class="command-card">
+            <div class="command-header">
+              <div style="flex:1;">
+                <div class="command-name">/${cmd.name}</div>
+                <div class="command-desc">${cmd.desc}</div>
+                <div style="margin-top:4px; font-size:0.75rem; color:rgba(255,255,255,0.3);">Slash: <code>/${cmd.name}</code> &nbsp;·&nbsp; Prefix: <code>!${cmd.name}</code></div>
+              </div>
+              <label class="switch">
+                <input type="checkbox" ${cfg.enabled ? 'checked' : ''} onchange="saveCmdConfig('${cmd.name}', 'enabled', this.checked)">
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="command-controls">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label" style="font-size:0.8rem;">Permission Level</label>
+                <select class="form-select" onchange="saveCmdConfig('${cmd.name}', 'permission_level', this.value)">
+                  <option ${cfg.permission_level==='Everyone'?'selected':''}>Everyone</option>
+                  <option ${cfg.permission_level==='Mod'?'selected':''}>Mod</option>
+                  <option ${cfg.permission_level==='Admin'?'selected':''}>Admin</option>
+                  <option ${cfg.permission_level==='DJ'?'selected':''}>DJ</option>
+                  <option ${cfg.permission_level==='Owner'?'selected':''}>Owner</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label" style="font-size:0.8rem;">Cooldown (seconds)</label>
+                <input type="number" class="form-control" value="${cfg.cooldown}" min="0" onchange="saveCmdConfig('${cmd.name}', 'cooldown', parseInt(this.value))">
+              </div>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    async function saveCmdConfig(cmdName, key, value) {
+      try {
+        const payload = {};
+        payload[key] = value;
+        await fetch(`/api/guild/${guildId}/command/${encodeURIComponent(cmdName)}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+      } catch (e) { console.error('Failed to save command config', e); }
+    }
+
+    async function runServerAction(action) {
+      const resultsDiv = document.getElementById('audit-results');
+      if (action === 'server_audit') {
+        resultsDiv.innerHTML = '<span style="color:var(--text-secondary);">Scanning server... please wait...</span>';
+      }
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (action === 'server_audit') {
+          if (!data.success || !data.results) {
+            resultsDiv.innerHTML = '<span style="color:#ef4444;">▲ Audit failed: ' + (data.error || 'Unknown error') + '</span>';
+            return;
+          }
+          const audit = data.results;
+          if (audit.error) {
+            resultsDiv.innerHTML = `<span style="color:#ef4444;">▲ ${audit.error}</span>`;
+            return;
+          }
+          
+          let html = '';
+          
+          // 1. Permission Anomalies
+          html += `<div style="margin-top:20px; margin-bottom:25px;">
+            <h4 style="font-family:'Share Tech Mono', monospace; color:var(--accent-cyan); margin-bottom:12px; border-bottom:1px solid var(--card-border); padding-bottom:6px; font-size:1rem; letter-spacing:1px;">◈ Permission Anomalies (${audit.permission_issues.length})</h4>`;
+          if (audit.permission_issues.length === 0) {
+            html += `<div style="color:var(--text-muted); font-size:0.9rem; padding:5px 0;">No permission anomalies found. All channels look healthy.</div>`;
+          } else {
+            audit.permission_issues.forEach(issue => {
+              const icon = issue.type === 'voice' ? '☊' : '#';
+              html += `<div style="background:rgba(255,255,255,0.02); border-left:3px solid var(--accent-purple); padding:12px; border-radius:4px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; border:1px solid rgba(255,255,255,0.01); border-left:3px solid var(--accent-purple);">
+                <div>
+                  <span style="font-weight:bold; color:var(--text-primary); font-size:0.9rem;">${icon} ${issue.name}</span>
+                  <span style="font-size:0.75rem; color:var(--text-muted); margin-left:10px;">ID: ${issue.id} | Category: ${issue.category}</span>
+                  <div style="font-size:0.8rem; color:#f87171; margin-top:4px; font-family:sans-serif;">${issue.reason}</div>
+                </div>
+              </div>`;
+            });
+          }
+          html += `</div>`;
+          
+          // 2. Duplicate Channels
+          html += `<div style="margin-bottom:15px;">
+            <h4 style="font-family:'Share Tech Mono', monospace; color:var(--accent-cyan); margin-bottom:12px; border-bottom:1px solid var(--card-border); padding-bottom:6px; font-size:1rem; letter-spacing:1px;">◈ Duplicate Channels (${audit.duplicates.length} groups)</h4>`;
+          if (audit.duplicates.length === 0) {
+            html += `<div style="color:var(--text-muted); font-size:0.9rem; padding:5px 0;">No duplicate channels detected in this guild layout.</div>`;
+          } else {
+             audit.duplicates.forEach(group => {
+              const icon = group.type === 'category' ? '📁' : (group.type === 'voice' ? '☊' : '#');
+              const label = group.type === 'category' 
+                ? `(Duplicate Category Group)` 
+                : `(Duplicate Group in Category: ${group.category})`;
+              html += `<div style="background:rgba(255,255,255,0.01); border:1px solid var(--card-border); padding:15px; border-radius:6px; margin-bottom:15px;">
+                <div style="font-weight:bold; color:var(--text-primary); margin-bottom:12px; display:flex; align-items:center; gap:8px; font-size:0.95rem;">
+                  <span style="color:var(--accent-cyan);">${icon} ${group.name}</span> 
+                  <span style="font-size:0.75rem; color:var(--text-secondary); font-weight:normal;">${label}</span>
+                </div>
+                <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:10px;">`;
+                
+              group.channels.forEach(chan => {
+                const isKeep = chan.keep;
+                const statusColor = isKeep ? '#00ff66' : '#ff2a5f';
+                const statusBg = isKeep ? 'rgba(0,255,102,0.06)' : 'rgba(255,42,95,0.06)';
+                const statusBorder = isKeep ? 'rgba(0,255,102,0.15)' : 'rgba(255,42,95,0.15)';
+                const createdTime = chan.created_at !== 'Unknown' 
+                  ? new Date(chan.created_at).toLocaleString([], {year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'})
+                  : 'Unknown';
+                  
+                html += `<div style="display:flex; justify-content:space-between; align-items:center; background:rgba(0,0,0,0.25); padding:12px; border-radius:4px; border:1px solid rgba(255,255,255,0.02);">
+                  <div style="display:flex; flex-direction:column; gap:4px;">
+                    <span style="font-family:'Share Tech Mono', monospace; font-size:0.8rem; color:var(--text-muted);">ID: ${chan.id}</span>
+                    <span style="font-size:0.75rem; color:var(--text-secondary);">Created: ${createdTime}</span>
+                    <span style="font-size:0.7rem; font-weight:600; padding:2px 6px; border-radius:3px; color:${statusColor}; background:${statusBg}; border:1px solid ${statusBorder}; width:fit-content; margin-top:2px;">${chan.recommendation}</span>
+                  </div>
+                  <div>`;
+                if (!isKeep) {
+                  html += `<button class="btn btn-sm" style="background:#ef4444; color:white; border:none; padding:5px 10px; font-size:0.75rem; border-radius:4px; cursor:pointer; font-weight:600;" onclick="deleteAuditChannel('${chan.id}', '${chan.name}')">Delete</button>`;
+                } else {
+                  html += `<span style="font-family:'Share Tech Mono', monospace; font-size:0.8rem; color:#00ff66; font-weight:bold;">[KEEP]</span>`;
+                }
+                html += `</div>
+                </div>`;
+              });
+              
+              html += `</div></div>`;
+            });
+          }
+          html += `</div>`;
+          
+          resultsDiv.innerHTML = html;
+        }
+      } catch (e) {
+        console.error('Server action failed', e);
+        if (action === 'server_audit') {
+          resultsDiv.innerHTML = '<span style="color:#ef4444;">▲ Network error occurred during audit.</span>';
+        }
+      }
+    }
+
+    async function deleteAuditChannel(channelId, channelName) {
+      if (!window.confirm(`Are you sure you want to permanently delete the duplicate channel "${channelName}" (ID: ${channelId})? This action cannot be undone.`)) {
+         return;
+      }
+      try {
+         const res = await fetch(`/api/guild/${guildId}/server-action`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'delete_channel', channel_id: channelId })
+         });
+         const data = await res.json().catch(() => ({}));
+         if (data.success) {
+            showToast(`Deleted channel "${channelName}" successfully!`, 'success');
+            // Refresh audit report
+            runServerAction('server_audit');
+            // Refresh layout list
+            fetchServerLayout();
+         } else {
+            showToast(data.error || 'Failed to delete channel.', 'error');
+         }
+      } catch (e) {
+         showToast('Network error occurred.', 'error');
+      }
+    }
+
+    async function runServerTemplate(templateId) {
+      const resContainer = document.getElementById('template-results');
+      resContainer.innerHTML = 'Applying template... Please wait.';
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'server_template_apply', template_id: templateId })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (data.success) {
+          resContainer.innerHTML = data.results || 'Template applied successfully!';
+        } else {
+          resContainer.innerHTML = 'Error: ' + (data.error || 'Failed to apply template.');
+          resContainer.style.color = '#ef4444';
+        }
+      } catch (e) {
+        resContainer.innerHTML = 'Network error occurred.';
+        resContainer.style.color = '#ef4444';
+      }
+    }
+
+    // --- BACKGROUND TASK POLLING ---
+    let pollInterval = null;
+    function pollTaskProgress(taskId, resultContainerId) {
+        const progressContainer = document.getElementById('task-progress-container');
+        const progressBar = document.getElementById('task-progress-bar');
+        const progressPercent = document.getElementById('task-progress-percent');
+        const progressMessage = document.getElementById('task-progress-message');
+        const resContainer = document.getElementById(resultContainerId);
+        
+        progressContainer.style.display = 'block';
+        resContainer.innerHTML = 'Task is processing in the background...';
+        
+        if (pollInterval) clearInterval(pollInterval);
+        
+        pollInterval = setInterval(async () => {
+            try {
+                const res = await fetch(`/api/guild/${guildId}/task-progress/${taskId}`);
+                const data = await res.json().catch(() => ({}));
+                if (data.success && data.task) {
+                    const task = data.task;
+                    let pct = 0;
+                    if (task.total > 0) {
+                        pct = Math.round((task.progress / task.total) * 100);
+                    }
+                    
+                    progressBar.style.width = pct + '%';
+                    progressPercent.innerText = pct + '%';
+                    progressMessage.innerText = task.message || 'Processing...';
+                    
+                    if (task.status === 'completed') {
+                        clearInterval(pollInterval);
+                        progressBar.style.background = 'linear-gradient(90deg, #10b981, #34d399)';
+                        resContainer.innerHTML = `<span style="color:#10b981;">◈ ${task.message}</span>`;
+                        setTimeout(() => { progressContainer.style.display = 'none'; progressBar.style.background = 'linear-gradient(90deg, #8b5cf6, #3b82f6)'; }, 5000);
+                    } else if (task.status === 'error') {
+                        clearInterval(pollInterval);
+                        progressBar.style.background = '#ef4444';
+                        resContainer.innerHTML = `<span style="color:#ef4444;">▲ Error: ${task.message}</span>`;
+                        setTimeout(() => { progressContainer.style.display = 'none'; progressBar.style.background = 'linear-gradient(90deg, #8b5cf6, #3b82f6)'; }, 5000);
+                    }
+                }
+            } catch (e) {
+                console.error("Polling error", e);
+            }
+        }, 1000);
+    }
+
+    async function runServerFont() {
+      const resContainer = document.getElementById('font-results');
+      const presetId = document.getElementById('font_selector').value;
+      const targetChannel = document.getElementById('font_target_channel').value;
+      const customName = document.getElementById('font_preview_input').value;
+      
+      const preset = DECORATOR_PRESETS.find(p => p.id === presetId);
+      if (!preset) {
+        resContainer.innerHTML = 'Error: Selected preset not found.';
+        return;
+      }
+      
+      const fontId = preset.font;
+      const pattern = preset.pattern;
+      const affectCategories = document.getElementById('decorator_affect_categories').checked;
+      
+      resContainer.innerHTML = 'Starting background task...';
+      
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            action: 'server_font_apply', 
+            font_id: fontId, 
+            channel_id: targetChannel, 
+            custom_name: customName,
+            pattern: pattern,
+            affect_categories: affectCategories
+          })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (data.success && data.task_id) {
+          pollTaskProgress(data.task_id, 'font-results');
+        } else {
+          resContainer.innerHTML = 'Error: ' + (data.error || 'Failed to apply fonts.');
+        }
+      } catch (e) {
+        resContainer.innerHTML = 'Network error occurred.';
+      }
+    }
+
+    function previewFont() {
+      const text = document.getElementById('font_preview_input').value;
+      const presetId = document.getElementById('font_selector').value;
+      if (!text) {
+        document.getElementById('font_live_preview').innerText = '...';
+        return;
+      }
+      
+      const preview = formatPresetTextClientSide(text, presetId);
+      document.getElementById('font_live_preview').innerText = preview;
+    }
+
+    function handleTargetChannelChange() {
+      const targetSelect = document.getElementById('font_target_channel');
+      const affectCatsContainer = document.getElementById('decorator_affect_cats_container');
+      if (!targetSelect || !affectCatsContainer) return;
+      
+      if (targetSelect.value === 'all') {
+         affectCatsContainer.style.opacity = '1';
+         affectCatsContainer.style.pointerEvents = 'auto';
+      } else {
+         affectCatsContainer.style.opacity = '0.4';
+         affectCatsContainer.style.pointerEvents = 'none';
+         
+         // Auto-populate the preview text input with the selected channel's cleaned name
+         if (activeLayoutData && activeLayoutData.categories) {
+            let foundChan = null;
+            for (const cat of activeLayoutData.categories) {
+               foundChan = cat.channels.find(c => c.id === targetSelect.value);
+               if (foundChan) break;
+            }
+            if (foundChan) {
+               let cleanedName = cleanStyledStringClientSide(foundChan.name);
+               // Replace hyphens with spaces for text channels to make editing cleaner
+               if (foundChan.type === 'text') {
+                  cleanedName = cleanedName.replace(/-/g, ' ');
+               }
+               document.getElementById('font_preview_input').value = cleanedName;
+               previewFont();
+               renderDecoratorPresets();
+            }
+         }
+      }
+    }
+
+    // ── DECORATOR PRESETS DATABASE (1,530 configs generated dynamically) ─────────────────────────────
+        const BASE_PATTERNS = [
+      // Category: stars (10 patterns)
+      { name: "Solid Star", pattern: "★ {word} ★", cat: "stars" },
+      { name: "Hollow Star", pattern: "☆ {word} ☆", cat: "stars" },
+      { name: "Sparkle Star", pattern: "✦ {word} ✦", cat: "stars" },
+      { name: "Soft Sparkle", pattern: "✧ {word} ✧", cat: "stars" },
+      { name: "Six-Point Star", pattern: "✶ {word} ✶", cat: "stars" },
+      { name: "Eight-Point Star", pattern: "✷ {word} ✷", cat: "stars" },
+      { name: "Pinwheel Star", pattern: "✸ {word} ✸", cat: "stars" },
+      { name: "Twelve-Point Star", pattern: "✹ {word} ✹", cat: "stars" },
+      { name: "Sunburst Star", pattern: "❂ {word} ❂", cat: "stars" },
+      { name: "Star Line Symm", pattern: "★ ─ {word} ─ ★", cat: "stars" },
+
+      // Category: arrows (10 patterns)
+      { name: "Double Arrow Right", pattern: "» {word} «", cat: "arrows" },
+      { name: "Double Arrow Left", pattern: "« {word} »", cat: "arrows" },
+      { name: "Point Right", pattern: "➤ {word} ➤", cat: "arrows" },
+      { name: "Bold Point Right", pattern: "➢ {word} ➢", cat: "arrows" },
+      { name: "Heavy Arrow Right", pattern: "➔ {word} ➔", cat: "arrows" },
+      { name: "Opposite Block Arrows", pattern: "🡲 {word} 🡰", cat: "arrows" },
+      { name: "Opposite Wedge Arrows", pattern: "⮚ {word} ⮘", cat: "arrows" },
+      { name: "Opposite Guide Arrows", pattern: "⮞ {word} ⮜", cat: "arrows" },
+      { name: "Double Arrow Line", pattern: "» ─ {word} ─ «", cat: "arrows" },
+      { name: "Double Arrow Dot", pattern: "« ٫ {word} ‧ »", cat: "arrows" },
+
+      // Category: aesthetic (12 patterns)
+      { name: "Glow Diamond", pattern: "◈ {word} ◈", cat: "aesthetic" },
+      { name: "Hollow Diamond", pattern: "◇ {word} ◇", cat: "aesthetic" },
+      { name: "Solid Diamond", pattern: "◆ {word} ◆", cat: "aesthetic" },
+      { name: "Lozenge", pattern: "⬪ {word} ⬪", cat: "aesthetic" },
+      { name: "Hexagon", pattern: "⬡ {word} ⬡", cat: "aesthetic" },
+      { name: "Vertical Bar Dot", pattern: "┇ {word} ‧", cat: "aesthetic" },
+      { name: "Gothic Frame Dot", pattern: "𓆩 ٫ {word} ‧ 𓆪", cat: "aesthetic" },
+      { name: "Solid Diamond Flat", pattern: "⬧ {word} ⬧", cat: "aesthetic" },
+      { name: "Hollow Diamond Flat", pattern: "⬨ {word} ⬨", cat: "aesthetic" },
+      { name: "Symmetric Lozenge Dot", pattern: "⬪ ₊ {word} ₊ ⬪", cat: "aesthetic" },
+      { name: "Cartouche Brackets", pattern: "𓊈 {word} 𓊉", cat: "aesthetic" },
+      { name: "Cartouche Brackets Dot", pattern: "𓊈 ٫ {word} ‧ 𓊉", cat: "aesthetic" },
+
+      // Category: minimalist (12 patterns)
+      { name: "Clean Raw", pattern: "{word}", cat: "minimalist" },
+      { name: "Bullet Point", pattern: "• {word} •", cat: "minimalist" },
+      { name: "Circle Bullet", pattern: "◦ {word} ◦", cat: "minimalist" },
+      { name: "One Dot", pattern: "․ {word} ․", cat: "minimalist" },
+      { name: "Vertical Line", pattern: "| {word} |", cat: "minimalist" },
+      { name: "Square Bracket", pattern: "[ {word} ]", cat: "minimalist" },
+      { name: "Angle Bracket", pattern: "⟨ {word} ⟩", cat: "minimalist" },
+      { name: "Tortoise Bracket", pattern: "〔 {word} 〕", cat: "minimalist" },
+      { name: "Corner Bracket", pattern: "「 {word} 」", cat: "minimalist" },
+      { name: "Double Corner Bracket", pattern: "『 {word} 』", cat: "minimalist" },
+      { name: "Strikethrough", pattern: "{char}̶", cat: "minimalist" },
+      { name: "Underline Deco", pattern: "{char}̲", cat: "minimalist" },
+
+      // Category: cyberpunk (12 patterns)
+      { name: "Lightning Bolt", pattern: "☇ {word} ☇", cat: "cyberpunk" },
+      { name: "Thunder Bolt", pattern: "☈ {word} ☈", cat: "cyberpunk" },
+      { name: "Gear Spindle", pattern: "⚙ {word} ⚙", cat: "cyberpunk" },
+      { name: "Telemetry Loop", pattern: "☌ {word} ☌", cat: "cyberpunk" },
+      { name: "Diagonal Link", pattern: "☍ {word} ☍", cat: "cyberpunk" },
+      { name: "Hexagon Node", pattern: "⎔ {word} ⎔", cat: "cyberpunk" },
+      { name: "Benzene Ring", pattern: "⌬ {word} ⌬", cat: "cyberpunk" },
+      { name: "Target Vector", pattern: "⌲ {word} ⌲", cat: "cyberpunk" },
+      { name: "Horizon Ring", pattern: "⍜ {word} ⍜", cat: "cyberpunk" },
+      { name: "Electrical Symbol", pattern: "⏧ {word} ⏧", cat: "cyberpunk" },
+      { name: "Benzene Benzol", pattern: "⏣ {word} ⏣", cat: "cyberpunk" },
+      { name: "Cyber Terminal Bracket", pattern: "⎾ {word} ⎿", cat: "cyberpunk" },
+
+      // Category: fancy (12 patterns)
+      { name: "Lotus Floral", pattern: "𓍢 {word} 𓍢", cat: "fancy" },
+      { name: "Rose Floral", pattern: "❀ {word} ❀", cat: "fancy" },
+      { name: "Cherry Floral", pattern: "✿ {word} ✿", cat: "fancy" },
+      { name: "Spark Floral", pattern: "❊ {word} ❊", cat: "fancy" },
+      { name: "Geometric Floral", pattern: "❈ {word} ❈", cat: "fancy" },
+      { name: "Snow Floral", pattern: "❉ {word} ❉", cat: "fancy" },
+      { name: "Floral Plus Symm", pattern: "❀ ₊ {word} ₊ ❀", cat: "fancy" },
+      { name: "Fancy White Bracket", pattern: "〖 {word} 〗", cat: "fancy" },
+      { name: "Floral Heart", pattern: "❦ {word} ❦", cat: "fancy" },
+      { name: "Sweet Heart", pattern: "ღ {word} ღ", cat: "fancy" },
+      { name: "Winged Heart", pattern: "𓆩ღ𓆪 {word} 𓆩ღ𓆪", cat: "fancy" },
+      { name: "Heart Exclamation", pattern: "❣ {word} ❣", cat: "fancy" },
+
+      // Category: symmetric (12 patterns)
+      { name: "Symmetric Lozenge", pattern: "⬪ ₊ {word} ₊ ⬪", cat: "symmetric" },
+      { name: "Gothic Cross Symm", pattern: "♰ {word} ♰", cat: "symmetric" },
+      { name: "Hollow Cross Symm", pattern: "♱ {word} ♱", cat: "symmetric" },
+      { name: "Peace Symm", pattern: "☮ {word} ☮", cat: "symmetric" },
+      { name: "Yin Yang Symm", pattern: "☯ {word} ☯", cat: "symmetric" },
+      { name: "Sun Symm", pattern: "☼ {word} ☼", cat: "symmetric" },
+      { name: "Crescent Moon", pattern: "☾ {word} ☾", cat: "symmetric" },
+      { name: "Waxing Moon", pattern: "☽ {word} ☽", cat: "symmetric" },
+      { name: "Triple Wing Symm", pattern: "─=≡ {word} ≡=─", cat: "symmetric" },
+      { name: "Aura Ring Symm", pattern: "°• {word} •°", cat: "symmetric" },
+      { name: "Crested Stags", pattern: "𐂂 {word} 𐂂", cat: "symmetric" },
+      { name: "Crested Pegasus", pattern: "𐂊 {word} 𐂊", cat: "symmetric" },
+
+      // Category: sparkles (12 patterns)
+      { name: "Eight Sparkle", pattern: "✳ {word} ✳", cat: "sparkles" },
+      { name: "Sparkle Star", pattern: "✦ {word} ✦", cat: "sparkles" },
+      { name: "Hollow Sparkle", pattern: "✧ {word} ✧", cat: "sparkles" },
+      { name: "Heavy Sparkle", pattern: "★ {word} ★", cat: "sparkles" },
+      { name: "White Sparkle", pattern: "☆ {word} ☆", cat: "sparkles" },
+      { name: "Sparkle Sun", pattern: "☼ {word} ☼", cat: "sparkles" },
+      { name: "Solar Node Sparkle", pattern: "☉ {word} ☉", cat: "sparkles" },
+      { name: "Asterisk Sparkle", pattern: "⁂ {word} ⁂", cat: "sparkles" },
+      { name: "Petal Sparkle", pattern: "❃ {word} ❃", cat: "sparkles" },
+      { name: "Rosette Star", pattern: "𖣔 {word} 𖣔", cat: "sparkles" },
+      { name: "Mandala Star", pattern: "𖤓 {word} 𖤓", cat: "sparkles" },
+      { name: "Spiral Vortex", pattern: "𖦹 {word} 𖦹", cat: "sparkles" },
+
+      // Category: ancient (12 patterns)
+      { name: "Gothic Frame", pattern: "𓆩 {word} 𓆪", cat: "ancient" },
+      { name: "Coil Frame", pattern: "𓏲 {word} 𓏲", cat: "ancient" },
+      { name: "Ancient Cross", pattern: "𓏴 {word} 𓏴", cat: "ancient" },
+      { name: "Ancient Border", pattern: "𓈀 {word} 𓈀", cat: "ancient" },
+      { name: "Ancient Sun", pattern: "𓂋 {word} 𓂋", cat: "ancient" },
+      { name: "Skull Frame", pattern: "☠ {word} ☠", cat: "ancient" },
+      { name: "Biohazard Frame", pattern: "☣ {word} ☣", cat: "ancient" },
+      { name: "Radioactive Frame", pattern: "☢ {word} ☢", cat: "ancient" },
+      { name: "Horus Eye Frame", pattern: "𓁹 {word} 𓁹", cat: "ancient" },
+      { name: "Ankh Cross", pattern: "𓋹 {word} 𓋹", cat: "ancient" },
+      { name: "Sacred Cat Frame", pattern: "𓃠 {word} 𓃠", cat: "ancient" },
+      { name: "Scarab Beetle Frame", pattern: "𓆧 {word} 𓆧", cat: "ancient" }
+    ];
+
+    const DECORATOR_PRESETS = [];
+    let presetCounter = 1;
+    const FONT_NAMES = {
+      "FN-01": "Cursive",
+      "FN-02": "Gothic",
+      "FN-03": "Blackboard",
+      "FN-04": "Math Bold",
+      "FN-05": "Math Italic",
+      "FN-06": "Bold Italic",
+      "FN-07": "Monospace",
+      "FN-08": "Sans Bold",
+      "FN-09": "Sans Italic",
+      "FN-10": "Sans Bold Italic",
+      "FN-11": "Fullwidth",
+      "FN-12": "Small Caps",
+      "FN-13": "Superscript",
+      "FN-14": "Circled",
+      "FN-15": "Squared",
+      "FN-16": "Filled Squares",
+      "FN-17": "Upside Down",
+      "FN-18": "Mirror"
+    };
+
+    BASE_PATTERNS.forEach(bp => {
+      for (let i = 1; i <= 18; i++) {
+        const fontId = `FN-${String(i).padStart(2, '0')}`;
+        const fontName = FONT_NAMES[fontId] || `Font ${i}`;
+        const id = `DN-${String(presetCounter).padStart(4, '0')}`;
+        DECORATOR_PRESETS.push({
+          id: id,
+          name: `${bp.name} (${fontName})`,
+          pattern: bp.pattern,
+          cat: bp.cat,
+          font: fontId
+        });
+        presetCounter++;
+      }
+    });
+
+    const ALPHABETS = "abcdefghijklmnopqrstuvwxyz";
+        const ALPHABET_MAPS = {
+        "FN-01": "𝓪𝓫𝓬𝓭𝓮𝓯𝓰𝓱𝓲𝓳𝓴𝓵𝓶𝓷𝓸𝓹𝓺𝓻𝓼𝓽𝓾𝓿𝔀𝔁𝔂𝔃",
+        "FN-02": "𝔞𝔟𝔠𝔡𝔢𝔣𝔤𝔥𝔦𝔧𝔨𝔩𝔪𝔫𝔬𝔭𝔮𝔯𝔰𝔱𝔲𝔳𝔴𝔵𝔶𝔷",
+        "FN-03": "𝕒𝕓𝕔𝕕𝕖𝕗𝕘𝕙𝕚𝕛𝕜𝕝𝕞𝕟𝕠𝕡𝕢𝕣𝕤𝕥𝕦𝕧𝕨𝕩𝕪𝕫",
+        "FN-04": "𝐚𝐛𝐜𝐝𝐞𝐟𝐠𝐡𝐢𝐣𝐤𝐥𝐦𝐧𝐨𝐩𝐪𝐫𝐬𝐭𝐮𝐯𝐰𝐱𝐲𝐳",
+        "FN-05": "𝑎𝑏𝑐𝑑𝑒𝑓𝑔ℎ𝑖𝑗𝑘𝑙𝑚𝑛𝑜𝑝𝑞𝑟𝑠𝑡𝑢𝑣𝑤𝑥𝑦𝑧",
+        "FN-06": "𝒂𝒃𝒄𝒅𝒆𝒇𝒈𝒉𝒊𝒋𝒌𝒍𝒎𝒏𝒐𝒑𝒒𝒓𝒔𝒕𝒖𝒗𝒘𝒙𝒚𝒛",
+        "FN-07": "𝚊𝚋𝚌𝚍𝚎𝚏𝚐𝚑𝚒𝚓𝚔𝚕𝚖𝚗𝚘𝚙𝚚𝚛𝚜𝚝𝚞𝚟𝚠𝚡𝚢𝚣",
+        "FN-08": "𝗮𝗯𝗰𝗱𝗲𝗳𝗴𝗵𝗶𝗷𝗸𝗹𝗺𝗻𝗼𝗽𝗾𝗿𝘀𝘁𝘂𝘃𝘄𝘅𝘆𝘇",
+        "FN-09": "𝘢𝘣𝘤𝘥𝘦𝘧𝘨𝘩𝘪𝘫𝘬𝘭𝘮𝘯𝘰𝘱𝘲𝘳𝘴𝘵𝘶𝘷𝘸𝘹𝘺𝘻",
+        "FN-10": "𝙖𝙗𝙘𝙙𝙚𝙛𝙜𝙝𝙞𝙟𝙠𝙡𝙢𝙣𝙤𝙥𝙦𝙧𝙨𝙩𝙪𝙫𝙬𝙭𝙮𝙯",
+        "FN-11": "ａｂｃｄｅｆｇｈｉｊｋｌｍｎｏｐｑｒｓｔｕｖｗｘｙｚ",
+        "FN-12": "ᴀʙᴄᴅᴇꜰɢʜɪᴊᴋʟᴍɴᴏᴘQʀꜱᴛᴜᴠᴡxʏᴢ",
+        "FN-13": "ᵃᵇᶜᵈᵉᶠᵍʰⁱʲᵏˡᵐⁿᵒᵖᵠʳˢᵗᵘᵛʷˣʸᶻ",
+        "FN-14": "ⓐⓑⓒⓓⓔⓕⓖⓗⓘⓙⓚⓛⓜⓝⓞⓟⓠⓡⓢⓣⓤⓥⓦⓧⓨⓩ",
+        "FN-15": "🄰🄱🄲🄳🄴🄵🄶🄷🄸🄹🄺🄻🄼🄽🄾🄿🅀🅁🅂🅃🅄🅅🅆🅇🅈🅉",
+        "FN-16": "🅰🅱🅲🅳🅴🅵🅶🅷🅸🅹🅺🅻🅼🅽🅾🅿🆀🆁🆂🆃🆄🆅🆆🆇🆈🆉",
+        "FN-17": "ɐqɔpǝɟƃɥıɾʞlɯuodbɹsʇnʌʍxʎz",
+        "FN-18": "dqpqǝɟƃɥᴉɾʞlɯuodbɹsʇnʌʍxʎz",
+    };
+
+    function cleanStyledStringClientSide(text) {
+      let reverseMap = {};
+      Object.keys(ALPHABET_MAPS).forEach(baseStyleId => {
+         const alphabetMap = ALPHABET_MAPS[baseStyleId];
+         const mapChars = Array.from(alphabetMap);
+         for (let idx = 0; idx < mapChars.length; idx++) {
+            if (idx < ALPHABETS.length) {
+               reverseMap[mapChars[idx]] = ALPHABETS[idx];
+            }
+         }
+      });
+      
+      const keepChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -_";
+      let cleaned = "";
+      for (let i = 0; i < text.length; i++) {
+         const char = text[i];
+         if (reverseMap[char]) {
+            cleaned += reverseMap[char];
+         } else if (keepChars.includes(char)) {
+            cleaned += char;
+         }
+      }
+      
+      // Strip leading/trailing spaces, hyphens, and underscores
+      let result = cleaned.trim();
+      while (result.startsWith('-') || result.startsWith('_') || result.startsWith(' ')) {
+         result = result.substring(1);
+      }
+      while (result.endsWith('-') || result.endsWith('_') || result.endsWith(' ')) {
+         result = result.substring(0, result.length - 1);
+      }
+      return result.replace(/\s+/g, ' ');
+    }
+
+    function formatPresetTextClientSide(text, presetId) {
+      const cleaned = cleanStyledStringClientSide(text);
+      const preset = DECORATOR_PRESETS.find(p => p.id === presetId);
+      if (!preset) return cleaned;
+      
+      const baseStyleId = preset.font;
+      const alphabetMap = ALPHABET_MAPS[baseStyleId] || ALPHABET_MAPS["FN-01"];
+      
+      const lower = cleaned.toLowerCase();
+      let res = "";
+      for (let i = 0; i < lower.length; i++) {
+        const char = lower[i];
+        const idx = ALPHABETS.indexOf(char);
+        if (idx !== -1 && idx < [...alphabetMap].length) {
+          res += Array.from(alphabetMap)[idx];
+        } else {
+          res += char;
+        }
+      }
+      
+      if (preset.pattern) {
+        if (preset.pattern.includes("{word}")) {
+          return preset.pattern.replace("{word}", res);
+        } else if (preset.pattern.includes("{char}")) {
+          let decorated = "";
+          for (let i = 0; i < res.length; i++) {
+            const c = res[i];
+            decorated += (c !== ' ') ? preset.pattern.replace("{char}", c) : ' ';
+          }
+          return decorated;
+        }
+      }
+      return res;
+    }
+
+    let currentCategory = 'all';
+
+    function renderDecoratorPresets() {
+      const grid = document.getElementById('decorator_presets_grid');
+      if (!grid) return;
+      
+      const searchVal = document.getElementById('decorator_search').value.toLowerCase();
+      const previewText = document.getElementById('font_preview_input').value || 'general chat';
+      
+      const filtered = DECORATOR_PRESETS.filter(p => {
+         const matchesCat = (currentCategory === 'all' || p.cat === currentCategory);
+         const matchesSearch = p.name.toLowerCase().includes(searchVal) || p.id.toLowerCase().includes(searchVal);
+         return matchesCat && matchesSearch;
+      });
+
+      const currentSelected = document.getElementById('font_selector').value;
+
+      grid.innerHTML = filtered.map(p => {
+         const activeStyle = p.id === currentSelected ? 'border-color: var(--c2) !important; box-shadow: 0 0 10px rgba(10,254,228,0.2) !important; background: rgba(10,254,228,0.03) !important;' : '';
+         return `
+           <div class="preset-card" style="background: rgba(255,255,255,0.015); border: 1px solid rgba(255,255,255,0.05); padding: 12px; cursor: pointer; text-align: center; transition: all 0.25s ease; ${activeStyle}" onclick="selectDecoratorPreset('${p.id}', this)">
+             <div style="font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 4px; font-family: monospace;">${p.id}</div>
+             <div style="font-size: 1.05rem; color: #fff; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${formatPresetTextClientSide(previewText, p.id)}</div>
+           </div>
+         `;
+      }).join('');
+    }
+
+    function selectDecoratorPreset(presetId, cardEl) {
+      const select = document.getElementById('font_selector');
+      if (select) {
+         select.value = presetId;
+         previewFont();
+         
+         document.querySelectorAll('#decorator_presets_grid .preset-card').forEach(card => {
+            card.style.borderColor = 'rgba(255,255,255,0.05)';
+            card.style.boxShadow = 'none';
+            card.style.background = 'rgba(255,255,255,0.015)';
+         });
+         
+         if (cardEl) {
+            cardEl.style.borderColor = 'var(--c2)';
+            cardEl.style.boxShadow = '0 0 10px rgba(10,254,228,0.2)';
+            cardEl.style.background = 'rgba(10,254,228,0.03)';
+         }
+      }
+    }
+
+    function filterDecoratorCategory(cat, btnEl) {
+      currentCategory = cat;
+      document.querySelectorAll('#decorator-cat-tabs .cmd-tab').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      renderDecoratorPresets();
+    }
+
+    function filterDecoratorPresets() {
+      renderDecoratorPresets();
+    }
+
+    function initFontSelectorOptions() {
+      const select = document.getElementById('font_selector');
+      if (!select) return;
+      select.innerHTML = '';
+      DECORATOR_PRESETS.forEach(p => {
+         const opt = document.createElement('option');
+         opt.value = p.id;
+         opt.innerText = p.name;
+         select.appendChild(opt);
+      });
+      if (DECORATOR_PRESETS.length > 0) {
+         select.value = DECORATOR_PRESETS[0].id;
+      }
+    }
+
+    // ── EMBED & SELF ROLES LOGIC ─────────────────────────────────────────────
+    function toggleSelfRolesSection() {
+      const enabled = document.getElementById('enable_self_roles').checked;
+      document.getElementById('self_roles_section').style.display = enabled ? 'block' : 'none';
+      const previewWrapper = document.getElementById('preview_buttons_wrapper');
+      if (previewWrapper) {
+         previewWrapper.style.display = enabled ? 'flex' : 'none';
+      }
+      updateLiveEmbedPreview();
+    }
+
+    let buttonCounter = 0;
+    function addSelfRoleButton() {
+      const container = document.getElementById('buttons_list');
+      if (!container) return;
+      
+      buttonCounter++;
+      const btnId = `btn_cfg_${buttonCounter}`;
+      
+      const rolesOptions = (activeLayoutData && activeLayoutData.roles) ? 
+        activeLayoutData.roles.map(r => `<option value="${r.id}">${r.name}</option>`).join('') : '';
+      
+      const card = document.createElement('div');
+      card.id = btnId;
+      card.className = 'glass-panel btn-config-card';
+      card.style.padding = '20px';
+      card.style.marginBottom = '12px';
+      card.style.borderLeft = '2.5px solid var(--c2)';
+      card.style.position = 'relative';
+      card.style.background = 'rgba(0,0,0,0.3)';
+      
+      card.innerHTML = `
+        <button type="button" class="btn-remove" style="position: absolute; top: 12px; right: 12px; background: none; border: none; color: var(--c1); font-weight: bold; cursor: pointer; font-size: 14px;" onclick="removeSelfRoleButton('${btnId}')">✕</button>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 0.72rem; letter-spacing: 1px;">Button Style</label>
+            <select class="form-select btn-style" style="padding: 8px 12px !important;" onchange="onButtonStyleChange('${btnId}')" required>
+              <option value="primary">Primary (Blue)</option>
+              <option value="secondary">Secondary (Grey)</option>
+              <option value="success">Success (Green)</option>
+              <option value="danger">Danger (Red)</option>
+              <option value="link">Link (Redirect URL)</option>
+              <option value="accent">Accent (Kaizer Neon)</option>
+              <option value="amber">Amber Warning</option>
+            </select>
+          </div>
+          
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 0.72rem; letter-spacing: 1px;">Label Text</label>
+            <input type="text" class="form-control btn-label" style="padding: 8px 12px !important;" placeholder="e.g. Verify Me" oninput="updateLiveEmbedPreview()">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+          <div class="form-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 0.72rem; letter-spacing: 1px;">Emoji Symbol (Optional)</label>
+            <input type="text" class="form-control btn-emoji" style="padding: 8px 12px !important;" placeholder="e.g. ◈" oninput="updateLiveEmbedPreview()">
+          </div>
+          
+          <div class="form-group btn-role-group" style="margin: 0;">
+            <label class="form-label" style="font-size: 0.72rem; letter-spacing: 1px;">Assign Role</label>
+            <select class="form-select btn-role" style="padding: 8px 12px !important;" onchange="updateLiveEmbedPreview()">
+              <option value="">-- Choose Role --</option>
+              ${rolesOptions}
+            </select>
+          </div>
+
+          <div class="form-group btn-url-group" style="margin: 0; display: none;">
+            <label class="form-label" style="font-size: 0.72rem; letter-spacing: 1px;">Link URL</label>
+            <input type="url" class="form-control btn-url" style="padding: 8px 12px !important;" placeholder="https://..." oninput="updateLiveEmbedPreview()">
+          </div>
+        </div>
+
+        <div class="form-group btn-mode-group" style="margin: 0;">
+          <label class="form-label" style="font-size: 0.72rem; letter-spacing: 1px;">Interaction Action Mode</label>
+          <select class="form-select btn-mode" style="padding: 8px 12px !important;">
+            <option value="toggle">Toggle Role (Assign or Remove)</option>
+            <option value="add">Add Role Only (Cannot remove)</option>
+            <option value="remove">Remove Role Only</option>
+          </select>
+        </div>
+      `;
+      
+      container.appendChild(card);
+      updateLiveEmbedPreview();
+    }
+
+    function removeSelfRoleButton(id) {
+      const el = document.getElementById(id);
+      if (el) el.remove();
+      updateLiveEmbedPreview();
+    }
+
+    function onButtonStyleChange(cardId) {
+      const card = document.getElementById(cardId);
+      if (!card) return;
+      const style = card.querySelector('.btn-style').value;
+      const roleGroup = card.querySelector('.btn-role-group');
+      const urlGroup = card.querySelector('.btn-url-group');
+      const modeGroup = card.querySelector('.btn-mode-group');
+      
+      if (style === 'link') {
+         roleGroup.style.display = 'none';
+         urlGroup.style.display = 'block';
+         modeGroup.style.display = 'none';
+      } else {
+         roleGroup.style.display = 'block';
+         urlGroup.style.display = 'none';
+         modeGroup.style.display = 'block';
+      }
+      updateLiveEmbedPreview();
+    }
+
+    function syncEmbedColorPicker(val) {
+      document.getElementById('embed_color_hex').value = val;
+      updateLiveEmbedPreview();
+    }
+    function syncEmbedColorHex(val) {
+      if (/^#[0-9A-F]{6}$/i.test(val)) {
+         document.getElementById('embed_color').value = val;
+         updateLiveEmbedPreview();
+      }
+    }
+
+    function updateLiveEmbedPreview() {
+      const authorName = document.getElementById('embed_author_name')?.value || '';
+      const authorIcon = document.getElementById('embed_author_icon')?.value || '';
+      const title = document.getElementById('embed_title')?.value || '';
+      const desc = document.getElementById('embed_description')?.value || '';
+      const color = document.getElementById('embed_color_hex')?.value || '#0affe4';
+      const thumbnail = document.getElementById('embed_thumbnail_url')?.value || '';
+      const image = document.getElementById('embed_image_url')?.value || '';
+      const footerText = document.getElementById('embed_footer_text')?.value || '';
+      const footerIcon = document.getElementById('embed_footer_icon')?.value || '';
+      
+      // Author
+      const previewAuthor = document.getElementById('preview_embed_author');
+      const previewAuthorIcon = document.getElementById('preview_embed_author_icon');
+      const previewAuthorName = document.getElementById('preview_embed_author_name');
+      if (previewAuthor) {
+         if (authorName) {
+            previewAuthor.style.display = 'flex';
+            if (previewAuthorName) previewAuthorName.innerText = authorName;
+            if (previewAuthorIcon) {
+               if (authorIcon) {
+                  previewAuthorIcon.src = authorIcon;
+                  previewAuthorIcon.style.display = 'block';
+               } else {
+                  previewAuthorIcon.style.display = 'none';
+               }
+            }
+         } else {
+            previewAuthor.style.display = 'none';
+         }
+      }
+      
+      // Title
+      const previewTitle = document.getElementById('preview_embed_title');
+      if (previewTitle) {
+         if (title) {
+            previewTitle.style.display = 'block';
+            previewTitle.innerText = title;
+         } else {
+            previewTitle.style.display = 'none';
+         }
+      }
+      
+      // Description
+      const previewDesc = document.getElementById('preview_embed_description');
+      if (previewDesc) {
+         previewDesc.innerText = desc || 'Click the buttons below to assign roles to yourself!';
+      }
+      
+      // Color
+      const previewWrapper = document.getElementById('preview_embed_wrapper');
+      if (previewWrapper) {
+         previewWrapper.style.borderLeftColor = color;
+      }
+      
+      // Thumbnail
+      const previewThumbnail = document.getElementById('preview_embed_thumbnail');
+      if (previewThumbnail) {
+         if (thumbnail) {
+            previewThumbnail.src = thumbnail;
+            previewThumbnail.style.display = 'block';
+         } else {
+            previewThumbnail.style.display = 'none';
+         }
+      }
+      
+      // Large Image
+      const previewImage = document.getElementById('preview_embed_image');
+      if (previewImage) {
+         if (image) {
+            previewImage.src = image.startsWith('/') ? window.location.origin + image : image;
+            previewImage.style.display = 'block';
+         } else {
+            previewImage.style.display = 'none';
+         }
+      }
+      
+      // Footer
+      const previewFooter = document.getElementById('preview_embed_footer');
+      const previewFooterIcon = document.getElementById('preview_embed_footer_icon');
+      const previewFooterText = document.getElementById('preview_embed_footer_text');
+      if (previewFooter) {
+         if (footerText) {
+            previewFooter.style.display = 'flex';
+            if (previewFooterText) previewFooterText.innerText = footerText;
+            if (previewFooterIcon) {
+               if (footerIcon) {
+                  previewFooterIcon.src = footerIcon;
+                  previewFooterIcon.style.display = 'block';
+               } else {
+                  previewFooterIcon.style.display = 'none';
+               }
+            }
+         } else {
+            previewFooter.style.display = 'none';
+         }
+      }
+      
+      // Render Buttons
+      const previewButtonsWrapper = document.getElementById('preview_buttons_wrapper');
+      const enableSelfRoles = document.getElementById('enable_self_roles')?.checked;
+      
+      if (previewButtonsWrapper) {
+         previewButtonsWrapper.innerHTML = '';
+         if (enableSelfRoles) {
+            const btnCards = document.querySelectorAll('#buttons_list .btn-config-card');
+            if (btnCards.length > 0) {
+               previewButtonsWrapper.style.display = 'flex';
+               btnCards.forEach(card => {
+                  const style = card.querySelector('.btn-style').value;
+                  const label = card.querySelector('.btn-label').value || 'Button';
+                  const emoji = card.querySelector('.btn-emoji').value;
+                  
+                  let emojiHtml = emoji ? `<span style="font-size:14px; margin-right: 4px;">${emoji}</span>` : '';
+                  let linkIconHtml = style === 'link' ? '<span style="font-size:11px; margin-left: 4px; opacity: 0.7;">↗</span>' : '';
+                  
+                  const btnPreview = document.createElement('div');
+                  btnPreview.className = `discord-btn discord-btn-${style}`;
+                  btnPreview.innerHTML = `${emojiHtml}<span>${label}</span>${linkIconHtml}`;
+                  previewButtonsWrapper.appendChild(btnPreview);
+               });
+            } else {
+               previewButtonsWrapper.style.display = 'none';
+            }
+         } else {
+            previewButtonsWrapper.style.display = 'none';
+         }
+      }
+    }
+
+    async function uploadEmbedImage() {
+      const fileInput = document.getElementById('embed_image_file');
+      const statusEl = document.getElementById('upload_status');
+      if (!fileInput.files || fileInput.files.length === 0) return;
+      
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append('image', file);
+      
+      statusEl.innerText = 'Uploading...';
+      statusEl.style.color = 'var(--c2)';
+      
+      try {
+         const res = await fetch('/api/upload-image', {
+            method: 'POST',
+            body: formData
+         });
+         const data = await res.json().catch(() => ({}));
+         if (res.ok && data.success) {
+            statusEl.innerText = 'Upload successful!';
+            statusEl.style.color = '#10b981';
+            document.getElementById('embed_image_url').value = data.url;
+            updateLiveEmbedPreview();
+         } else {
+            statusEl.innerText = 'Upload failed: ' + (data.error || 'Unknown error');
+            statusEl.style.color = 'var(--c1)';
+         }
+      } catch (e) {
+         statusEl.innerText = 'Upload error.';
+         statusEl.style.color = 'var(--c1)';
+      }
+    }
+
+    async function sendEmbedRoles(event) {
+      if (event) event.preventDefault();
+      
+      const channelId = document.getElementById('embed_channel_id').value;
+      if (!channelId) {
+         showToast('Please select a target channel.', 'error');
+         return;
+      }
+      
+      const embedData = {
+         author_name: document.getElementById('embed_author_name').value,
+         author_icon_url: document.getElementById('embed_author_icon').value,
+         title: document.getElementById('embed_title').value,
+         description: document.getElementById('embed_description').value,
+         color: document.getElementById('embed_color_hex').value || '#0affe4',
+         thumbnail_url: document.getElementById('embed_thumbnail_url').value,
+         image_url: document.getElementById('embed_image_url').value,
+         footer_text: document.getElementById('embed_footer_text').value,
+         footer_icon_url: document.getElementById('embed_footer_icon').value
+      };
+      
+      const buttons = [];
+      const enableSelfRoles = document.getElementById('enable_self_roles').checked;
+      
+      if (enableSelfRoles) {
+         const btnCards = document.querySelectorAll('#buttons_list .btn-config-card');
+         for (let i = 0; i < btnCards.length; i++) {
+            const card = btnCards[i];
+            const style = card.querySelector('.btn-style').value;
+            const label = card.querySelector('.btn-label').value;
+            const emoji = card.querySelector('.btn-emoji').value;
+            
+            if (style === 'link') {
+               const url = card.querySelector('.btn-url').value;
+               if (!url) {
+                  showToast('Please specify a URL link for the button.', 'error');
+                  return;
+               }
+               buttons.push({ style, label, emoji, url });
+            } else {
+               const roleId = card.querySelector('.btn-role').value;
+               const mode = card.querySelector('.btn-mode').value;
+               if (!roleId) {
+                  showToast('Please select a role for the interactive button.', 'error');
+                  return;
+               }
+               buttons.push({ style, label, emoji, role_id: roleId, mode });
+            }
+         }
+      }
+      
+      const payload = {
+         channel_id: channelId,
+         embed_data: embedData,
+         buttons: buttons
+      };
+      
+      const submitBtn = document.querySelector('#form-embed-roles button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<span>Sending Message...</span>';
+      submitBtn.disabled = true;
+      
+      try {
+         const res = await fetch(`/api/guild/${guildId}/send-embed-roles`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+         });
+         const data = await res.json().catch(() => ({}));
+         if (res.ok && data.success) {
+            showToast('Embed and buttons sent successfully!', 'success');
+         } else {
+            showToast(data.error || 'Failed to send message.', 'error');
+         }
+      } catch (e) {
+         showToast('Network error occurred.', 'error');
+      } finally {
+         submitBtn.innerHTML = originalText;
+         submitBtn.disabled = false;
+      }
+    }
+
+    let activeLayoutData = null;
+
+    // Lightweight fallback: use simple /roles + /channels endpoints to populate dropdowns
+    // when the full server_export fails (e.g. timeout) or resContainer is missing.
+    async function populateDropdownsFallback() {
+      try {
+        const [rolesRes, channelsRes] = await Promise.all([
+          fetch(`/api/guild/${guildId}/roles`),
+          fetch(`/api/guild/${guildId}/channels`)
+        ]);
+        const roles = rolesRes.ok ? await rolesRes.json() : [];
+        const allChannels = channelsRes.ok ? await channelsRes.json() : [];
+
+        // Build a minimal activeLayoutData structure so all populate* functions work
+        const textChannels = allChannels.filter(c => c.type === 'text' || c.type.includes('text'));
+        const voiceChannels = allChannels.filter(c => c.type === 'voice' || c.type.includes('voice'));
+        const categoryChannels = allChannels.filter(c => c.type === 'category' || c.type.includes('category'));
+
+        // Build categories map
+        const catMap = {};
+        categoryChannels.forEach(c => { catMap[c.id] = { id: c.id, name: c.name, channels: [] }; });
+        const uncategorized = { id: 'none', name: 'Uncategorized', channels: [] };
+
+        // Assign channels to categories (Discord API doesn't give parent_id here, so flat-assign)
+        [...textChannels, ...voiceChannels].forEach(c => {
+          uncategorized.channels.push({ id: c.id, name: c.name, type: (c.type.includes('voice') ? 'voice' : 'text') });
+        });
+
+        const categories = Object.values(catMap);
+        if (uncategorized.channels.length > 0) categories.unshift(uncategorized);
+
+        activeLayoutData = { roles: roles.filter(r => r.name !== '@everyone'), categories };
+
+        // Now populate all dropdowns with this data
+        const layoutRoles = activeLayoutData.roles;
+        populateLevelingRolesDropdowns(layoutRoles);
+        populateTicketsDropdowns(layoutRoles);
+        populateCustomCommandsRoles(layoutRoles);
+        populateGiveawayRolesSelect(layoutRoles);
+        populateModerationDropdowns(layoutRoles);
+        populateBotSettingsRoles(layoutRoles);
+        await populateMusicDropdowns(layoutRoles);
+        populateStatsDropdowns();
+        
+        // Re-render admin/mod lists to update role names if they were loaded as IDs
+        renderAdminRolesList();
+        renderModRolesList();
+
+        // Populate channel dropdowns manually
+        const selectors = {
+          embed_channel_id: '-- Select Channel --',
+          welcome_channel: '-- Select Channel --',
+          goodbye_channel: '-- Select Channel --',
+          gw_channel_id: '-- Select Channel --',
+          log_channel: '-- Choose Log Channel --'
+        };
+        Object.entries(selectors).forEach(([id, placeholder]) => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          const oldVal = el.value;
+          el.innerHTML = `<option value="">${placeholder}</option>`;
+          textChannels.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.id;
+            opt.innerText = `# ${c.name}`;
+            el.appendChild(opt);
+          });
+          if (oldVal) el.value = oldVal;
+        });
+
+        // Populate bulk role select
+        const bulkRoleSelect = document.getElementById('bulk_role_id');
+        if (bulkRoleSelect) {
+          bulkRoleSelect.innerHTML = '<option value="">-- Select Role --</option>';
+          layoutRoles.forEach(role => {
+            const opt = document.createElement('option');
+            opt.value = role.id;
+            opt.innerText = role.name;
+            opt.dataset.color = role.color || '#99aab5';
+            bulkRoleSelect.appendChild(opt);
+          });
+          if (typeof updateBulkPermissionPreview === 'function') updateBulkPermissionPreview();
+        }
+
+        loadCustomCommands();
+        loadGuildSettings();
+        console.log('[Kaizer] Dropdowns populated via fallback API (roles+channels).');
+      } catch (e) {
+        console.error('[Kaizer] Fallback dropdown population failed:', e);
+      }
+    }
+
+    async function fetchServerLayout() {
+      const resContainer = document.getElementById('layout-results');
+      const editorContainer = document.getElementById('layout-editor-container');
+      const saveBtn = document.getElementById('save-layout-btn');
+      
+      // Guard: resContainer only exists in the Server Builder tab.
+      // If missing (e.g. called from DOMContentLoaded before the tab renders),
+      // skip UI updates but still run the API call for dropdown population.
+      if (resContainer) resContainer.innerHTML = 'Fetching server layout...';
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'server_export' })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (data.success && data.export_data) {
+          activeLayoutData = data.export_data;
+          if (resContainer) resContainer.innerHTML = 'Layout loaded.';
+          if (editorContainer) editorContainer.style.display = 'block';
+          if (saveBtn) saveBtn.style.display = 'block';
+          
+          let html = '';
+          const roles = activeLayoutData.roles || [];
+          
+          // Populate Bulk Role Select
+          const bulkRoleSelect = document.getElementById('bulk_role_id');
+          if (bulkRoleSelect) {
+             bulkRoleSelect.innerHTML = '<option value="">-- Select Role --</option>';
+             roles.forEach(role => {
+                const opt = document.createElement('option');
+                opt.value = role.id;
+                opt.innerText = role.name;
+                opt.dataset.color = role.color; // Save the role color
+                bulkRoleSelect.appendChild(opt);
+             });
+             updateBulkPermissionPreview();
+          }
+          
+          // Populate target select dropdowns for Decorator and Embed target channel
+          const targetSelect = document.getElementById('font_target_channel');
+          if (targetSelect) {
+             targetSelect.innerHTML = '<option value="all">-- RENAME ALL CHANNELS IN SERVER --</option>';
+          }
+          
+          const embedChannelSelect = document.getElementById('embed_channel_id');
+          if (embedChannelSelect) {
+             embedChannelSelect.innerHTML = '<option value="">-- Select Channel --</option>';
+          }
+          const welcomeChannelSelect = document.getElementById('welcome_channel');
+          const goodbyeChannelSelect = document.getElementById('goodbye_channel');
+          const gwChannelSelect = document.getElementById('gw_channel_id');
+          const logChannelSelect = document.getElementById('log_channel');
+          if (welcomeChannelSelect) welcomeChannelSelect.innerHTML = '<option value="">-- Select Channel --</option>';
+          if (goodbyeChannelSelect) goodbyeChannelSelect.innerHTML = '<option value="">-- Select Channel --</option>';
+          if (gwChannelSelect) gwChannelSelect.innerHTML = '<option value="">-- Select Channel --</option>';
+          if (logChannelSelect) logChannelSelect.innerHTML = '<option value="">-- Choose Log Channel --</option>';
+          
+          activeLayoutData.categories.forEach(cat => {
+            html += `<div style="margin-bottom:15px;">
+              <h4 style="color:var(--c2); margin-bottom:10px; font-weight:bold;">${cat.name}</h4>
+              <div style="margin-left:15px;">`;
+            
+            cat.channels.forEach(chan => {
+              const icon = chan.type === 'voice' ? '☊' : '#';
+              
+              // Add to Target Channel Select
+              if (targetSelect) {
+                 const opt = document.createElement('option');
+                 opt.value = chan.id;
+                 opt.innerText = `[${cat.name}] ${chan.name}`;
+                 targetSelect.appendChild(opt);
+              }
+              
+              // Add text channels to Embed, Welcome, and Goodbye target channel dropdowns
+              if (chan.type === 'text') {
+                 if (embedChannelSelect) {
+                    const embOpt = document.createElement('option');
+                    embOpt.value = chan.id;
+                    embOpt.innerText = `# ${chan.name} (${cat.name})`;
+                    embedChannelSelect.appendChild(embOpt);
+                 }
+                 if (welcomeChannelSelect) {
+                    const welOpt = document.createElement('option');
+                    welOpt.value = chan.id;
+                    welOpt.innerText = `# ${chan.name} (${cat.name})`;
+                    welcomeChannelSelect.appendChild(welOpt);
+                 }
+                 if (goodbyeChannelSelect) {
+                    const gbOpt = document.createElement('option');
+                    gbOpt.value = chan.id;
+                    gbOpt.innerText = `# ${chan.name} (${cat.name})`;
+                    goodbyeChannelSelect.appendChild(gbOpt);
+                 }
+                 if (gwChannelSelect) {
+                    const gwOpt = document.createElement('option');
+                    gwOpt.value = chan.id;
+                    gwOpt.innerText = `# ${chan.name} (${cat.name})`;
+                    gwChannelSelect.appendChild(gwOpt);
+                 }
+                 if (logChannelSelect) {
+                    const logOpt = document.createElement('option');
+                    logOpt.value = chan.id;
+                    logOpt.innerText = `# ${chan.name} (${cat.name})`;
+                    logChannelSelect.appendChild(logOpt);
+                 }
+              }
+              
+              html += `<div style="display:flex; flex-direction:column; background:rgba(255,255,255,0.05); padding:10px; border-radius:6px; margin-bottom:8px;">
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:bold;">${icon} ${chan.name}</span>
+                    <label class="switch"><input type="checkbox" id="pub_${chan.id}" onchange="toggleRoles('${chan.id}')" checked><span class="slider"></span><span style="margin-left:55px;">Public</span></label>
+                  </div>
+                  <div id="roles_${chan.id}" style="display:none; flex-wrap:wrap; gap:8px;">
+                    <div style="width:100%; font-size:0.8rem; color:var(--text-muted); margin-bottom:5px;">Select roles allowed to view:</div>`;
+              roles.forEach(role => {
+                 html += `<label style="background:rgba(0,0,0,0.3); padding:4px 8px; border-radius:4px; font-size:0.85rem; cursor:pointer;"><input type="checkbox" class="role-cb-${chan.id}" value="${role.id}"> ${role.name}</label>`;
+              });
+              html += `</div></div>`;
+            });
+            html += `</div></div>`;
+          });
+          if (editorContainer) editorContainer.innerHTML = html;
+          
+          // Re-trigger live preview so role options populate inside card buttons
+          updateLiveEmbedPreview();
+          handleTargetChannelChange();
+          populateLevelingRolesDropdowns(roles);
+          populateTicketsDropdowns(roles);
+          populateCustomCommandsRoles(roles);
+          populateGiveawayRolesSelect(roles);
+          populateModerationDropdowns(roles);
+          populateBotSettingsRoles(roles);
+          await populateMusicDropdowns(roles);
+          populateStatsDropdowns();
+          loadCustomCommands();
+          loadGuildSettings();
+        } else {
+          if (resContainer) resContainer.innerHTML = 'Failed to fetch layout. Using fallback...';
+          await populateDropdownsFallback();
+        }
+      } catch (e) {
+        console.error('[Kaizer] fetchServerLayout error:', e);
+        if (resContainer) resContainer.innerHTML = 'Network error. Using fallback...';
+        await populateDropdownsFallback();
+      }
+    }
+
+    function toggleRoles(chanId) {
+      const isPublic = document.getElementById('pub_' + chanId).checked;
+      document.getElementById('roles_' + chanId).style.display = isPublic ? 'none' : 'flex';
+    }
+
+    async function saveServerLayout() {
+      const resContainer = document.getElementById('layout-results');
+      resContainer.innerHTML = 'Starting background task...';
+      
+      const payload = { channels: {} };
+      if (!activeLayoutData) return;
+      
+      activeLayoutData.categories.forEach(cat => {
+        cat.channels.forEach(chan => {
+            const isPublic = document.getElementById('pub_' + chan.id).checked;
+            const roles = [];
+            if (!isPublic) {
+                document.querySelectorAll('.role-cb-' + chan.id).forEach(cb => {
+                    if (cb.checked) roles.push(cb.value);
+                });
+            }
+            payload.channels[chan.id] = { public: isPublic, roles: roles };
+        });
+      });
+      
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'server_apply_layout', layout: payload })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (data.success && data.task_id) {
+          pollTaskProgress(data.task_id, 'layout-results');
+        } else {
+          resContainer.innerHTML = 'Error: ' + (data.error || 'Failed to save.');
+        }
+      } catch (e) {
+        resContainer.innerHTML = 'Network error.';
+      }
+    }
+
+    async function createNewRolePrompt() {
+      const name = window.prompt("Enter the name of the new role to create:");
+      if (!name) return;
+      
+      try {
+         showToast("Creating role...", "info");
+         const res = await fetch(`/api/guild/${guildId}/server-action`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'create_role', role_name: name })
+         });
+         const data = await res.json().catch(() => ({}));
+         if (data.success && data.role) {
+            showToast(`Role "${data.role.name}" created successfully!`, 'success');
+            
+            // Add new role to bulk_role_id select
+            const bulkRoleSelect = document.getElementById('bulk_role_id');
+            const opt = document.createElement('option');
+            opt.value = data.role.id;
+            opt.innerText = data.role.name;
+            opt.dataset.color = data.role.color; // Save the role color
+            bulkRoleSelect.appendChild(opt);
+            
+            // Select the newly created role
+            bulkRoleSelect.value = data.role.id;
+            
+            // Update activeLayoutData.roles so it is kept in cache
+            if (activeLayoutData) {
+               if (!activeLayoutData.roles) activeLayoutData.roles = [];
+               activeLayoutData.roles.push(data.role);
+            }
+            updateBulkPermissionPreview();
+         } else {
+            showToast(data.error || 'Failed to create role.', 'error');
+         }
+      } catch (e) {
+         showToast('Network error occurred.', 'error');
+      }
+    }
+
+    async function applyBulkPermissions(event) {
+      event.preventDefault();
+      const resContainer = document.getElementById('bulk-results');
+      const roleId = document.getElementById('bulk_role_id').value;
+      const preset = document.getElementById('bulk_preset').value;
+      
+      if (!roleId) {
+         showToast("Please select a target role.", "error");
+         return;
+      }
+      
+      resContainer.innerHTML = 'Starting background task...';
+      
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'server_bulkpermissions', role_id: roleId, preset: preset })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (data.success && data.task_id) {
+          pollTaskProgress(data.task_id, 'bulk-results');
+        } else {
+          resContainer.innerHTML = 'Error: ' + (data.error || 'Failed to apply permissions.');
+        }
+      } catch (e) {
+        resContainer.innerHTML = 'Network error occurred.';
+      }
+    }
+
+    function updateBulkPermissionPreview() {
+      const roleSelect = document.getElementById('bulk_role_id');
+      const presetSelect = document.getElementById('bulk_preset');
+      const previewDiv = document.getElementById('bulk-permission-preview');
+      
+      if (!roleSelect || !presetSelect || !previewDiv) return;
+      
+      const roleId = roleSelect.value;
+      const preset = presetSelect.value;
+      
+      if (!roleId || !preset) {
+        previewDiv.style.display = 'none';
+        return;
+      }
+      
+      const chosenOpt = roleSelect.options[roleSelect.selectedIndex];
+      const roleName = chosenOpt.innerText;
+      let roleColor = chosenOpt.dataset.color || '#99aab5';
+      if (roleColor === '#000000' || roleColor === '0' || roleColor === '') {
+        roleColor = '#ffffff';
+      }
+      
+      previewDiv.style.display = 'block';
+      
+      let presetTitle = '';
+      let allowedHtml = '';
+      let deniedHtml = '';
+      
+      if (preset === 'read_only') {
+        presetTitle = 'Read Only';
+        allowedHtml = `
+          <div style="color:#10b981; font-size:0.82rem; display:flex; align-items:center; gap:6px; padding:2px 0;">
+            <span style="font-weight:bold; font-size: 0.9rem;">✔</span> <span>View Channels</span>
+          </div>
+          <div style="color:#10b981; font-size:0.82rem; display:flex; align-items:center; gap:6px; padding:2px 0;">
+            <span style="font-weight:bold; font-size: 0.9rem;">✔</span> <span>Connect to Voice</span>
+          </div>
+        `;
+        deniedHtml = `
+          <div style="color:#ef4444; font-size:0.82rem; display:flex; align-items:center; gap:6px; padding:2px 0;">
+            <span style="font-weight:bold; font-size: 0.9rem;">✕</span> <span>Send Messages</span>
+          </div>
+          <div style="color:#ef4444; font-size:0.82rem; display:flex; align-items:center; gap:6px; padding:2px 0;">
+            <span style="font-weight:bold; font-size: 0.9rem;">✕</span> <span>Speak in Voice</span>
+          </div>
+        `;
+      } else if (preset === 'member') {
+        presetTitle = 'Member (Default)';
+        allowedHtml = `
+          <div style="color:#10b981; font-size:0.82rem; display:flex; align-items:center; gap:6px; padding:2px 0;">
+            <span style="font-weight:bold; font-size: 0.9rem;">✔</span> <span>View Channels</span>
+          </div>
+          <div style="color:#10b981; font-size:0.82rem; display:flex; align-items:center; gap:6px; padding:2px 0;">
+            <span style="font-weight:bold; font-size: 0.9rem;">✔</span> <span>Send Messages</span>
+          </div>
+          <div style="color:#10b981; font-size:0.82rem; display:flex; align-items:center; gap:6px; padding:2px 0;">
+            <span style="font-weight:bold; font-size: 0.9rem;">✔</span> <span>Connect to Voice</span>
+          </div>
+          <div style="color:#10b981; font-size:0.82rem; display:flex; align-items:center; gap:6px; padding:2px 0;">
+            <span style="font-weight:bold; font-size: 0.9rem;">✔</span> <span>Speak in Voice</span>
+          </div>
+        `;
+        deniedHtml = `
+          <div style="color:var(--text-muted); font-size:0.82rem; font-style:italic;">No overrides applied</div>
+        `;
+      } else if (preset === 'mod') {
+        presetTitle = 'Moderator';
+        allowedHtml = `
+          <div style="color:#10b981; font-size:0.82rem; display:flex; align-items:center; gap:6px; padding:2px 0;">
+            <span style="font-weight:bold; font-size: 0.9rem;">✔</span> <span>View & Send</span>
+          </div>
+          <div style="color:#10b981; font-size:0.82rem; display:flex; align-items:center; gap:6px; padding:2px 0;">
+            <span style="font-weight:bold; font-size: 0.9rem;">✔</span> <span>Manage Messages</span>
+          </div>
+          <div style="color:#10b981; font-size:0.82rem; display:flex; align-items:center; gap:6px; padding:2px 0;">
+            <span style="font-weight:bold; font-size: 0.9rem;">✔</span> <span>Connect & Speak</span>
+          </div>
+          <div style="color:#10b981; font-size:0.82rem; display:flex; align-items:center; gap:6px; padding:2px 0;">
+            <span style="font-weight:bold; font-size: 0.9rem;">✔</span> <span>Mute / Deafen / Move</span>
+          </div>
+        `;
+        deniedHtml = `
+          <div style="color:var(--text-muted); font-size:0.82rem; font-style:italic;">No overrides applied</div>
+        `;
+      } else if (preset === 'locked') {
+        presetTitle = 'Locked (Private)';
+        allowedHtml = `
+          <div style="color:var(--text-muted); font-size:0.82rem; font-style:italic;">All access denied</div>
+        `;
+        deniedHtml = `
+          <div style="color:#ef4444; font-size:0.82rem; display:flex; align-items:center; gap:6px; padding:2px 0;">
+            <span style="font-weight:bold; font-size: 0.9rem;">✕</span> <span>View Channels</span>
+          </div>
+          <div style="color:#ef4444; font-size:0.82rem; display:flex; align-items:center; gap:6px; padding:2px 0;">
+            <span style="font-weight:bold; font-size: 0.9rem;">✕</span> <span>Connect to Voice</span>
+          </div>
+        `;
+      }
+      
+      previewDiv.innerHTML = `
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid rgba(255,255,255,0.06); padding-bottom:8px; flex-wrap:wrap; gap:8px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <span style="width:10px; height:10px; border-radius:50%; background:${roleColor}; display:inline-block; box-shadow:0 0 8px ${roleColor};"></span>
+              <span style="font-weight:bold; color:${roleColor}; font-size:0.95rem; font-family:'Share Tech Mono', monospace;">${roleName}</span>
+            </div>
+            <span style="background:rgba(255,255,255,0.05); color:var(--accent-cyan); font-size:0.7rem; text-transform:uppercase; font-weight:bold; padding:4px 8px; border-radius:4px; font-family:'Share Tech Mono', monospace; border:1px solid rgba(10,254,228,0.15); box-shadow:0 0 10px rgba(10,254,228,0.05);">
+              ${presetTitle}
+            </span>
+          </div>
+          
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px;">
+            <div>
+              <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:6px; font-weight:bold; font-family:'Share Tech Mono', monospace;">◈ ALLOWED POWERS</div>
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                ${allowedHtml}
+              </div>
+            </div>
+            <div>
+              <div style="font-size:0.7rem; text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin-bottom:6px; font-weight:bold; font-family:'Share Tech Mono', monospace;">◈ DENIED POWERS</div>
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                ${deniedHtml}
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    const TEMPLATES_CATALOG = {
+      gaming: {
+        name: "Gaming Server",
+        desc: "Adds LFG, Voice Lounges, and Gaming zones with stylized fonts.",
+        categories: [
+          {name: "◈ ─ INFORMATION ─ ◈", channels: [{name: "✦-rules", type: "text"}, {name: "✦-announcements", type: "text"}]},
+          {name: "⬪ ٫ CHAT HUB ‧", channels: [{name: "₊-general-chat", type: "text"}, {name: "₊-clips-and-highlights", type: "text"}]},
+          {name: "┇ ٫ VOICE LOBBIES | ☩", channels: [{name: "Lobby (No Mic)", type: "voice"}, {name: "Squad Room 1", type: "voice"}, {name: "Squad Room 2", type: "voice"}]}
+        ]
+      },
+      community: {
+        name: "Community Hub",
+        desc: "Adds Welcome gate, media, and hangout channels with stylized fonts.",
+        categories: [
+          {name: "✦ ─ WELCOME GATE ─ ✦", channels: [{name: "◈-rules-and-info", type: "text"}, {name: "◈-events-feed", type: "text"}]},
+          {name: "⬪ ٫ HANGOUT ZONE ‧", channels: [{name: "⁕-general-chat", type: "text"}, {name: "⁕-memes-and-media", type: "text"}, {name: "⁕-hobbies", type: "text"}]},
+          {name: "┇ ٫ CHILL VOICES | ☩", channels: [{name: "Acoustic Lounge", type: "voice"}, {name: "Coffee Shop VC", type: "voice"}]}
+        ]
+      },
+      creator: {
+        name: "Creator Lounge",
+        desc: "Adds Broadcast feeds, streams, and Sub-only zones with stylized fonts.",
+        categories: [
+          {name: "◈ ─ BROADCAST ─ ◈", channels: [{name: "▲-rules", type: "text"}, {name: "▲-stream-alerts", type: "text"}, {name: "▲-upload-feed", type: "text"}]},
+          {name: "⬪ ٫ SUBSCRIBER ROOMS ‧", channels: [{name: "✦-sub-lounge", type: "text"}, {name: "✦-exclusive-media", type: "text"}]},
+          {name: "┇ ٫ RECORDING ZONE | ☩", channels: [{name: "Waiting Room", type: "voice"}, {name: "Recording Booth", type: "voice"}]}
+        ]
+      },
+      tech: {
+        name: "Tech/Dev Hub",
+        desc: "Adds Github updates, code talk, and help desks with stylized fonts.",
+        categories: [
+          {name: "✦ ─ DOCUMENTATION ─ ✦", channels: [{name: "◈-guidelines", type: "text"}, {name: "◈-github-updates", type: "text"}]},
+          {name: "⬪ ٫ TERMINAL ‧", channels: [{name: "⁕-general-coding", type: "text"}, {name: "⁕-resources", type: "text"}, {name: "⁕-help-desk", type: "text"}]},
+          {name: "┇ ٫ VOICE DISCUSSIONS | ☩", channels: [{name: "Daily Standup", type: "voice"}, {name: "Pair Programming", type: "voice"}]}
+        ]
+      },
+      anime: {
+        name: "Anime & Manga Lounge",
+        desc: "Adds Anime directory, discussions, cosplay/art, and watch-party stream rooms.",
+        categories: [
+          {name: "✦ ─ ANIME DIRECTORY ─ ✦", channels: [{name: "◈-rules-and-news", type: "text"}, {name: "◈-weekly-schedule", type: "text"}]},
+          {name: "⬪ ٫ DISCUSSIONS ‧", channels: [{name: "₊-general-chat", type: "text"}, {name: "₊-anime-media", type: "text"}, {name: "₊-cosplay-and-art", type: "text"}, {name: "₊-recommendations", type: "text"}]},
+          {name: "┇ ٫ WATCH PARTIES | ☩", channels: [{name: "Stream Room 1", type: "voice"}, {name: "Stream Room 2", type: "voice"}]}
+        ]
+      },
+      study: {
+        name: "Study & Productivity Desk",
+        desc: "Adds Study focus hall, goals tracker, Pomodoro chat, and silent library VCs.",
+        categories: [
+          {name: "◈ ─ RECEPTION ─ ◈", channels: [{name: "✦-announcements", type: "text"}, {name: "✦-focus-resources", type: "text"}]},
+          {name: "⬪ ٫ STUDY HALL ‧", channels: [{name: "⁕-general-desk", type: "text"}, {name: "⁕-pomodoro-timer", type: "text"}, {name: "⁕-weekly-goals", type: "text"}]},
+          {name: "┇ ٫ SILENT LIBRARY | ☩", channels: [{name: "Quiet Room (Muted)", type: "voice"}, {name: "Study Session A", type: "voice"}, {name: "Study Session B", type: "voice"}]}
+        ]
+      },
+      music: {
+        name: "Music Station & Lounge",
+        desc: "Adds song requests, playlist sharing channels, chill lounges, and live acoustic stages.",
+        categories: [
+          {name: "✦ ─ STATION DETAILS ─ ✦", channels: [{name: "⬪-rules", type: "text"}, {name: "⬪-music-events", type: "text"}]},
+          {name: "⬪ ٫ MUSIC DECK ‧", channels: [{name: "☊-general-lounge", type: "text"}, {name: "☊-song-requests", type: "text"}, {name: "☊-playlist-sharing", type: "text"}]},
+          {name: "┇ ٫ AUDIO ROOMS | ☩", channels: [{name: "Chill Corner", type: "voice"}, {name: "Live Stage", type: "voice"}, {name: "Stage Backstage", type: "voice"}]}
+        ]
+      },
+      crypto: {
+        name: "Web3 & Crypto Syndicate",
+        desc: "Adds market telemetry, signals updates, trading desks, and Alpha lounges.",
+        categories: [
+          {name: "◈ ─ HUB TELEMETRY ─ ◈", channels: [{name: "▲-rules-and-signals", type: "text"}, {name: "▲-market-updates", type: "text"}]},
+          {name: "⬪ ٫ TRADING TERMINAL ‧", channels: [{name: "✦-general-discussion", type: "text"}, {name: "✦-charts-analysis", type: "text"}, {name: "✦-nft-showroom", type: "text"}]},
+          {name: "┇ ٫ ALPHA LOUNGES | ☩", channels: [{name: "Alpha Lounge", type: "voice"}, {name: "Trading Desk VC", type: "voice"}]}
+        ]
+      },
+      artistic: {
+        name: "Artistic Studio",
+        desc: "Adds design portfolios, showroom galleries, critiques, and co-working voice rooms.",
+        categories: [
+          {name: "┋ ✧ ─ 𝔠𝔯𝔢𝔞𝔱𝔦𝔳𝔢 𝔷𝔬𝔫𝔢 ─ ✧ ┋", channels: [{name: "✦-gallery-showroom", type: "text"}, {name: "✦-design-critique", type: "text"}, {name: "✦-commissions", type: "text"}]},
+          {name: "┋ ⬪ ٫ 𝔭𝔬𝔯𝔱𝔣𝔬𝔩𝔦𝔬𝔰 ‧ ┋", channels: [{name: "⁕-digital-art", type: "text"}, {name: "⁕-traditional-art", type: "text"}, {name: "⁕-resources", type: "text"}]},
+          {name: "┋ ┇ ٫ 𝔩𝔦𝔳𝔢 𝔡𝔯𝔞𝔴𝔦𝔫𝔤 | ☩ ┋", channels: [{name: "Co-Working Space", type: "voice"}, {name: "Sketch & Chat", type: "voice"}]}
+        ]
+      },
+      roleplay: {
+        name: "Neon Roleplay",
+        desc: "Neo-Tokyo world building lore, active roleplay districts, and holo-chamber voice channels.",
+        categories: [
+          {name: "┋ ✦ ─ ɴᴇᴏ-ᴛᴏᴋʏᴏ ─ ✦ ┋", channels: [{name: "◣-archives-lore", type: "text"}, {name: "◣-rules-and-signup", type: "text"}]},
+          {name: "┋ ⬪ ٫ ʀᴘ ᴅɪsᴛʀɪᴄᴛs ‧ ┋", channels: [{name: "▲-neon-alley-rp", type: "text"}, {name: "▲-underground-bar", type: "text"}, {name: "▲-corporate-sector", type: "text"}]},
+          {name: "┋ ┇ ٫ ᴠᴏɪᴄᴇ ʀᴘ | ☩ ┋", channels: [{name: "Tavern VC", type: "voice"}, {name: "Campfire Stories", type: "voice"}]}
+        ]
+      },
+      esports: {
+        name: "Esports Arena",
+        desc: "Tournament schedule boards, scrim results logs, tactical war rooms, and voice lobbies.",
+        categories: [
+          {name: "┋ ⚙ ─ ᴛᴏᴜʀɴᴀᴍᴇɴᴛ ʜǫ ─ ⚙ ┋", channels: [{name: "▲-news-and-updates", type: "text"}, {name: "▲-schedule-brackets", type: "text"}]},
+          {name: "┋ ⬪ ٫ ᴡᴀʀ ʀᴏᴏᴍs ‧ ┋", channels: [{name: "✦-scrim-results", type: "text"}, {name: "✦-strategy-chat", type: "text"}, {name: "✦-vod-reviews", type: "text"}]},
+          {name: "┋ ┇ ٫ ᴄᴏᴍᴘᴇᴛɪᴛɪᴠᴇ ᴠᴄs | ☩ ┋", channels: [{name: "Team Alpha VC", type: "voice"}, {name: "Team Beta VC", type: "voice"}, {name: "Tournament Main", type: "voice"}]}
+        ]
+      },
+      chill_cafe: {
+        name: "Cozy Cafe",
+        desc: "Warm fireside discussion circles, playlist sharing boards, and cozy lo-fi coffee lounges.",
+        categories: [
+          {name: "┋ ✿ ─ 𝓒𝓪𝓯𝓮 𝓡𝓮𝓬𝓮𝓹𝓽𝓲𝓸𝓷 ─ ✿ ┋", channels: [{name: "◈-rules-and-menu", type: "text"}, {name: "◈-announcements", type: "text"}]},
+          {name: "┋ ⬪ ٫ 𝓒𝓱𝓲𝓵𝓵 𝓣𝓪𝓫𝓵𝓮𝓼 ‧ ┋", channels: [{name: "⁕-fireside-chat", type: "text"}, {name: "⁕-media-sharing", type: "text"}, {name: "⁕-bot-commands", type: "text"}]},
+          {name: "┋ ┇ ٫ 𝓒𝓸𝓯𝓯𝓮𝓮 𝓑𝓻𝓮𝓪𝓴𝓼 | ☩ ┋", channels: [{name: "Cozy Fireplace", type: "voice"}, {name: "Lofi Bar", type: "voice"}]}
+        ]
+      }
+    };
+
+    let selectedTemplateId = null;
+
+    function selectTemplate(templateId) {
+      const t = TEMPLATES_CATALOG[templateId];
+      if (!t) return;
+      
+      selectedTemplateId = templateId;
+      
+      document.getElementById('preview-template-title').innerText = `◈ Previewing Layout: ${t.name}`;
+      document.getElementById('preview-template-desc').innerText = t.desc;
+      document.getElementById('discord-guild-name').innerText = `${t.name.toUpperCase()} CLIENT`;
+      
+      const THEMES = {
+        gaming: { font: "'Space Grotesk', sans-serif", color: "#8b5cf6", glow: "none", uppercase: true },
+        community: { font: "'Space Grotesk', sans-serif", color: "#3b82f6", glow: "none", uppercase: true },
+        creator: { font: "'Space Grotesk', sans-serif", color: "#ef4444", glow: "none", uppercase: true },
+        tech: { font: "monospace", color: "#10b981", glow: "none", uppercase: true },
+        anime: { font: "sans-serif", color: "#ec4899", glow: "none", uppercase: true },
+        study: { font: "'Space Grotesk', sans-serif", color: "#fbbf24", glow: "none", uppercase: true },
+        music: { font: "'Playfair Display', serif", color: "#a855f7", glow: "none", uppercase: false },
+        crypto: { font: "'Orbitron', sans-serif", color: "#14b8a6", glow: "none", uppercase: true },
+        artistic: { font: "'Playfair Display', serif", color: "#6366f1", glow: "none", uppercase: false },
+        roleplay: { font: "'Orbitron', sans-serif", color: "#d946ef", glow: "0 0 10px rgba(217,70,239,0.5)", uppercase: true },
+        esports: { font: "'Bebas Neue', sans-serif", color: "#dc2626", glow: "none", uppercase: true },
+        chill_cafe: { font: "'Playfair Display', serif", color: "#b45309", glow: "none", uppercase: false }
+      };
+      
+      const theme = THEMES[templateId] || { font: "'Space Grotesk', sans-serif", color: "var(--accent-cyan)", glow: "none", uppercase: true };
+      
+      let html = '';
+      t.categories.forEach(cat => {
+         html += `<div style="margin-bottom:12px;">
+           <div class="discord-category-item" style="color:${theme.color}; font-family:${theme.font}; text-shadow:${theme.glow}; text-transform:${theme.uppercase ? 'uppercase' : 'none'};">
+             <span style="color:#949ba4; font-size:0.55rem; margin-right:4px;">▼</span>
+             <span style="font-weight: 700; font-size: 0.74rem; letter-spacing: 0.5px;">${cat.name}</span>
+           </div>
+           <div style="margin-left:8px; display:flex; flex-direction:column; gap:1px;">`;
+         
+         cat.channels.forEach(chan => {
+            const icon = chan.type === 'voice' ? '☊' : '#';
+            html += `<div class="discord-channel-item">
+              <span style="color:#80848e; font-size:0.95rem; font-family:sans-serif; font-weight:bold; margin-right:3px; opacity:0.75;">${icon}</span>
+              <span style="letter-spacing:0.2px;">${chan.name}</span>
+            </div>`;
+         });
+         
+         html += `</div></div>`;
+      });
+      
+      document.getElementById('preview-channels-list').innerHTML = html;
+      
+      // Setup the apply button listener
+      const applyBtn = document.getElementById('apply-template-btn');
+      applyBtn.onclick = () => {
+         runServerTemplate(templateId);
+      };
+      
+      // Show preview container
+      const previewContainer = document.getElementById('template-preview-container');
+      previewContainer.style.display = 'block';
+      
+      // Smooth scroll to preview container
+      previewContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function closeTemplatePreview() {
+      document.getElementById('template-preview-container').style.display = 'none';
+      selectedTemplateId = null;
+    }
+
+    async function loadActiveTempVCs() {
+      const container = document.getElementById('active-tempvcs');
+      try {
+        const res = await fetch(`/api/guild/${guildId}/tempvcs`);
+        const data = await res.json().catch(() => ({}));
+        if (data.success && data.data && data.data.length > 0) {
+          let html = '<div style="display:grid; gap:10px;">';
+          data.data.forEach(vc => {
+            html += `<div style="background:rgba(255,255,255,0.05); padding:10px; border-radius:6px; display:flex; justify-content:space-between; align-items:center;">
+                       <span>Channel ID: <strong>${vc.channel_id}</strong></span>
+                       <span style="color:var(--text-muted); font-size:0.9rem;">Owner: <discord-mention type="user">${vc.owner_id}</discord-mention></span>
+                     </div>`;
+          });
+          html += '</div>';
+          container.innerHTML = html;
+        } else {
+          container.innerHTML = 'No active temp VCs at the moment.';
+        }
+      } catch (e) {
+        container.innerHTML = 'Failed to load active temp VCs.';
+      }
+    }
+
+    let gwSelectedRoles = [];
+
+    function populateGiveawayRolesSelect(roles) {
+      const selectEl = document.getElementById('gw_roles_select');
+      if (!selectEl) return;
+      selectEl.innerHTML = '<option value="">-- Select Role --</option>';
+      roles.forEach(role => {
+        const opt = document.createElement('option');
+        opt.value = role.id;
+        opt.innerText = role.name;
+        selectEl.appendChild(opt);
+      });
+      gwSelectedRoles = [];
+      renderGiveawaySelectedRoles();
+    }
+
+    function toggleGiveawayTimingStyle() {
+      const useDates = document.getElementById('gw_use_dates').checked;
+      const durationPanel = document.getElementById('gw_duration_panel');
+      const datesPanel = document.getElementById('gw_dates_panel');
+      const timezonePanel = document.getElementById('gw_timezone_panel');
+      const clocksPanel = document.getElementById('gw_clocks_panel');
+      
+      if (useDates) {
+        durationPanel.style.display = 'none';
+        datesPanel.style.display = 'flex';
+        if (timezonePanel) timezonePanel.style.display = 'block';
+        if (clocksPanel) clocksPanel.style.display = 'flex';
+        initGiveawayDatePickers();
+      } else {
+        durationPanel.style.display = 'block';
+        datesPanel.style.display = 'none';
+        if (timezonePanel) timezonePanel.style.display = 'none';
+        if (clocksPanel) clocksPanel.style.display = 'none';
+      }
+    }
+
+    function initGiveawayDatePickers() {
+      const now = new Date();
+      // Round to nearest minute
+      now.setSeconds(0);
+      now.setMilliseconds(0);
+      
+      const formatForPicker = (d) => {
+        const y = d.getFullYear();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const date = String(d.getDate()).padStart(2, '0');
+        const h = String(d.getHours()).padStart(2, '0');
+        const min = String(d.getMinutes()).padStart(2, '0');
+        return `${y}-${m}-${date}T${h}:${min}`;
+      };
+      
+      const startPicker = document.getElementById('gw_start_time_picker');
+      const endPicker = document.getElementById('gw_end_time_picker');
+      
+      if (startPicker && !startPicker.value) {
+        startPicker.value = formatForPicker(now);
+      }
+      if (endPicker && !endPicker.value) {
+        const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+        endPicker.value = formatForPicker(tomorrow);
+      }
+      updateGiveawayDates();
+    }
+
+    function updateGiveawayDates() {
+      const mode = document.getElementById('gw_timezone_mode').value;
+      const startPicker = document.getElementById('gw_start_time_picker').value;
+      const endPicker = document.getElementById('gw_end_time_picker').value;
+      
+      const startHidden = document.getElementById('gw_start_time');
+      const endHidden = document.getElementById('gw_end_time');
+      
+      const startHelp = document.getElementById('gw_start_help');
+      const endHelp = document.getElementById('gw_end_help');
+      
+      if (!startPicker) {
+        if (startHidden) startHidden.value = '';
+        if (startHelp) startHelp.innerHTML = '';
+      } else {
+        const parsed = parsePickerDateTime(startPicker, mode);
+        if (startHidden) startHidden.value = parsed.isoString;
+        if (startHelp) {
+          startHelp.innerHTML = `
+            <div style="font-size: 0.72rem; color: var(--text-muted);">Starts:</div>
+            <div style="font-size: 0.78rem; color: #fff; font-weight: bold;">${parsed.localStr} (Local)</div>
+            <div style="font-size: 0.78rem; color: var(--c2); font-weight: bold;">${parsed.gmtStr}</div>
+          `;
+        }
+      }
+      
+      if (!endPicker) {
+        if (endHidden) endHidden.value = '';
+        if (endHelp) endHelp.innerHTML = '';
+      } else {
+        const parsed = parsePickerDateTime(endPicker, mode);
+        if (endHidden) endHidden.value = parsed.isoString;
+        if (endHelp) {
+          endHelp.innerHTML = `
+            <div style="font-size: 0.72rem; color: var(--text-muted);">Ends:</div>
+            <div style="font-size: 0.78rem; color: #fff; font-weight: bold;">${parsed.localStr} (Local)</div>
+            <div style="font-size: 0.78rem; color: var(--c2); font-weight: bold;">${parsed.gmtStr}</div>
+          `;
+        }
+      }
+    }
+    
+    function parsePickerDateTime(pickerVal, mode) {
+      const parts = pickerVal.split('T');
+      const dateParts = parts[0].split('-');
+      const timeParts = parts[1].split(':');
+      
+      const year = parseInt(dateParts[0]);
+      const month = parseInt(dateParts[1]) - 1;
+      const day = parseInt(dateParts[2]);
+      const hour = parseInt(timeParts[0]);
+      const minute = parseInt(timeParts[1]);
+      
+      let dateObj;
+      if (mode === 'utc') {
+        dateObj = new Date(Date.UTC(year, month, day, hour, minute));
+      } else {
+        dateObj = new Date(year, month, day, hour, minute);
+      }
+      
+      const isoString = dateObj.toISOString();
+      
+      const locYear = dateObj.getFullYear();
+      const locMonth = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const locDate = String(dateObj.getDate()).padStart(2, '0');
+      const locHours = String(dateObj.getHours()).padStart(2, '0');
+      const locMinutes = String(dateObj.getMinutes()).padStart(2, '0');
+      const localStr = `${locYear}-${locMonth}-${locDate} ${locHours}:${locMinutes}`;
+      
+      const utcYear = dateObj.getUTCFullYear();
+      const utcMonth = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+      const utcDate = String(dateObj.getUTCDate()).padStart(2, '0');
+      const utcHours = String(dateObj.getUTCHours()).padStart(2, '0');
+      const utcMinutes = String(dateObj.getUTCMinutes()).padStart(2, '0');
+      const gmtStr = `${utcYear}-${utcMonth}-${utcDate} ${utcHours}:${utcMinutes} UTC`;
+      
+      return {
+        isoString: isoString,
+        localStr: localStr,
+        gmtStr: gmtStr
+      };
+    }
+
+    function startGiveawayClocks() {
+      const updateClocks = () => {
+        const now = new Date();
+        
+        const utcYear = now.getUTCFullYear();
+        const utcMonth = String(now.getUTCMonth() + 1).padStart(2, '0');
+        const utcDate = String(now.getUTCDate()).padStart(2, '0');
+        const utcHours = String(now.getUTCHours()).padStart(2, '0');
+        const utcMinutes = String(now.getUTCMinutes()).padStart(2, '0');
+        const utcSeconds = String(now.getUTCSeconds()).padStart(2, '0');
+        
+        const gmtStr = `${utcYear}-${utcMonth}-${utcDate} ${utcHours}:${utcMinutes}:${utcSeconds} UTC`;
+        const gmtEl = document.getElementById('gmt_clock');
+        if (gmtEl) gmtEl.innerText = gmtStr;
+        
+        const locYear = now.getFullYear();
+        const locMonth = String(now.getMonth() + 1).padStart(2, '0');
+        const locDate = String(now.getDate()).padStart(2, '0');
+        const locHours = String(now.getHours()).padStart(2, '0');
+        const locMinutes = String(now.getMinutes()).padStart(2, '0');
+        const locSeconds = String(now.getSeconds()).padStart(2, '0');
+        
+        const offsetMin = -now.getTimezoneOffset();
+        const offsetSign = offsetMin >= 0 ? '+' : '-';
+        const offsetHours = String(Math.floor(Math.abs(offsetMin) / 60)).padStart(2, '0');
+        const offsetMins = String(Math.abs(offsetMin) % 60).padStart(2, '0');
+        
+        const localStr = `${locYear}-${locMonth}-${locDate} ${locHours}:${locMinutes}:${locSeconds} (GMT${offsetSign}${offsetHours}:${offsetMins})`;
+        const localEl = document.getElementById('local_clock');
+        if (localEl) localEl.innerText = localStr;
+      };
+      
+      updateClocks();
+      setInterval(updateClocks, 1000);
+    }
+
+    function toggleGiveawayRoleRestrictions() {
+      const enabled = document.getElementById('gw_restrict_roles_enabled').checked;
+      const panel = document.getElementById('gw_role_restrictions_panel');
+      panel.style.display = enabled ? 'block' : 'none';
+    }
+
+    function addGiveawayRole() {
+      const selectEl = document.getElementById('gw_roles_select');
+      const roleId = selectEl.value;
+      if (!roleId) return;
+      
+      const roleName = selectEl.options[selectEl.selectedIndex].text;
+      
+      if (gwSelectedRoles.some(r => r.id === roleId)) {
+        showToast("Role already added.", "error");
+        return;
+      }
+      
+      gwSelectedRoles.push({ id: roleId, name: roleName });
+      renderGiveawaySelectedRoles();
+      selectEl.value = '';
+    }
+
+    function removeGiveawayRole(roleId) {
+      gwSelectedRoles = gwSelectedRoles.filter(r => r.id !== roleId);
+      renderGiveawaySelectedRoles();
+    }
+
+    function renderGiveawaySelectedRoles() {
+      const container = document.getElementById('gw_allowed_roles_list');
+      const hiddenInput = document.getElementById('gw_allowed_roles');
+      if (!container || !hiddenInput) return;
+      
+      container.innerHTML = '';
+      const ids = gwSelectedRoles.map(r => r.id);
+      hiddenInput.value = JSON.stringify(ids);
+      
+      gwSelectedRoles.forEach(role => {
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.style.background = 'rgba(10, 255, 228, 0.15)';
+        badge.style.color = 'var(--c2)';
+        badge.style.padding = '5px 10px';
+        badge.style.borderRadius = '4px';
+        badge.style.fontSize = '0.8rem';
+        badge.style.display = 'inline-flex';
+        badge.style.alignItems = 'center';
+        badge.style.gap = '6px';
+        
+        badge.innerHTML = `
+          <span>${role.name}</span>
+          <span onclick="removeGiveawayRole('${role.id}')" style="cursor:pointer; color:#ef4444; font-weight:bold; font-size:0.9rem;">&times;</span>
+        `;
+        container.appendChild(badge);
+      });
+    }
+
+    function toggleGiveawayEmbedEditor() {
+      const enabledEl = document.getElementById('gw_use_custom_embed');
+      if (!enabledEl) return;
+      const enabled = enabledEl.checked;
+      const makerPanel = document.getElementById('gw_embed_maker_panel');
+      const previewCard = document.getElementById('gw_embed_preview_card');
+      
+      if (makerPanel) makerPanel.style.display = enabled ? 'block' : 'none';
+      if (previewCard) previewCard.style.display = enabled ? 'block' : 'none';
+      updateGiveawayEmbedPreview();
+    }
+
+    function syncGiveawayEmbedColorPicker(val) {
+      const hexEl = document.getElementById('gw_embed_color_hex');
+      if (hexEl) hexEl.value = val;
+      updateGiveawayEmbedPreview();
+    }
+
+    function syncGiveawayEmbedColorHex(val) {
+      if (/^#[0-9A-F]{6}$/i.test(val)) {
+        const pickerEl = document.getElementById('gw_embed_color');
+        if (pickerEl) pickerEl.value = val;
+        updateGiveawayEmbedPreview();
+      }
+    }
+
+    function updateGiveawayEmbedPreview() {
+      const enabledEl = document.getElementById('gw_use_custom_embed');
+      const enabled = enabledEl ? enabledEl.checked : false;
+      const hiddenInput = document.getElementById('gw_embed_config');
+      if (!hiddenInput) return;
+      
+      if (!enabled) {
+        hiddenInput.value = '{}';
+        return;
+      }
+      
+      const title = document.getElementById('gw_embed_title')?.value || "🎉 GIVEAWAY 🎉";
+      const desc = document.getElementById('gw_embed_desc')?.value || "Click the button below to enter!";
+      const color = document.getElementById('gw_embed_color_hex')?.value || '#9b59b6';
+      const thumbnail = document.getElementById('gw_embed_thumbnail')?.value || '';
+      const image = document.getElementById('gw_embed_image')?.value || '';
+      const footer = document.getElementById('gw_embed_footer')?.value || '';
+      const footerIcon = document.getElementById('gw_embed_footer_icon')?.value || '';
+      
+      const configObj = {
+        title: title,
+        description: desc,
+        color: color,
+        thumbnail: thumbnail,
+        image: image,
+        footer: footer,
+        footer_icon: footerIcon
+      };
+      
+      hiddenInput.value = JSON.stringify(configObj);
+      
+      const previewBox = document.getElementById('gw_embed_preview_box');
+      if (previewBox) previewBox.style.borderColor = color;
+      
+      const previewTitle = document.getElementById('gw_preview_title');
+      if (previewTitle) previewTitle.innerText = title;
+      
+      const previewDesc = document.getElementById('gw_preview_desc');
+      if (previewDesc) previewDesc.innerText = desc;
+      
+      const imgEl = document.getElementById('gw_preview_image');
+      if (imgEl) {
+        if (image) {
+          imgEl.src = image;
+          imgEl.style.display = 'block';
+        } else {
+          imgEl.style.display = 'none';
+        }
+      }
+      
+      const footerEl = document.getElementById('gw_preview_footer');
+      const footerIconEl = document.getElementById('gw_preview_footer_icon');
+      const footerTextEl = document.getElementById('gw_preview_footer_text');
+      
+      if (footerEl) {
+        if (footer) {
+          if (footerTextEl) footerTextEl.innerText = footer;
+          if (footerIconEl) {
+            if (footerIcon) {
+              footerIconEl.src = footerIcon;
+              footerIconEl.style.display = 'block';
+            } else {
+              footerIconEl.style.display = 'none';
+            }
+          }
+          footerEl.style.display = 'flex';
+        } else {
+          footerEl.style.display = 'none';
+        }
+      }
+    }
+
+    function updateGiveawayAnimationPreview() {
+      const container = document.getElementById('gw_animation_preview_canvas');
+      if (container) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-style: italic;">Animation style changed. Click below to test drawing simulation!</div>';
+      }
+    }
+
+    let gwAnimInterval = null;
+
+    function triggerGiveawayAnimationDemo() {
+      const container = document.getElementById('gw_animation_preview_canvas');
+      if (!container) return;
+      
+      if (gwAnimInterval) {
+        clearInterval(gwAnimInterval);
+        cancelAnimationFrame(gwAnimInterval);
+        gwAnimInterval = null;
+      }
+      
+      const style = document.getElementById('gw_animation_style').value;
+      container.innerHTML = '';
+      
+      const names = ["Shadow_Core", "Kaizer_Fan", "Matrix_X", "Neon_Glow", "Alpha_Byte", "Cyber_Rex", "Omega_Zero", "Pulse_Wave", "Delta_V", "Echo_1"];
+      
+      if (style === 'scrolling_wheel') {
+        container.innerHTML = `
+          <div style="width: 100%; text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-bottom: 8px;">Draw Animation: Scrolling Wheel</div>
+          <div style="width: 100%; overflow: hidden; position: relative; height: 50px; background: rgba(0,0,0,0.3); border-radius: 6px; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.05);">
+            <div id="wheel_pointer" style="position: absolute; top: 0; bottom: 0; left: 50%; width: 4px; background: var(--c2); z-index: 10; box-shadow: 0 0 8px var(--c2); transform: translateX(-50%);"></div>
+            <div id="wheel_list" style="display: flex; gap: 15px; position: absolute; left: 0; transition: transform 3.5s cubic-bezier(0.1, 0.8, 0.1, 1); padding-left: 50%;">
+            </div>
+          </div>
+          <div id="wheel_winner" style="margin-top: 10px; font-weight: bold; font-size: 1.1rem; color: #fff;">...</div>
+        `;
+        
+        const list = document.getElementById('wheel_list');
+        const wheelNames = [...names, ...names, ...names, ...names];
+        wheelNames.forEach(n => {
+          const el = document.createElement('div');
+          el.style.padding = '6px 15px';
+          el.style.background = 'rgba(255,255,255,0.06)';
+          el.style.border = '1px solid rgba(255,255,255,0.1)';
+          el.style.borderRadius = '4px';
+          el.style.whiteSpace = 'nowrap';
+          el.style.fontSize = '0.9rem';
+          el.style.color = '#fff';
+          el.innerText = n;
+          list.appendChild(el);
+        });
+        
+        setTimeout(() => {
+          const listWidth = list.offsetWidth;
+          const targetOffset = -(listWidth * 0.7) + (Math.random() * 100 - 50);
+          list.style.transform = `translateX(${targetOffset}px)`;
+        }, 100);
+        
+        setTimeout(() => {
+          document.getElementById('wheel_winner').innerHTML = `Winner: <span style="color: var(--c2); font-weight: bold;">Pulse_Wave 🎉</span>`;
+        }, 3600);
+        
+      } else if (style === 'confetti') {
+        container.innerHTML = `
+          <canvas id="confetti_canvas" style="position: absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:5;"></canvas>
+          <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 8px; z-index: 2;">Draw Animation: Confetti Burst</div>
+          <div id="confetti_name" style="font-size: 1.8rem; font-weight: bold; color: var(--c2); text-shadow: 0 0 10px rgba(10,255,228,0.3); z-index: 2;">...</div>
+        `;
+        
+        const nameEl = document.getElementById('confetti_name');
+        let idx = 0;
+        gwAnimInterval = setInterval(() => {
+          nameEl.innerText = names[idx % names.length];
+          idx++;
+        }, 80);
+        
+        setTimeout(() => {
+          clearInterval(gwAnimInterval);
+          const winner = names[Math.floor(Math.random() * names.length)];
+          nameEl.innerHTML = `<span style="color: #fbbf24; text-shadow: 0 0 15px rgba(251,191,36,0.6);">${winner} 🎉</span>`;
+          
+          const canvas = document.getElementById('confetti_canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = container.offsetWidth;
+          canvas.height = container.offsetHeight;
+          
+          let particles = [];
+          for (let i = 0; i < 80; i++) {
+            particles.push({
+              x: canvas.width / 2,
+              y: canvas.height / 2,
+              vx: (Math.random() - 0.5) * 8,
+              vy: (Math.random() - 0.5) * 8 - 3,
+              color: `hsl(${Math.random() * 360}, 90%, 60%)`,
+              r: Math.random() * 4 + 3,
+              alpha: 1
+            });
+          }
+          
+          function drawConfetti() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            let active = false;
+            particles.forEach(p => {
+              if (p.alpha > 0) {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.alpha;
+                ctx.fill();
+                
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.15;
+                p.alpha -= 0.015;
+                active = true;
+              }
+            });
+            if (active) {
+              gwAnimInterval = requestAnimationFrame(drawConfetti);
+            }
+          }
+          drawConfetti();
+        }, 2000);
+        
+      } else if (style === 'slot_machine') {
+        container.innerHTML = `
+          <div style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 8px;">Draw Animation: Slot Machine</div>
+          <div style="display: flex; gap: 10px; justify-content: center; height: 50px; overflow: hidden; border: 2px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 5px; background: rgba(0,0,0,0.4); width: 80%;">
+            <div class="slot-reel" id="reel1" style="flex:1; display:flex; flex-direction:column; gap:5px; transition: transform 2s cubic-bezier(0.1, 0.8, 0.1, 1);"></div>
+            <div class="slot-reel" id="reel2" style="flex:1; display:flex; flex-direction:column; gap:5px; transition: transform 2.5s cubic-bezier(0.1, 0.8, 0.1, 1);"></div>
+            <div class="slot-reel" id="reel3" style="flex:1; display:flex; flex-direction:column; gap:5px; transition: transform 3s cubic-bezier(0.1, 0.8, 0.1, 1);"></div>
+          </div>
+          <div id="slot_winner" style="margin-top: 10px; font-weight: bold; font-size: 1.1rem; color: #fff;">...</div>
+        `;
+        
+        const populateReel = (id) => {
+          const el = document.getElementById(id);
+          const reelNames = [...names, ...names, ...names];
+          reelNames.forEach(n => {
+            const item = document.createElement('div');
+            item.style.height = '30px';
+            item.style.display = 'flex';
+            item.style.alignItems = 'center';
+            item.style.justifyContent = 'center';
+            item.style.color = '#fff';
+            item.style.fontSize = '0.85rem';
+            item.style.background = 'rgba(255,255,255,0.04)';
+            item.style.borderRadius = '3px';
+            item.innerText = n;
+            el.appendChild(item);
+          });
+        };
+        populateReel('reel1');
+        populateReel('reel2');
+        populateReel('reel3');
+        
+        setTimeout(() => {
+          document.getElementById('reel1').style.transform = `translateY(${-30 * 18}px)`;
+          document.getElementById('reel2').style.transform = `translateY(${-30 * 18}px)`;
+          document.getElementById('reel3').style.transform = `translateY(${-30 * 18}px)`;
+        }, 100);
+        
+        setTimeout(() => {
+          document.getElementById('slot_winner').innerHTML = `Winner: <span style="color: var(--c2); font-weight: bold;">Neon_Glow 🎉</span>`;
+        }, 3200);
+        
+      } else if (style === 'radar_ping') {
+        container.innerHTML = `
+          <canvas id="radar_canvas" style="position: absolute; top:0; left:0; width:100%; height:100%; border-radius: 8px;"></canvas>
+          <div id="radar_winner" style="position: absolute; bottom: 10px; font-weight: bold; font-size: 1.1rem; color: #fff; z-index: 10;">...</div>
+        `;
+        
+        const canvas = document.getElementById('radar_canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = container.offsetWidth;
+        canvas.height = container.offsetHeight;
+        
+        const cx = canvas.width / 2;
+        const cy = canvas.height / 2;
+        const maxRadius = Math.min(cx, cy) - 10;
+        
+        let dots = [];
+        for (let i = 0; i < 8; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const r = Math.random() * (maxRadius - 30) + 15;
+          dots.push({
+            x: cx + Math.cos(angle) * r,
+            y: cy + Math.sin(angle) * r,
+            name: names[i],
+            intensity: 0,
+            isWinner: i === 4
+          });
+        }
+        
+        let angle = 0;
+        let winnerFound = false;
+        let winnerPulse = 0;
+        
+        function drawRadar() {
+          ctx.fillStyle = 'rgba(10, 15, 25, 0.2)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          
+          ctx.strokeStyle = 'rgba(10, 255, 228, 0.08)';
+          ctx.lineWidth = 1;
+          for (let r = 30; r < maxRadius; r += 30) {
+            ctx.beginPath();
+            ctx.arc(cx, cy, r, 0, Math.PI * 2);
+            ctx.stroke();
+          }
+          
+          ctx.strokeStyle = 'rgba(10, 255, 228, 0.25)';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(cx + Math.cos(angle) * maxRadius, cy + Math.sin(angle) * maxRadius);
+          ctx.stroke();
+          
+          dots.forEach(d => {
+            const dotAngle = Math.atan2(d.y - cy, d.x - cx);
+            let diff = angle - dotAngle;
+            while (diff < 0) diff += Math.PI * 2;
+            diff = diff % (Math.PI * 2);
+            
+            if (diff < 0.2) {
+              d.intensity = 1.0;
+            } else {
+              d.intensity -= 0.015;
+            }
+            d.intensity = Math.max(0, d.intensity);
+            
+            if (d.intensity > 0) {
+              ctx.beginPath();
+              ctx.arc(d.x, d.y, 4, 0, Math.PI * 2);
+              ctx.fillStyle = `rgba(10, 255, 228, ${d.intensity})`;
+              ctx.shadowBlur = 8;
+              ctx.shadowColor = 'var(--c2)';
+              ctx.fill();
+              ctx.shadowBlur = 0;
+            }
+            
+            if (winnerFound && d.isWinner) {
+              ctx.beginPath();
+              ctx.arc(d.x, d.y, 4 + Math.sin(winnerPulse) * 4, 0, Math.PI * 2);
+              ctx.strokeStyle = '#fbbf24';
+              ctx.lineWidth = 2;
+              ctx.stroke();
+              
+              ctx.beginPath();
+              ctx.arc(d.x, d.y, 3, 0, Math.PI * 2);
+              ctx.fillStyle = '#fbbf24';
+              ctx.fill();
+            }
+          });
+          
+          angle += 0.04;
+          winnerPulse += 0.15;
+          
+          if (!winnerFound && angle > Math.PI * 4) {
+            winnerFound = true;
+            document.getElementById('radar_winner').innerHTML = `Winner: <span style="color: #fbbf24; font-weight: bold;">Alpha_Byte 🎉</span>`;
+          }
+          
+          if (angle < Math.PI * 6) {
+            gwAnimInterval = requestAnimationFrame(drawRadar);
+          }
+        }
+        drawRadar();
+      }
+    }
+
+    function populateCustomCommandsRoles(roles) {
+      const selectEl = document.getElementById('cc_permission');
+      if (!selectEl) return;
+      selectEl.innerHTML = '<option value="Everyone">Everyone</option>';
+      roles.forEach(role => {
+        const opt = document.createElement('option');
+        opt.value = role.id;
+        opt.innerText = role.name;
+        selectEl.appendChild(opt);
+      });
+    }
+
+    async function loadCustomCommands() {
+      const container = document.getElementById('custom_commands_list');
+      if (!container) return;
+      container.innerHTML = '<div style="color: var(--text-muted); font-style: italic;">Loading custom commands...</div>';
+      try {
+        const res = await fetch(`/api/guild/${guildId}/custom_commands`);
+        const data = await res.json();
+        if (data.success && data.commands) {
+          renderCustomCommandsList(data.commands);
+        } else {
+          container.innerHTML = '<div style="color: #ef4444; font-style: italic;">Failed to load custom commands.</div>';
+        }
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = '<div style="color: #ef4444; font-style: italic;">Error fetching custom commands.</div>';
+      }
+    }
+
+    function renderCustomCommandsList(commands) {
+      const container = document.getElementById('custom_commands_list');
+      if (!container) return;
+      if (!commands || commands.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-style: italic; margin: 0;">No custom commands created yet.</p>';
+        return;
+      }
+      
+      let html = '<div style="display: flex; flex-direction: column; gap: 15px;">';
+      commands.forEach(cmd => {
+        let roleName = 'Everyone';
+        if (cmd.permission_level !== 'Everyone') {
+          const role = (activeLayoutData && activeLayoutData.roles) ? activeLayoutData.roles.find(r => r.id === cmd.permission_level) : null;
+          roleName = role ? role.name : (cmd.permission_level || 'Everyone');
+        }
+        
+        let mediaHtml = '';
+        if (cmd.image_url) {
+          mediaHtml += `<div style="margin-top: 6px; font-size: 0.82rem; color: var(--c2);"><strong>Image:</strong> <a href="${cmd.image_url}" target="_blank" style="color: var(--c2); text-decoration: underline;">${cmd.image_url}</a></div>`;
+        }
+        if (cmd.gif_url) {
+          mediaHtml += `<div style="margin-top: 6px; font-size: 0.82rem; color: var(--c2);"><strong>GIF:</strong> <a href="${cmd.gif_url}" target="_blank" style="color: var(--c2); text-decoration: underline;">${cmd.gif_url}</a></div>`;
+        }
+        
+        html += `
+          <div style="padding: 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02); border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.08);">
+            <div style="flex: 1; min-width: 0; padding-right: 20px;">
+              <div style="font-size: 1.05rem; font-weight: bold; color: #fff; margin-bottom: 6px;">
+                Trigger: <span style="color: var(--c2); font-style: italic;">${cmd.trigger_word}</span>
+              </div>
+              <div style="font-size: 0.92rem; color: var(--text-muted); word-break: break-word; white-space: pre-wrap;">${cmd.response_text || ''}</div>
+              <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center;">
+                <span style="background: rgba(10, 255, 228, 0.12); color: var(--c2); border: 1px solid rgba(10, 255, 228, 0.25); padding: 3px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 600;">
+                  Role: ${roleName}
+                </span>
+              </div>
+              ${mediaHtml}
+            </div>
+            <div>
+              <button class="btn" onclick="deleteCustomCommand('${cmd.trigger_word}')" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: all 0.2s; font-size: 0.85rem;" onmouseover="this.style.background='rgba(239, 68, 68, 0.35)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.2)'">
+                Remove
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    async function deleteCustomCommand(trigger_word) {
+      if (!confirm(`Are you sure you want to delete the custom command "${trigger_word}"?`)) return;
+      try {
+        showToast("Deleting command...", "info");
+        const res = await fetch(`/api/guild/${guildId}/custom_commands/${encodeURIComponent(trigger_word)}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message || "Command deleted successfully!", "success");
+          loadCustomCommands();
+        } else {
+          showToast(data.error || "Failed to delete custom command.", "error");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Error deleting custom command.", "error");
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => { 
+      initFontSelectorOptions(); // Initialize selector options
+      renderDecoratorPresets(); // Initialize visual grid
+      loadCommandsForCategory('moderation'); 
+      loadActiveTempVCs();
+      fetchServerLayout(); // Pre-fetch layout so the channel dropdown populates
+      previewFont(); // Initialize preview
+      handleTargetChannelChange(); // Setup initial toggle dim state
+    });
+  
+
+    // ── WELCOME & GOODBYE DASHBOARD CONFIGURATION HELPERS ────────────────────────────────────
+    const WELCOME_THEMES = {
+      cyan_neon: { primary: "#0affe4", secondary: "#0055ff" },
+      red_hot: { primary: "#ef4444", secondary: "#991b1b" },
+      emerald_green: { primary: "#10b981", secondary: "#064e3b" },
+      golden_hour: { primary: "#fbbf24", secondary: "#b45309" },
+      electric_purple: { primary: "#a855f7", secondary: "#4c1d95" },
+      synthwave_pink: { primary: "#ec4899", secondary: "#500724" },
+      dark_space: { primary: "#1e293b", secondary: "#0f172a" },
+      ice_blue: { primary: "#38bdf8", secondary: "#1e3a8a" }
+    };
+
+    function hexToRgb(hex) {
+      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+      return result ? `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : "255, 255, 255";
+    }
+
+    function applyCardBackground(elementId, style, color, customUrl) {
+      const el = document.getElementById(elementId);
+      if (!el) return;
+      
+      if (customUrl) {
+        el.style.backgroundImage = `url('${customUrl}')`;
+        el.style.backgroundSize = "cover";
+        el.style.backgroundPosition = "center";
+        el.style.backgroundRepeat = "no-repeat";
+        return;
+      }
+      
+      const theme = WELCOME_THEMES[color] || WELCOME_THEMES["dark_space"];
+      const c1 = theme.primary;
+      const c2 = theme.secondary;
+      
+      el.style.setProperty('--preview-primary', c1);
+      
+      // Clear previous styles
+      el.style.backgroundRepeat = "no-repeat";
+      el.style.backgroundPosition = "center";
+      el.style.backgroundSize = "auto";
+      
+      const gradient = `linear-gradient(135deg, ${c1}, ${c2})`;
+      
+      if (style === "plain_gradient") {
+        el.style.backgroundImage = gradient;
+      } else if (style === "tech_grid") {
+        el.style.backgroundImage = `linear-gradient(rgba(255,255,255,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.06) 1px, transparent 1px), ${gradient}`;
+        el.style.backgroundSize = "20px 20px, 20px 20px, auto";
+      } else if (style === "cosmic_stars") {
+        el.style.backgroundImage = `radial-gradient(circle at 20% 30%, rgba(255,255,255,0.8) 1.5px, transparent 2px), radial-gradient(circle at 75% 60%, rgba(255,255,255,0.6) 2px, transparent 3px), radial-gradient(circle at 40% 80%, rgba(255,255,255,0.7) 1px, transparent 2.5px), ${gradient}`;
+        el.style.backgroundSize = "100px 100px, 120px 120px, 80px 80px, auto";
+      } else if (style === "geometric_wires") {
+        el.style.backgroundImage = `repeating-linear-gradient(45deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 8px), ${gradient}`;
+      } else if (style === "wave_lines") {
+        el.style.backgroundImage = `repeating-radial-gradient(circle at 50% 100%, transparent, transparent 40px, rgba(255,255,255,0.03) 40px, rgba(255,255,255,0.03) 80px), ${gradient}`;
+      } else if (style === "circular_aura") {
+        el.style.backgroundImage = `radial-gradient(circle at center 140px, rgba(255,255,255,0.2) 0%, transparent 65%), ${gradient}`;
+      } else if (style === "circuit_board") {
+        el.style.backgroundImage = `linear-gradient(45deg, rgba(255,255,255,0.04) 25%, transparent 25%), linear-gradient(-45deg, rgba(255,255,255,0.04) 25%, transparent 25%), ${gradient}`;
+        el.style.backgroundSize = "30px 30px, 30px 30px, auto";
+      } else if (style === "retro_synthwave") {
+        el.style.backgroundImage = `radial-gradient(circle at center 115px, #f43f5e 40px, transparent 41px), linear-gradient(rgba(255, 45, 85, 0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 45, 85, 0.15) 1px, transparent 1px), linear-gradient(to bottom, #070707 55%, #1e1b4b), ${gradient}`;
+        el.style.backgroundSize = "auto, 20px 20px, 20px 20px, auto, auto";
+      } else if (style === "minimalist_frame") {
+        el.style.backgroundImage = `linear-gradient(to right, rgba(255,255,255,0.05) 1.5px, transparent 1.5px), linear-gradient(to bottom, rgba(255,255,255,0.05) 1.5px, transparent 1.5px), ${gradient}`;
+        el.style.backgroundSize = "calc(100% - 30px) 100%, 100% calc(100% - 30px), auto";
+        el.style.backgroundPosition = "center center";
+        el.style.backgroundRepeat = "no-repeat";
+      } else if (style === "abstract_splatter") {
+        el.style.backgroundImage = `radial-gradient(circle at 35% 30%, rgba(${hexToRgb(c1)}, 0.45) 0%, transparent 50%), radial-gradient(circle at 65% 70%, rgba(${hexToRgb(c2)}, 0.35) 0%, transparent 55%), ${gradient}`;
+      }
+    }
+
+    function renderPresetsGrid(prefix) {
+      const grid = document.getElementById(`${prefix}_presets_grid`);
+      if (!grid) return;
+      
+      grid.innerHTML = "";
+      const styles = [
+        { id: "plain_gradient", name: "Plain Gradient" },
+        { id: "tech_grid", name: "Tech Grid" },
+        { id: "cosmic_stars", name: "Cosmic Stars" },
+        { id: "geometric_wires", name: "Geometric Wires" },
+        { id: "wave_lines", name: "Wave Lines" },
+        { id: "circular_aura", name: "Circular Aura" },
+        { id: "circuit_board", name: "Circuit Board" },
+        { id: "retro_synthwave", name: "Retro Synthwave" },
+        { id: "minimalist_frame", name: "Minimalist Frame" },
+        { id: "abstract_splatter", name: "Abstract Splatter" }
+      ];
+      const colors = [
+        { id: "cyan_neon", name: "Cyan" },
+        { id: "red_hot", name: "Red" },
+        { id: "emerald_green", name: "Green" },
+        { id: "golden_hour", name: "Gold" },
+        { id: "electric_purple", name: "Purple" },
+        { id: "synthwave_pink", name: "Pink" },
+        { id: "dark_space", name: "Dark" },
+        { id: "ice_blue", name: "Ice" }
+      ];
+      
+      styles.forEach(style => {
+        colors.forEach(color => {
+          const btn = document.createElement("div");
+          btn.className = "preset-btn";
+          btn.title = `${style.name} (${color.name})`;
+          btn.dataset.style = style.id;
+          btn.dataset.color = color.id;
+          
+          const theme = WELCOME_THEMES[color.id];
+          btn.style.background = `linear-gradient(135deg, ${theme.primary}, ${theme.secondary})`;
+          
+          btn.onclick = () => {
+            document.getElementById(`${prefix}_image_style`).value = style.id;
+            document.getElementById(`${prefix}_image_color`).value = color.id;
+            
+            grid.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            if (prefix === 'welcome') updateWelcomeCardPreview();
+            else updateGoodbyeCardPreview();
+          };
+          grid.appendChild(btn);
+        });
+      });
+    }
+
+    function copyPlaceholder(placeholder) {
+      navigator.clipboard.writeText(placeholder);
+      showToast(`Copied ${placeholder} to clipboard!`, 'success');
+    }
+
+    function toggleWelcomeFields() {
+      const enabled = document.getElementById('welcome_enabled').checked;
+      const container = document.getElementById('welcome_fields_container');
+      if (enabled) {
+        container.classList.remove('disabled-panel');
+      } else {
+        container.classList.add('disabled-panel');
+      }
+      updateWelcomeAlertPreview();
+    }
+
+    function toggleWelcomeEmbedEditor() {
+      const embedEnabled = document.getElementById('welcome_embed_enabled').checked;
+      const textGroup = document.getElementById('welcome_text_message_group');
+      const embedEditor = document.getElementById('welcome_embed_editor');
+      
+      if (embedEnabled) {
+        textGroup.classList.add('disabled-panel');
+        embedEditor.classList.remove('disabled-panel');
+      } else {
+        textGroup.classList.remove('disabled-panel');
+        embedEditor.classList.add('disabled-panel');
+      }
+      updateWelcomeAlertPreview();
+    }
+
+    function syncWelcomeEmbedColorPicker(val) {
+      document.getElementById('welcome_embed_color_hex').value = val;
+      updateWelcomeEmbedPreview();
+    }
+
+    function syncWelcomeEmbedColorHex(val) {
+      if (/^#[0-9A-F]{6}$/i.test(val)) {
+        document.getElementById('welcome_embed_color').value = val;
+        updateWelcomeEmbedPreview();
+      }
+    }
+
+    function updateWelcomeEmbedPreview() {
+      const title = document.getElementById('welcome_embed_title').value;
+      const desc = document.getElementById('welcome_embed_desc').value;
+      const color = document.getElementById('welcome_embed_color_hex').value || '#0affe4';
+      const thumbnail = document.getElementById('welcome_embed_thumbnail').value;
+      const image = document.getElementById('welcome_embed_image').value;
+      const footerText = document.getElementById('welcome_embed_footer').value;
+      const footerIcon = document.getElementById('welcome_embed_footer_icon').value;
+      
+      const userVal = (window.KAIZER_STATE && window.KAIZER_STATE.user) ? `@${window.KAIZER_STATE.user.username}` : '@MemberName';
+      const usernameVal = (window.KAIZER_STATE && window.KAIZER_STATE.user) ? window.KAIZER_STATE.user.username : 'MemberName';
+      const serverVal = (window.KAIZER_STATE && window.KAIZER_STATE.guild_name) ? window.KAIZER_STATE.guild_name : 'Kaizer Server';
+      
+      const formatText = (txt) => {
+        return txt
+          .replace(/{user}/g, `<span class="discord-mention">${userVal}</span>`)
+          .replace(/{username}/g, usernameVal)
+          .replace(/{server}/g, serverVal)
+          .replace(/{member_count}/g, '1,234')
+          .replace(/{avatar_url}/g, 'https://cdn.discordapp.com/embed/avatars/0.png');
+      };
+
+      document.getElementById('welcome_embed_preview_box').style.borderColor = color;
+      
+      const titleEl = document.getElementById('welcome_preview_title');
+      if (title) {
+        titleEl.innerText = title
+          .replace(/{user}/g, `@${usernameVal}`)
+          .replace(/{username}/g, usernameVal)
+          .replace(/{server}/g, serverVal)
+          .replace(/{member_count}/g, '1,234');
+        titleEl.style.display = 'block';
+      } else {
+        titleEl.style.display = 'none';
+      }
+      
+      const descEl = document.getElementById('welcome_preview_desc');
+      if (desc) {
+        descEl.innerHTML = formatText(desc);
+        descEl.style.display = 'block';
+      } else {
+        descEl.style.display = 'none';
+      }
+      
+      const thumbWrapper = document.getElementById('welcome_preview_thumbnail_wrapper');
+      const thumbImg = document.getElementById('welcome_preview_thumbnail');
+      if (thumbnail) {
+        thumbImg.src = (thumbnail === '{avatar_url}') ? 'https://cdn.discordapp.com/embed/avatars/0.png' : thumbnail;
+        thumbWrapper.style.display = 'block';
+      } else {
+        thumbWrapper.style.display = 'none';
+      }
+      
+      const imgWrapper = document.getElementById('welcome_preview_image_wrapper');
+      const img = document.getElementById('welcome_preview_image');
+      if (image) {
+        img.src = image;
+        imgWrapper.style.display = 'block';
+      } else {
+        imgWrapper.style.display = 'none';
+      }
+      
+      const footerWrapper = document.getElementById('welcome_preview_footer_wrapper');
+      const footerIconEl = document.getElementById('welcome_preview_footer_icon');
+      const footerTextEl = document.getElementById('welcome_preview_footer_text');
+      
+      if (footerText || footerIcon) {
+        footerTextEl.innerText = footerText
+          .replace(/{user}/g, `@${usernameVal}`)
+          .replace(/{username}/g, usernameVal)
+          .replace(/{server}/g, serverVal)
+          .replace(/{member_count}/g, '1,234') || '';
+        if (footerIcon) {
+          footerIconEl.src = footerIcon;
+          footerIconEl.style.display = 'block';
+        } else {
+          footerIconEl.style.display = 'none';
+        }
+        footerWrapper.style.display = 'flex';
+      } else {
+        footerWrapper.style.display = 'none';
+      }
+    }
+
+    // Image and DM toggles (Welcome)
+    function toggleWelcomeImageFields() {
+      const enabled = document.getElementById('welcome_image_enabled').checked;
+      const box = document.getElementById('welcome_image_customizer_box');
+      if (enabled) {
+        box.classList.remove('disabled-panel');
+      } else {
+        box.classList.add('disabled-panel');
+      }
+      updateWelcomeAlertPreview();
+    }
+
+    function toggleWelcomeDMFields() {
+      const enabled = document.getElementById('welcome_dm_enabled').checked;
+      const box = document.getElementById('welcome_dm_customizer_box');
+      if (enabled) {
+        box.classList.remove('disabled-panel');
+      } else {
+        box.classList.add('disabled-panel');
+      }
+      updateWelcomeDMPreview();
+    }
+
+    function toggleWelcomeDMEmbedEditor() {
+      const embedEnabled = document.getElementById('welcome_dm_embed_enabled').checked;
+      const textGroup = document.getElementById('welcome_dm_text_group');
+      const embedEditor = document.getElementById('welcome_dm_embed_editor');
+      
+      if (embedEnabled) {
+        textGroup.classList.add('disabled-panel');
+        embedEditor.classList.remove('disabled-panel');
+      } else {
+        textGroup.classList.remove('disabled-panel');
+        embedEditor.classList.add('disabled-panel');
+      }
+      updateWelcomeDMPreview();
+    }
+
+    function updateWelcomeAlertPreview() {
+      const textPreview = document.getElementById('welcome_preview_plain_text');
+      const embedEnabled = document.getElementById('welcome_embed_enabled').checked;
+      
+      const userVal = (window.KAIZER_STATE && window.KAIZER_STATE.user) ? `@${window.KAIZER_STATE.user.username}` : '@MemberName';
+      const usernameVal = (window.KAIZER_STATE && window.KAIZER_STATE.user) ? window.KAIZER_STATE.user.username : 'MemberName';
+      const serverVal = (window.KAIZER_STATE && window.KAIZER_STATE.guild_name) ? window.KAIZER_STATE.guild_name : 'Kaizer Server';
+      
+      const formatText = (txt) => {
+        return txt
+          .replace(/{user}/g, `<span class="discord-mention">${userVal}</span>`)
+          .replace(/{username}/g, usernameVal)
+          .replace(/{server}/g, serverVal)
+          .replace(/{member_count}/g, '1,234')
+          .replace(/{avatar_url}/g, 'https://cdn.discordapp.com/embed/avatars/0.png');
+      };
+
+      if (embedEnabled) {
+        textPreview.style.display = 'none';
+        document.getElementById('welcome_embed_preview_box').style.display = 'block';
+        updateWelcomeEmbedPreview();
+      } else {
+        textPreview.innerHTML = formatText(document.getElementById('welcome_message').value || '');
+        textPreview.style.display = 'block';
+        document.getElementById('welcome_embed_preview_box').style.display = 'none';
+      }
+
+      const imageEnabled = document.getElementById('welcome_image_enabled').checked;
+      const cardWrapper = document.getElementById('welcome_preview_image_card_wrapper');
+      if (imageEnabled) {
+        cardWrapper.style.display = 'block';
+        updateWelcomeCardPreview();
+      } else {
+        cardWrapper.style.display = 'none';
+      }
+    }
+
+    function updateWelcomeCardPreview() {
+      const style = document.getElementById('welcome_image_style').value;
+      const color = document.getElementById('welcome_image_color').value;
+      const customUrl = document.getElementById('welcome_custom_bg_url').value;
+      
+      const showAvatar = document.getElementById('welcome_image_show_avatar').checked;
+      const showUsername = document.getElementById('welcome_image_show_username').checked;
+      const showServer = document.getElementById('welcome_image_show_server').checked;
+      const showCount = document.getElementById('welcome_image_show_count').checked;
+      const customText = document.getElementById('welcome_image_custom_text').value;
+      
+      const usernameVal = (window.KAIZER_STATE && window.KAIZER_STATE.user) ? window.KAIZER_STATE.user.username : 'MemberName';
+      const serverVal = (window.KAIZER_STATE && window.KAIZER_STATE.guild_name) ? window.KAIZER_STATE.guild_name : 'Kaizer Server';
+      
+      const formatText = (txt) => {
+        return txt
+          .replace(/{user}/g, `@${usernameVal}`)
+          .replace(/{username}/g, usernameVal)
+          .replace(/{server}/g, serverVal)
+          .replace(/{member_count}/g, '1,234');
+      };
+      
+      // Chat Preview Card
+      applyCardBackground('welcome_card_preview_chat', style, color, customUrl);
+      const chatAvatar = document.getElementById('welcome_card_avatar_wrapper_chat');
+      if (chatAvatar) chatAvatar.style.display = showAvatar ? 'block' : 'none';
+      
+      const chatName = document.getElementById('welcome_card_username_chat');
+      if (chatName) {
+        chatName.innerText = usernameVal;
+        chatName.style.display = showUsername ? 'block' : 'none';
+      }
+      const chatServer = document.getElementById('welcome_card_server_chat');
+      if (chatServer) {
+        chatServer.innerText = `Welcome to ${serverVal}`;
+        chatServer.style.display = showServer ? 'block' : 'none';
+      }
+      const chatCount = document.getElementById('welcome_card_count_chat');
+      if (chatCount) {
+        chatCount.innerText = `Member #1,234`;
+        chatCount.style.display = showCount ? 'block' : 'none';
+      }
+      const chatCustom = document.getElementById('welcome_card_custom_chat');
+      if (chatCustom) {
+        chatCustom.innerText = formatText(customText);
+        chatCustom.style.display = customText ? 'block' : 'none';
+      }
+
+      // Editor Preview Card
+      applyCardBackground('welcome_card_preview_editor', style, color, customUrl);
+      const editorAvatar = document.getElementById('welcome_card_avatar_wrapper_editor');
+      if (editorAvatar) editorAvatar.style.display = showAvatar ? 'block' : 'none';
+      
+      const editorName = document.getElementById('welcome_card_username_editor');
+      if (editorName) {
+        editorName.innerText = usernameVal;
+        editorName.style.display = showUsername ? 'block' : 'none';
+      }
+      const editorServer = document.getElementById('welcome_card_server_editor');
+      if (editorServer) {
+        editorServer.innerText = `Welcome to ${serverVal}`;
+        editorServer.style.display = showServer ? 'block' : 'none';
+      }
+      const editorCount = document.getElementById('welcome_card_count_editor');
+      if (editorCount) {
+        editorCount.innerText = `Member #1,234`;
+        editorCount.style.display = showCount ? 'block' : 'none';
+      }
+      const editorCustom = document.getElementById('welcome_card_custom_editor');
+      if (editorCustom) {
+        editorCustom.innerText = formatText(customText);
+        editorCustom.style.display = customText ? 'block' : 'none';
+      }
+    }
+
+    function updateWelcomeDMPreview() {
+      const embedEnabled = document.getElementById('welcome_dm_embed_enabled').checked;
+      const textPreview = document.getElementById('welcome_dm_preview_text');
+      const embedBox = document.getElementById('welcome_dm_embed_preview_box');
+      
+      const userVal = (window.KAIZER_STATE && window.KAIZER_STATE.user) ? `@${window.KAIZER_STATE.user.username}` : '@MemberName';
+      const usernameVal = (window.KAIZER_STATE && window.KAIZER_STATE.user) ? window.KAIZER_STATE.user.username : 'MemberName';
+      const serverVal = (window.KAIZER_STATE && window.KAIZER_STATE.guild_name) ? window.KAIZER_STATE.guild_name : 'Kaizer Server';
+      
+      const formatText = (txt) => {
+        return txt
+          .replace(/{user}/g, `<span class="discord-mention">${userVal}</span>`)
+          .replace(/{username}/g, usernameVal)
+          .replace(/{server}/g, serverVal)
+          .replace(/{member_count}/g, '1,234')
+          .replace(/{avatar_url}/g, 'https://cdn.discordapp.com/embed/avatars/0.png');
+      };
+
+      if (embedEnabled) {
+        textPreview.style.display = 'none';
+        embedBox.style.display = 'block';
+        
+        const title = document.getElementById('welcome_dm_embed_title').value;
+        const desc = document.getElementById('welcome_dm_embed_desc').value;
+        const color = document.getElementById('welcome_dm_embed_color_hex').value || '#0affe4';
+        const thumbnail = document.getElementById('welcome_dm_embed_thumbnail').value;
+        const image = document.getElementById('welcome_dm_embed_image').value;
+        const footerText = document.getElementById('welcome_dm_embed_footer').value;
+        const footerIcon = document.getElementById('welcome_dm_embed_footer_icon').value;
+        
+        embedBox.style.borderColor = color;
+        
+        const titleEl = document.getElementById('welcome_dm_preview_title');
+        if (title) {
+          titleEl.innerText = title
+            .replace(/{user}/g, `@${usernameVal}`)
+            .replace(/{username}/g, usernameVal)
+            .replace(/{server}/g, serverVal)
+            .replace(/{member_count}/g, '1,234');
+          titleEl.style.display = 'block';
+        } else {
+          titleEl.style.display = 'none';
+        }
+        
+        const descEl = document.getElementById('welcome_dm_preview_desc');
+        if (desc) {
+          descEl.innerHTML = formatText(desc);
+          descEl.style.display = 'block';
+        } else {
+          descEl.style.display = 'none';
+        }
+        
+        const thumbWrapper = document.getElementById('welcome_dm_preview_thumbnail_wrapper');
+        const thumbImg = document.getElementById('welcome_dm_preview_thumbnail');
+        if (thumbnail) {
+          thumbImg.src = (thumbnail === '{avatar_url}') ? 'https://cdn.discordapp.com/embed/avatars/0.png' : thumbnail;
+          thumbWrapper.style.display = 'block';
+        } else {
+          thumbWrapper.style.display = 'none';
+        }
+        
+        const imgWrapper = document.getElementById('welcome_dm_preview_image_wrapper');
+        const img = document.getElementById('welcome_dm_preview_image');
+        if (image) {
+          img.src = image;
+          imgWrapper.style.display = 'block';
+        } else {
+          imgWrapper.style.display = 'none';
+        }
+        
+        const footerWrapper = document.getElementById('welcome_dm_preview_footer_wrapper');
+        const footerIconEl = document.getElementById('welcome_dm_preview_footer_icon');
+        const footerTextEl = document.getElementById('welcome_dm_preview_footer_text');
+        
+        if (footerText || footerIcon) {
+          footerTextEl.innerText = footerText
+            .replace(/{user}/g, `@${usernameVal}`)
+            .replace(/{username}/g, usernameVal)
+            .replace(/{server}/g, serverVal)
+            .replace(/{member_count}/g, '1,234') || '';
+          if (footerIcon) {
+            footerIconEl.src = footerIcon;
+            footerIconEl.style.display = 'block';
+          } else {
+            footerIconEl.style.display = 'none';
+          }
+          footerWrapper.style.display = 'flex';
+        } else {
+          footerWrapper.style.display = 'none';
+        }
+      } else {
+        textPreview.innerHTML = formatText(document.getElementById('welcome_dm_text').value || '');
+        textPreview.style.display = 'block';
+        embedBox.style.display = 'none';
+      }
+    }
+
+
+    // Goodbye toggles
+    function toggleGoodbyeFields() {
+      const enabled = document.getElementById('goodbye_enabled').checked;
+      const container = document.getElementById('goodbye_fields_container');
+      if (enabled) {
+        container.classList.remove('disabled-panel');
+      } else {
+        container.classList.add('disabled-panel');
+      }
+      updateGoodbyeAlertPreview();
+    }
+
+    function toggleGoodbyeEmbedEditor() {
+      const embedEnabled = document.getElementById('goodbye_embed_enabled').checked;
+      const textGroup = document.getElementById('goodbye_text_message_group');
+      const embedEditor = document.getElementById('goodbye_embed_editor');
+      
+      if (embedEnabled) {
+        textGroup.classList.add('disabled-panel');
+        embedEditor.classList.remove('disabled-panel');
+      } else {
+        textGroup.classList.remove('disabled-panel');
+        embedEditor.classList.add('disabled-panel');
+      }
+      updateGoodbyeAlertPreview();
+    }
+
+    function syncGoodbyeEmbedColorPicker(val) {
+      document.getElementById('goodbye_embed_color_hex').value = val;
+      updateGoodbyeEmbedPreview();
+    }
+
+    function syncGoodbyeEmbedColorHex(val) {
+      if (/^#[0-9A-F]{6}$/i.test(val)) {
+        document.getElementById('goodbye_embed_color').value = val;
+        updateGoodbyeEmbedPreview();
+      }
+    }
+
+    function updateGoodbyeEmbedPreview() {
+      const title = document.getElementById('goodbye_embed_title').value;
+      const desc = document.getElementById('goodbye_embed_desc').value;
+      const color = document.getElementById('goodbye_embed_color_hex').value || '#ef4444';
+      const thumbnail = document.getElementById('goodbye_embed_thumbnail').value;
+      const image = document.getElementById('goodbye_embed_image').value;
+      const footerText = document.getElementById('goodbye_embed_footer').value;
+      const footerIcon = document.getElementById('goodbye_embed_footer_icon').value;
+      
+      const userVal = (window.KAIZER_STATE && window.KAIZER_STATE.user) ? `@${window.KAIZER_STATE.user.username}` : '@MemberName';
+      const usernameVal = (window.KAIZER_STATE && window.KAIZER_STATE.user) ? window.KAIZER_STATE.user.username : 'MemberName';
+      const serverVal = (window.KAIZER_STATE && window.KAIZER_STATE.guild_name) ? window.KAIZER_STATE.guild_name : 'Kaizer Server';
+      
+      const formatText = (txt) => {
+        return txt
+          .replace(/{user}/g, `<span class="discord-mention">${userVal}</span>`)
+          .replace(/{username}/g, usernameVal)
+          .replace(/{server}/g, serverVal)
+          .replace(/{member_count}/g, '1,234')
+          .replace(/{avatar_url}/g, 'https://cdn.discordapp.com/embed/avatars/0.png');
+      };
+
+      document.getElementById('goodbye_embed_preview_box').style.borderColor = color;
+      
+      const titleEl = document.getElementById('goodbye_preview_title');
+      if (title) {
+        titleEl.innerText = title
+          .replace(/{user}/g, `@${usernameVal}`)
+          .replace(/{username}/g, usernameVal)
+          .replace(/{server}/g, serverVal)
+          .replace(/{member_count}/g, '1,234');
+        titleEl.style.display = 'block';
+      } else {
+        titleEl.style.display = 'none';
+      }
+      
+      const descEl = document.getElementById('goodbye_preview_desc');
+      if (desc) {
+        descEl.innerHTML = formatText(desc);
+        descEl.style.display = 'block';
+      } else {
+        descEl.style.display = 'none';
+      }
+      
+      const thumbWrapper = document.getElementById('goodbye_preview_thumbnail_wrapper');
+      const thumbImg = document.getElementById('goodbye_preview_thumbnail');
+      if (thumbnail) {
+        thumbImg.src = (thumbnail === '{avatar_url}') ? 'https://cdn.discordapp.com/embed/avatars/0.png' : thumbnail;
+        thumbWrapper.style.display = 'block';
+      } else {
+        thumbWrapper.style.display = 'none';
+      }
+      
+      const imgWrapper = document.getElementById('goodbye_preview_image_wrapper');
+      const img = document.getElementById('goodbye_preview_image');
+      if (image) {
+        img.src = image;
+        imgWrapper.style.display = 'block';
+      } else {
+        imgWrapper.style.display = 'none';
+      }
+      
+      const footerWrapper = document.getElementById('goodbye_preview_footer_wrapper');
+      const footerIconEl = document.getElementById('goodbye_preview_footer_icon');
+      const footerTextEl = document.getElementById('goodbye_preview_footer_text');
+      
+      if (footerText || footerIcon) {
+        footerTextEl.innerText = footerText
+          .replace(/{user}/g, `@${usernameVal}`)
+          .replace(/{username}/g, usernameVal)
+          .replace(/{server}/g, serverVal)
+          .replace(/{member_count}/g, '1,234') || '';
+        if (footerIcon) {
+          footerIconEl.src = footerIcon;
+          footerIconEl.style.display = 'block';
+        } else {
+          footerIconEl.style.display = 'none';
+        }
+        footerWrapper.style.display = 'flex';
+      } else {
+        footerWrapper.style.display = 'none';
+      }
+    }
+
+    // Image and DM toggles (Goodbye)
+    function toggleGoodbyeImageFields() {
+      const enabled = document.getElementById('goodbye_image_enabled').checked;
+      const box = document.getElementById('goodbye_image_customizer_box');
+      if (enabled) {
+        box.classList.remove('disabled-panel');
+      } else {
+        box.classList.add('disabled-panel');
+      }
+      updateGoodbyeAlertPreview();
+    }
+
+    function toggleGoodbyeDMFields() {
+      const enabled = document.getElementById('goodbye_dm_enabled').checked;
+      const box = document.getElementById('goodbye_dm_customizer_box');
+      if (enabled) {
+        box.classList.remove('disabled-panel');
+      } else {
+        box.classList.add('disabled-panel');
+      }
+      updateGoodbyeDMPreview();
+    }
+
+    function toggleGoodbyeDMEmbedEditor() {
+      const embedEnabled = document.getElementById('goodbye_dm_embed_enabled').checked;
+      const textGroup = document.getElementById('goodbye_dm_text_group');
+      const embedEditor = document.getElementById('goodbye_dm_embed_editor');
+      
+      if (embedEnabled) {
+        textGroup.classList.add('disabled-panel');
+        embedEditor.classList.remove('disabled-panel');
+      } else {
+        textGroup.classList.remove('disabled-panel');
+        embedEditor.classList.add('disabled-panel');
+      }
+      updateGoodbyeDMPreview();
+    }
+
+    function updateGoodbyeAlertPreview() {
+      const textPreview = document.getElementById('goodbye_preview_plain_text');
+      const embedEnabled = document.getElementById('goodbye_embed_enabled').checked;
+      
+      const userVal = (window.KAIZER_STATE && window.KAIZER_STATE.user) ? `@${window.KAIZER_STATE.user.username}` : '@MemberName';
+      const usernameVal = (window.KAIZER_STATE && window.KAIZER_STATE.user) ? window.KAIZER_STATE.user.username : 'MemberName';
+      const serverVal = (window.KAIZER_STATE && window.KAIZER_STATE.guild_name) ? window.KAIZER_STATE.guild_name : 'Kaizer Server';
+      
+      const formatText = (txt) => {
+        return txt
+          .replace(/{user}/g, `<span class="discord-mention">${userVal}</span>`)
+          .replace(/{username}/g, usernameVal)
+          .replace(/{server}/g, serverVal)
+          .replace(/{member_count}/g, '1,234')
+          .replace(/{avatar_url}/g, 'https://cdn.discordapp.com/embed/avatars/0.png');
+      };
+
+      if (embedEnabled) {
+        textPreview.style.display = 'none';
+        document.getElementById('goodbye_embed_preview_box').style.display = 'block';
+        updateGoodbyeEmbedPreview();
+      } else {
+        textPreview.innerHTML = formatText(document.getElementById('goodbye_message').value || '');
+        textPreview.style.display = 'block';
+        document.getElementById('goodbye_embed_preview_box').style.display = 'none';
+      }
+
+      const imageEnabled = document.getElementById('goodbye_image_enabled').checked;
+      const cardWrapper = document.getElementById('goodbye_preview_image_card_wrapper');
+      if (imageEnabled) {
+        cardWrapper.style.display = 'block';
+        updateGoodbyeCardPreview();
+      } else {
+        cardWrapper.style.display = 'none';
+      }
+    }
+
+    function updateGoodbyeCardPreview() {
+      const style = document.getElementById('goodbye_image_style').value;
+      const color = document.getElementById('goodbye_image_color').value;
+      const customUrl = document.getElementById('goodbye_custom_bg_url').value;
+      
+      const showAvatar = document.getElementById('goodbye_image_show_avatar').checked;
+      const showUsername = document.getElementById('goodbye_image_show_username').checked;
+      const showServer = document.getElementById('goodbye_image_show_server').checked;
+      const showCount = document.getElementById('goodbye_image_show_count').checked;
+      const customText = document.getElementById('goodbye_image_custom_text').value;
+      
+      const usernameVal = (window.KAIZER_STATE && window.KAIZER_STATE.user) ? window.KAIZER_STATE.user.username : 'MemberName';
+      const serverVal = (window.KAIZER_STATE && window.KAIZER_STATE.guild_name) ? window.KAIZER_STATE.guild_name : 'Kaizer Server';
+      
+      const formatText = (txt) => {
+        return txt
+          .replace(/{user}/g, `@${usernameVal}`)
+          .replace(/{username}/g, usernameVal)
+          .replace(/{server}/g, serverVal)
+          .replace(/{member_count}/g, '1,234');
+      };
+      
+      // Chat Preview Card
+      applyCardBackground('goodbye_card_preview_chat', style, color, customUrl);
+      const chatAvatar = document.getElementById('goodbye_card_avatar_wrapper_chat');
+      if (chatAvatar) chatAvatar.style.display = showAvatar ? 'block' : 'none';
+      
+      const chatName = document.getElementById('goodbye_card_username_chat');
+      if (chatName) {
+        chatName.innerText = usernameVal;
+        chatName.style.display = showUsername ? 'block' : 'none';
+      }
+      const chatServer = document.getElementById('goodbye_card_server_chat');
+      if (chatServer) {
+        chatServer.innerText = `Goodbye from ${serverVal}`;
+        chatServer.style.display = showServer ? 'block' : 'none';
+      }
+      const chatCount = document.getElementById('goodbye_card_count_chat');
+      if (chatCount) {
+        chatCount.innerText = `Member #1,234`;
+        chatCount.style.display = showCount ? 'block' : 'none';
+      }
+      const chatCustom = document.getElementById('goodbye_card_custom_chat');
+      if (chatCustom) {
+        chatCustom.innerText = formatText(customText);
+        chatCustom.style.display = customText ? 'block' : 'none';
+      }
+
+      // Editor Preview Card
+      applyCardBackground('goodbye_card_preview_editor', style, color, customUrl);
+      const editorAvatar = document.getElementById('goodbye_card_avatar_wrapper_editor');
+      if (editorAvatar) editorAvatar.style.display = showAvatar ? 'block' : 'none';
+      
+      const editorName = document.getElementById('goodbye_card_username_editor');
+      if (editorName) {
+        editorName.innerText = usernameVal;
+        editorName.style.display = showUsername ? 'block' : 'none';
+      }
+      const editorServer = document.getElementById('goodbye_card_server_editor');
+      if (editorServer) {
+        editorServer.innerText = `Goodbye from ${serverVal}`;
+        editorServer.style.display = showServer ? 'block' : 'none';
+      }
+      const editorCount = document.getElementById('goodbye_card_count_editor');
+      if (editorCount) {
+        editorCount.innerText = `Member #1,234`;
+        editorCount.style.display = showCount ? 'block' : 'none';
+      }
+      const editorCustom = document.getElementById('goodbye_card_custom_editor');
+      if (editorCustom) {
+        editorCustom.innerText = formatText(customText);
+        editorCustom.style.display = customText ? 'block' : 'none';
+      }
+    }
+
+    function updateGoodbyeDMPreview() {
+      const embedEnabled = document.getElementById('goodbye_dm_embed_enabled').checked;
+      const textPreview = document.getElementById('goodbye_dm_preview_text');
+      const embedBox = document.getElementById('goodbye_dm_embed_preview_box');
+      
+      const userVal = (window.KAIZER_STATE && window.KAIZER_STATE.user) ? `@${window.KAIZER_STATE.user.username}` : '@MemberName';
+      const usernameVal = (window.KAIZER_STATE && window.KAIZER_STATE.user) ? window.KAIZER_STATE.user.username : 'MemberName';
+      const serverVal = (window.KAIZER_STATE && window.KAIZER_STATE.guild_name) ? window.KAIZER_STATE.guild_name : 'Kaizer Server';
+      
+      const formatText = (txt) => {
+        return txt
+          .replace(/{user}/g, `<span class="discord-mention">${userVal}</span>`)
+          .replace(/{username}/g, usernameVal)
+          .replace(/{server}/g, serverVal)
+          .replace(/{member_count}/g, '1,234')
+          .replace(/{avatar_url}/g, 'https://cdn.discordapp.com/embed/avatars/0.png');
+      };
+
+      if (embedEnabled) {
+        textPreview.style.display = 'none';
+        embedBox.style.display = 'block';
+        
+        const title = document.getElementById('goodbye_dm_embed_title').value;
+        const desc = document.getElementById('goodbye_dm_embed_desc').value;
+        const color = document.getElementById('goodbye_dm_embed_color_hex').value || '#ef4444';
+        const thumbnail = document.getElementById('goodbye_dm_embed_thumbnail').value;
+        const image = document.getElementById('goodbye_dm_embed_image').value;
+        const footerText = document.getElementById('goodbye_dm_embed_footer').value;
+        const footerIcon = document.getElementById('goodbye_dm_embed_footer_icon').value;
+        
+        embedBox.style.borderColor = color;
+        
+        const titleEl = document.getElementById('goodbye_dm_preview_title');
+        if (title) {
+          titleEl.innerText = title
+            .replace(/{user}/g, `@${usernameVal}`)
+            .replace(/{username}/g, usernameVal)
+            .replace(/{server}/g, serverVal)
+            .replace(/{member_count}/g, '1,234');
+          titleEl.style.display = 'block';
+        } else {
+          titleEl.style.display = 'none';
+        }
+        
+        const descEl = document.getElementById('goodbye_dm_preview_desc');
+        if (desc) {
+          descEl.innerHTML = formatText(desc);
+          descEl.style.display = 'block';
+        } else {
+          descEl.style.display = 'none';
+        }
+        
+        const thumbWrapper = document.getElementById('goodbye_dm_preview_thumbnail_wrapper');
+        const thumbImg = document.getElementById('goodbye_dm_preview_thumbnail');
+        if (thumbnail) {
+          thumbImg.src = (thumbnail === '{avatar_url}') ? 'https://cdn.discordapp.com/embed/avatars/0.png' : thumbnail;
+          thumbWrapper.style.display = 'block';
+        } else {
+          thumbWrapper.style.display = 'none';
+        }
+        
+        const imgWrapper = document.getElementById('goodbye_dm_preview_image_wrapper');
+        const img = document.getElementById('goodbye_dm_preview_image');
+        if (image) {
+          img.src = image;
+          imgWrapper.style.display = 'block';
+        } else {
+          imgWrapper.style.display = 'none';
+        }
+        
+        const footerWrapper = document.getElementById('goodbye_dm_preview_footer_wrapper');
+        const footerIconEl = document.getElementById('goodbye_dm_preview_footer_icon');
+        const footerTextEl = document.getElementById('goodbye_dm_preview_footer_text');
+        
+        if (footerText || footerIcon) {
+          footerTextEl.innerText = footerText
+            .replace(/{user}/g, `@${usernameVal}`)
+            .replace(/{username}/g, usernameVal)
+            .replace(/{server}/g, serverVal)
+            .replace(/{member_count}/g, '1,234') || '';
+          if (footerIcon) {
+            footerIconEl.src = footerIcon;
+            footerIconEl.style.display = 'block';
+          } else {
+            footerIconEl.style.display = 'none';
+          }
+          footerWrapper.style.display = 'flex';
+        } else {
+          footerWrapper.style.display = 'none';
+        }
+      } else {
+        textPreview.innerHTML = formatText(document.getElementById('goodbye_dm_text').value || '');
+        textPreview.style.display = 'block';
+        embedBox.style.display = 'none';
+      }
+    }
+
+    async function triggerTestEvent(prefix) {
+      if (typeof guildId === 'undefined') {
+        showToast("Guild ID not found.", "error");
+        return;
+      }
+      try {
+        const response = await fetch(`/api/guild/${guildId}/${prefix}/test`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        });
+        const result = await response.json();
+        if (response.ok && result.success) {
+          showToast(result.message || `Test ${prefix.toUpperCase()} Alert triggered!`, "success");
+        } else {
+          showToast(result.error || `Failed to trigger test ${prefix} alert`, "error");
+        }
+      } catch (err) {
+        showToast(`Connection error while sending test alert`, "error");
+      }
+    }
+    
+    // ── TICKET SYSTEM MANAGEMENT ─────────────────────────────────────────────
+    function populateTicketsDropdowns(roles) {
+      const ticketRoleSelect = document.getElementById('ticket_support_role');
+      if (ticketRoleSelect) {
+        const oldVal = ticketRoleSelect.value;
+        ticketRoleSelect.innerHTML = '<option value="">-- Choose Support Role --</option>';
+        roles.forEach(role => {
+          const opt = document.createElement('option');
+          opt.value = role.id;
+          opt.innerText = role.name;
+          ticketRoleSelect.appendChild(opt);
+        });
+        if (oldVal) ticketRoleSelect.value = oldVal;
+      }
+
+      const ticketCategorySelect = document.getElementById('ticket_category');
+      if (ticketCategorySelect) {
+        const oldVal = ticketCategorySelect.value;
+        ticketCategorySelect.innerHTML = '<option value="">-- Choose Category --</option>';
+        if (activeLayoutData && activeLayoutData.categories) {
+          activeLayoutData.categories.forEach(cat => {
+            if (cat.id !== 'none') {
+              const opt = document.createElement('option');
+              opt.value = cat.id;
+              opt.innerText = cat.name;
+              ticketCategorySelect.appendChild(opt);
+            }
+          });
+        }
+        if (oldVal) ticketCategorySelect.value = oldVal;
+      }
+
+      const ticketLogSelect = document.getElementById('ticket_log_channel');
+      if (ticketLogSelect) {
+        const oldVal = ticketLogSelect.value;
+        ticketLogSelect.innerHTML = '<option value="">-- Choose Log Channel --</option>';
+        if (activeLayoutData && activeLayoutData.categories) {
+          activeLayoutData.categories.forEach(cat => {
+            cat.channels.forEach(chan => {
+              if (chan.type === 'text') {
+                const opt = document.createElement('option');
+                opt.value = chan.id;
+                opt.innerText = `# ${chan.name} (${cat.name})`;
+                ticketLogSelect.appendChild(opt);
+              }
+            });
+          });
+        }
+        if (oldVal) ticketLogSelect.value = oldVal;
+      }
+    }
+
+    async function createRoleForTicketsPrompt() {
+      const name = window.prompt("Enter the name of the support role to create (if it exists, its color will be overwritten):");
+      if (!name) return;
+      
+      try {
+         showToast("Creating/Overwriting support role...", "info");
+         const res = await fetch(`/api/guild/${guildId}/server-action`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'create_role', role_name: name, role_color: '#0affe4' })
+         });
+         const data = await res.json().catch(() => ({}));
+         if (data.success && data.role) {
+            showToast(`Support role "${data.role.name}" loaded successfully!`, 'success');
+            
+            // Check if role already exists in activeLayoutData.roles
+            if (activeLayoutData) {
+               if (!activeLayoutData.roles) activeLayoutData.roles = [];
+               const existingIdx = activeLayoutData.roles.findIndex(r => r.id === data.role.id || r.name.toLowerCase() === data.role.name.toLowerCase());
+               if (existingIdx > -1) {
+                  activeLayoutData.roles[existingIdx] = data.role; // Update
+               } else {
+                  activeLayoutData.roles.push(data.role); // Append
+               }
+            }
+            
+            // Refresh all dropdowns
+            populateTicketsDropdowns(activeLayoutData.roles);
+            populateLevelingRolesDropdowns(activeLayoutData.roles);
+            
+            const bulkRoleSelect = document.getElementById('bulk_role_id');
+            if (bulkRoleSelect) {
+               // Rebuild bulk role options
+               bulkRoleSelect.innerHTML = '<option value="">-- Select Role --</option>';
+               activeLayoutData.roles.forEach(role => {
+                  const opt = document.createElement('option');
+                  opt.value = role.id;
+                  opt.innerText = role.name;
+                  opt.dataset.color = role.color;
+                  bulkRoleSelect.appendChild(opt);
+               });
+            }
+            
+            // Select this role in the support role dropdown
+            const ticketRoleSelect = document.getElementById('ticket_support_role');
+            if (ticketRoleSelect) {
+               ticketRoleSelect.value = data.role.id;
+            }
+         } else {
+            showToast(data.error || 'Failed to create/load support role.', 'error');
+         }
+      } catch (e) {
+         showToast('Network error occurred.', 'error');
+      }
+    }
+
+    // ── LEVELING SYSTEM MANAGEMENT ──────────────────────────────────────────
+    let currentLevelRoles = {};
+    let currentLevelPermissions = [];
+
+    function populateLevelingRolesDropdowns(roles) {
+      const rewardRoleSelect = document.getElementById('level_reward_role');
+      if (rewardRoleSelect) {
+        if (!roles || roles.length === 0) {
+          rewardRoleSelect.innerHTML = '<option value="">-- No Custom Roles Found --</option>';
+        } else {
+          rewardRoleSelect.innerHTML = '<option value="">-- Choose Role --</option>';
+          roles.forEach(role => {
+            const opt = document.createElement('option');
+            opt.value = role.id;
+            opt.innerText = role.name;
+            rewardRoleSelect.appendChild(opt);
+          });
+        }
+      }
+
+      // Populate the level-up announcement channel dropdown
+      const levelChanSelect = document.getElementById('level_up_channel');
+      if (levelChanSelect) {
+        const savedVal = levelChanSelect.value;
+        // Keep the default options, remove any previously added channel options
+        while (levelChanSelect.options.length > 2) {
+          levelChanSelect.remove(2);
+        }
+        // Add text channels from the server layout
+        if (activeLayoutData && activeLayoutData.categories) {
+          activeLayoutData.categories.forEach(cat => {
+            cat.channels.forEach(chan => {
+              if (chan.type === 'text') {
+                const opt = document.createElement('option');
+                opt.value = chan.id;
+                opt.textContent = `# ${chan.name}`;
+                levelChanSelect.appendChild(opt);
+              }
+            });
+          });
+        }
+        // Restore saved selection
+        if (savedVal) levelChanSelect.value = savedVal;
+      }
+    }
+
+    function toggleCustomLevelInput(selectEl, wrapperId) {
+      const wrapper = document.getElementById(wrapperId);
+      if (wrapper) {
+        wrapper.style.display = selectEl.value === 'custom' ? 'block' : 'none';
+      }
+    }
+
+    function renderLevelRolesList() {
+      const hiddenInput = document.getElementById('level_roles');
+      if (hiddenInput && hiddenInput.value) {
+        try {
+          currentLevelRoles = typeof hiddenInput.value === 'string' ? JSON.parse(hiddenInput.value) : hiddenInput.value;
+        } catch (e) {
+          currentLevelRoles = {};
+        }
+      } else {
+        currentLevelRoles = {};
+      }
+
+      const container = document.getElementById('level_roles_list');
+      if (!container) return;
+
+      container.innerHTML = '';
+      const levels = Object.keys(currentLevelRoles).map(Number).sort((a, b) => a - b);
+
+      if (levels.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 0.9rem; font-style: italic; padding: 10px 0;">No level role rewards configured yet.</div>';
+        return;
+      }
+
+      levels.forEach(lvl => {
+        const roleId = currentLevelRoles[lvl];
+        const roleObj = activeLayoutData && activeLayoutData.roles ? activeLayoutData.roles.find(r => r.id === roleId) : null;
+        const roleName = roleObj ? roleObj.name : `Unknown Role (ID: ${roleId})`;
+        let roleColor = roleObj && roleObj.color && roleObj.color !== '#000000' ? roleObj.color : '#0affe4';
+        
+        // If color format is integer, convert it
+        if (roleObj && typeof roleObj.color === 'string' && !roleObj.color.startsWith('#')) {
+          const cInt = parseInt(roleObj.color);
+          if (!isNaN(cInt)) {
+            roleColor = '#' + cInt.toString(16).padStart(6, '0');
+          }
+        }
+
+        const card = document.createElement('div');
+        card.style.display = 'flex';
+        card.style.justifyContent = 'space-between';
+        card.style.alignItems = 'center';
+        card.style.background = 'rgba(255, 255, 255, 0.02)';
+        card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+        card.style.padding = '10px 15px';
+        card.style.marginBottom = '8px';
+        card.style.borderRadius = '0px';
+        card.style.borderLeft = `3px solid ${roleColor}`;
+
+        card.innerHTML = `
+          <div>
+            <span style="font-weight: bold; color: var(--c2); font-family: monospace;">Level ${lvl}</span>
+            <span style="color: var(--text-muted); margin: 0 8px;">➜</span>
+            <span style="color: ${roleColor}; font-weight: 500;">${roleName}</span>
+          </div>
+          <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 10px; border-color: var(--c1) !important; color: var(--c1) !important; line-height: 1;" onclick="removeLevelRoleReward(${lvl})">Remove</button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function addLevelRoleReward() {
+      const levelSelect = document.getElementById('level_reward_level');
+      const customLevelInput = document.getElementById('level_reward_level_custom');
+      const roleSelect = document.getElementById('level_reward_role');
+
+      let level = parseInt(levelSelect.value);
+      if (levelSelect.value === 'custom' && customLevelInput) {
+        level = parseInt(customLevelInput.value);
+      }
+
+      const roleId = roleSelect.value;
+
+      if (isNaN(level) || level <= 0) {
+        showToast('Please enter/select a valid level (greater than 0).', 'error');
+        return;
+      }
+      if (!roleId) {
+        showToast('Please select a role reward.', 'error');
+        return;
+      }
+
+      currentLevelRoles[level] = roleId;
+
+      // Update hidden input
+      document.getElementById('level_roles').value = JSON.stringify(currentLevelRoles);
+
+      // Re-render
+      renderLevelRolesList();
+      showToast(`Added role reward for Level ${level}!`, 'success');
+    }
+
+    function removeLevelRoleReward(level) {
+      delete currentLevelRoles[level];
+      document.getElementById('level_roles').value = JSON.stringify(currentLevelRoles);
+      renderLevelRolesList();
+      showToast(`Removed role reward for Level ${level}`, 'success');
+    }
+
+    function renderLevelPermissionsList() {
+      const hiddenInput = document.getElementById('level_permissions');
+      if (hiddenInput && hiddenInput.value) {
+        try {
+          currentLevelPermissions = typeof hiddenInput.value === 'string' ? JSON.parse(hiddenInput.value) : hiddenInput.value;
+          if (!Array.isArray(currentLevelPermissions)) currentLevelPermissions = [];
+        } catch (e) {
+          currentLevelPermissions = [];
+        }
+      } else {
+        currentLevelPermissions = [];
+      }
+
+      const container = document.getElementById('level_permissions_list');
+      if (!container) return;
+
+      container.innerHTML = '';
+      const sortedRules = [...currentLevelPermissions].sort((a, b) => a.level - b.level);
+
+      if (sortedRules.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 0.9rem; font-style: italic; padding: 10px 0;">No level permission rules configured yet.</div>';
+        return;
+      }
+
+      sortedRules.forEach(rule => {
+        const lvl = rule.level;
+        const allowText = rule.allow_text !== false;
+        const allowImage = rule.allow_image !== false;
+        const allowGif = rule.allow_gif !== false;
+
+        const card = document.createElement('div');
+        card.style.display = 'flex';
+        card.style.justifyContent = 'space-between';
+        card.style.alignItems = 'center';
+        card.style.background = 'rgba(255, 255, 255, 0.02)';
+        card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+        card.style.padding = '10px 15px';
+        card.style.marginBottom = '8px';
+        card.style.borderRadius = '0px';
+        card.style.borderLeft = `3px solid var(--c2)`;
+
+        card.innerHTML = `
+          <div>
+            <span style="font-weight: bold; color: var(--c2); font-family: monospace;">Level ${lvl}+</span>
+            <span style="color: var(--text-muted); margin: 0 8px;">➜</span>
+            <span style="font-size: 0.85rem; font-family: monospace;">
+              Text: ${allowText ? '<span style="color:#10b981; font-weight:bold;">YES</span>' : '<span style="color:#ef4444; font-weight:bold;">NO</span>'} | 
+              Images: ${allowImage ? '<span style="color:#10b981; font-weight:bold;">YES</span>' : '<span style="color:#ef4444; font-weight:bold;">NO</span>'} | 
+              GIFs: ${allowGif ? '<span style="color:#10b981; font-weight:bold;">YES</span>' : '<span style="color:#ef4444; font-weight:bold;">NO</span>'}
+            </span>
+          </div>
+          <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 10px; border-color: var(--c1) !important; color: var(--c1) !important; line-height: 1;" onclick="removeLevelPermissionRule(${lvl})">Remove</button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function addLevelPermissionRule() {
+      const levelSelect = document.getElementById('level_perm_level');
+      const customLevelInput = document.getElementById('level_perm_level_custom');
+
+      let level = parseInt(levelSelect.value);
+      if (levelSelect.value === 'custom' && customLevelInput) {
+        level = parseInt(customLevelInput.value);
+      }
+
+      if (isNaN(level) || level < 0) {
+        showToast('Please enter/select a valid level threshold.', 'error');
+        return;
+      }
+      const allowText = document.getElementById('level_perm_allow_text').checked;
+      const allowImage = document.getElementById('level_perm_allow_image').checked;
+      const allowGif = document.getElementById('level_perm_allow_gif').checked;
+
+      const existingIdx = currentLevelPermissions.findIndex(r => r.level === level);
+      const newRule = {
+        level: level,
+        allow_text: allowText,
+        allow_image: allowImage,
+        allow_gif: allowGif
+      };
+
+      if (existingIdx > -1) {
+        currentLevelPermissions[existingIdx] = newRule;
+      } else {
+        currentLevelPermissions.push(newRule);
+      }
+
+      // Update hidden input
+      document.getElementById('level_permissions').value = JSON.stringify(currentLevelPermissions);
+
+      // Re-render
+      renderLevelPermissionsList();
+      showToast(`Added permission override for Level ${level}!`, 'success');
+    }
+
+    function removeLevelPermissionRule(level) {
+      currentLevelPermissions = currentLevelPermissions.filter(r => r.level !== level);
+      document.getElementById('level_permissions').value = JSON.stringify(currentLevelPermissions);
+      renderLevelPermissionsList();
+      showToast(`Removed permission override for Level ${level}`, 'success');
+    }
+
+    async function createRoleFromLeveling() {
+      const nameInput = document.getElementById('new_role_name');
+      const colorInput = document.getElementById('new_role_color');
+
+      const roleName = nameInput.value.trim();
+      const roleColor = colorInput.value; // e.g. #0affe4
+
+      if (!roleName) {
+        showToast('Please enter a role name.', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btn-create-leveling-role');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span>Creating...</span>';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create_role', role_name: roleName, role_color: roleColor })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success && data.role) {
+          showToast(`Role "${data.role.name}" created successfully in Discord!`, 'success');
+          
+          nameInput.value = '';
+
+          // Append new role to activeLayoutData
+          if (activeLayoutData) {
+            if (!activeLayoutData.roles) activeLayoutData.roles = [];
+            activeLayoutData.roles.push(data.role);
+          }
+
+          // Re-populate all dropdowns on the page
+          populateLevelingRolesDropdowns(activeLayoutData.roles);
+
+          // Update other role dropdowns (like bulk role select)
+          const bulkRoleSelect = document.getElementById('bulk_role_id');
+          if (bulkRoleSelect) {
+             const opt = document.createElement('option');
+             opt.value = data.role.id;
+             opt.innerText = data.role.name;
+             opt.dataset.color = data.role.color;
+             bulkRoleSelect.appendChild(opt);
+          }
+        } else {
+          showToast(data.error || 'Failed to create role.', 'error');
+        }
+      } catch (e) {
+        showToast('Network error occurred.', 'error');
+    }
+  }
+
+    // ── BOT SETTINGS CONFIGURATION HANDLERS ──────────────────────────────────
+    let currentPrefixes = [];
+    let currentAdminRoles = [];
+    let currentModRoles = [];
+
+    function populateBotSettingsRoles(roles) {
+      console.log('[Kaizer] populateBotSettingsRoles called with', roles ? roles.length : 0, 'roles');
+      const adminSelect = document.getElementById('admin_roles_select');
+      const modSelect = document.getElementById('mod_roles_select');
+      if (!adminSelect && !modSelect) {
+        console.warn('[Kaizer] Bot settings selects not found in DOM');
+        return;
+      }
+      if (!roles || roles.length === 0) {
+        console.warn('[Kaizer] populateBotSettingsRoles called with empty roles array');
+        return;
+      }
+      if (adminSelect) adminSelect.innerHTML = '<option value="">-- Select Role --</option>';
+      if (modSelect) modSelect.innerHTML = '<option value="">-- Select Role --</option>';
+      
+      roles.forEach(role => {
+        if (adminSelect) {
+          const opt1 = document.createElement('option');
+          opt1.value = role.id;
+          opt1.textContent = role.name;
+          adminSelect.appendChild(opt1);
+        }
+        if (modSelect) {
+          const opt2 = document.createElement('option');
+          opt2.value = role.id;
+          opt2.textContent = role.name;
+          modSelect.appendChild(opt2);
+        }
+      });
+      console.log('[Kaizer] Bot settings roles populated:', roles.length, 'roles added to dropdowns');
+    }
+
+    // Ensure bot settings roles are populated when switching to that tab
+    async function ensureBotSettingsRoles() {
+      const adminSelect = document.getElementById('admin_roles_select');
+      if (!adminSelect) return;
+      // Already has options beyond the placeholder
+      if (adminSelect.options.length > 1) return;
+      console.log('[Kaizer] Bot settings roles not loaded, fetching...');
+      // Use activeLayoutData if available
+      if (activeLayoutData && activeLayoutData.roles && activeLayoutData.roles.length > 0) {
+        populateBotSettingsRoles(activeLayoutData.roles);
+        return;
+      }
+      // Otherwise fetch directly
+      try {
+        const res = await fetch(`/api/guild/${guildId}/roles`);
+        if (res.ok) {
+          const roles = await res.json();
+          const filteredRoles = roles.filter(r => r.name !== '@everyone');
+          if (!activeLayoutData) activeLayoutData = { roles: filteredRoles, categories: [] };
+          else activeLayoutData.roles = filteredRoles;
+          populateBotSettingsRoles(filteredRoles);
+          renderAdminRolesList();
+          renderModRolesList();
+          console.log('[Kaizer] Bot settings roles loaded via direct API:', filteredRoles.length);
+        }
+      } catch(e) {
+        console.error('[Kaizer] Failed to load bot settings roles:', e);
+      }
+    }
+
+    // Prefix list builders
+    function addBotPrefix() {
+      const inputEl = document.getElementById('new_prefix_input');
+      if (!inputEl) return;
+      const prefixVal = inputEl.value.trim();
+      if (!prefixVal) return;
+      
+      if (prefixVal.length > 10) {
+        showToast("Prefix must be 10 characters or less.", "error");
+        return;
+      }
+      if (currentPrefixes.includes(prefixVal)) {
+        showToast("Prefix already added.", "error");
+        return;
+      }
+      currentPrefixes.push(prefixVal);
+      renderPrefixesList();
+      inputEl.value = '';
+    }
+
+    function removeBotPrefix(prefix) {
+      currentPrefixes = currentPrefixes.filter(p => p !== prefix);
+      renderPrefixesList();
+    }
+
+    function renderPrefixesList() {
+      const container = document.getElementById('bot_prefixes_list');
+      const hiddenInput = document.getElementById('prefix');
+      if (!container || !hiddenInput) return;
+      
+      const val = hiddenInput.value;
+      if (val && currentPrefixes.length === 0) {
+        currentPrefixes = val.split(',').map(s => s.trim()).filter(Boolean);
+      }
+      
+      hiddenInput.value = currentPrefixes.join(', ');
+      container.innerHTML = '';
+      
+      currentPrefixes.forEach(prefix => {
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.style.background = 'rgba(255, 255, 255, 0.1)';
+        badge.style.color = '#fff';
+        badge.style.padding = '5px 10px';
+        badge.style.borderRadius = '4px';
+        badge.style.fontSize = '0.8rem';
+        badge.style.display = 'inline-flex';
+        badge.style.alignItems = 'center';
+        badge.style.gap = '8px';
+        badge.innerHTML = `
+          <span><code>${prefix}</code></span>
+          <span onclick="removeBotPrefix('${prefix}')" style="cursor:pointer; color:#ef4444; font-weight:bold; font-size:0.9rem;">&times;</span>
+        `;
+        container.appendChild(badge);
+      });
+    }
+
+    // Admin roles list builders
+    function addAdminRole() {
+      const selectEl = document.getElementById('admin_roles_select');
+      if (!selectEl) return;
+      const roleId = selectEl.value;
+      if (!roleId) return;
+      
+      const roleName = selectEl.options[selectEl.selectedIndex].text;
+      if (currentAdminRoles.includes(roleId)) {
+        showToast("Role already added.", "error");
+        return;
+      }
+      currentAdminRoles.push(roleId);
+      renderAdminRolesList();
+      selectEl.value = '';
+    }
+
+    function removeAdminRole(roleId) {
+      currentAdminRoles = currentAdminRoles.filter(id => id !== roleId);
+      renderAdminRolesList();
+    }
+
+    function renderAdminRolesList() {
+      const container = document.getElementById('admin_roles_list');
+      const hiddenInput = document.getElementById('admin_roles');
+      if (!container || !hiddenInput) return;
+      
+      const val = hiddenInput.value;
+      if (val && currentAdminRoles.length === 0) {
+        try {
+          currentAdminRoles = typeof val === 'string' ? JSON.parse(val) : val;
+        } catch(e) {
+          currentAdminRoles = val.split(',').map(s => s.trim()).filter(Boolean);
+        }
+      }
+      if (!Array.isArray(currentAdminRoles)) {
+        currentAdminRoles = [];
+      }
+      
+      hiddenInput.value = JSON.stringify(currentAdminRoles);
+      container.innerHTML = '';
+      
+      currentAdminRoles.forEach(roleId => {
+        let roleName = roleId;
+        if (activeLayoutData && activeLayoutData.roles) {
+          const r = activeLayoutData.roles.find(x => x.id === roleId);
+          if (r) roleName = r.name;
+        }
+        
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.style.background = 'rgba(10, 255, 228, 0.15)';
+        badge.style.color = 'var(--c2)';
+        badge.style.padding = '5px 10px';
+        badge.style.borderRadius = '4px';
+        badge.style.fontSize = '0.8rem';
+        badge.style.display = 'inline-flex';
+        badge.style.alignItems = 'center';
+        badge.style.gap = '8px';
+        badge.innerHTML = `
+          <span>${roleName}</span>
+          <span onclick="removeAdminRole('${roleId}')" style="cursor:pointer; color:#ef4444; font-weight:bold; font-size:0.9rem;">&times;</span>
+        `;
+        container.appendChild(badge);
+      });
+    }
+
+    // Mod roles list builders
+    function addModRole() {
+      const selectEl = document.getElementById('mod_roles_select');
+      if (!selectEl) return;
+      const roleId = selectEl.value;
+      if (!roleId) return;
+      
+      const roleName = selectEl.options[selectEl.selectedIndex].text;
+      if (currentModRoles.includes(roleId)) {
+        showToast("Role already added.", "error");
+        return;
+      }
+      currentModRoles.push(roleId);
+      renderModRolesList();
+      selectEl.value = '';
+    }
+
+    function removeModRole(roleId) {
+      currentModRoles = currentModRoles.filter(id => id !== roleId);
+      renderModRolesList();
+    }
+
+    function renderModRolesList() {
+      const container = document.getElementById('mod_roles_list');
+      const hiddenInput = document.getElementById('mod_roles');
+      if (!container || !hiddenInput) return;
+      
+      const val = hiddenInput.value;
+      if (val && currentModRoles.length === 0) {
+        try {
+          currentModRoles = typeof val === 'string' ? JSON.parse(val) : val;
+        } catch(e) {
+          currentModRoles = val.split(',').map(s => s.trim()).filter(Boolean);
+        }
+      }
+      if (!Array.isArray(currentModRoles)) {
+        currentModRoles = [];
+      }
+      
+      hiddenInput.value = JSON.stringify(currentModRoles);
+      container.innerHTML = '';
+      
+      currentModRoles.forEach(roleId => {
+        let roleName = roleId;
+        if (activeLayoutData && activeLayoutData.roles) {
+          const r = activeLayoutData.roles.find(x => x.id === roleId);
+          if (r) roleName = r.name;
+        }
+        
+        const badge = document.createElement('span');
+        badge.className = 'badge';
+        badge.style.background = 'rgba(10, 255, 228, 0.15)';
+        badge.style.color = 'var(--c2)';
+        badge.style.padding = '5px 10px';
+        badge.style.borderRadius = '4px';
+        badge.style.fontSize = '0.8rem';
+        badge.style.display = 'inline-flex';
+        badge.style.alignItems = 'center';
+        badge.style.gap = '8px';
+        badge.innerHTML = `
+          <span>${roleName}</span>
+          <span onclick="removeModRole('${roleId}')" style="cursor:pointer; color:#ef4444; font-weight:bold; font-size:0.9rem;">&times;</span>
+        `;
+        container.appendChild(badge);
+      });
+    }
+
+    // Color picker synchronizers
+    function syncBotEmbedColorPicker(val) {
+      const hexEl = document.getElementById('embed_color');
+      if (hexEl) hexEl.value = val;
+    }
+
+    function syncBotEmbedColorHex(val) {
+      if (/^#[0-9A-F]{6}$/i.test(val)) {
+        const pickerEl = document.getElementById('bot_embed_color_picker');
+        if (pickerEl) pickerEl.value = val;
+      }
+    }
+
+// ── MODERATION DROPDOWNS & AUTOMOD CREATOR STUDIO ───────────────────────
+    let currentAutomodRules = [];
+
+    function populateModerationDropdowns(roles) {
+      const muteRoleSelect = document.getElementById('mod_mute_role');
+      if (muteRoleSelect) {
+        const oldVal = muteRoleSelect.value;
+        muteRoleSelect.innerHTML = '<option value="">-- Select Mute Role --</option>';
+        roles.forEach(role => {
+          const opt = document.createElement('option');
+          opt.value = role.id;
+          opt.innerText = role.name;
+          muteRoleSelect.appendChild(opt);
+        });
+        if (oldVal) muteRoleSelect.value = oldVal;
+      }
+
+      const logChannelSelect = document.getElementById('mod_log_channel');
+      if (logChannelSelect) {
+        const oldVal = logChannelSelect.value;
+        logChannelSelect.innerHTML = '<option value="">-- Select Log Channel --</option>';
+        const textChans = getTextChannels();
+        textChans.forEach(chan => {
+          const opt = document.createElement('option');
+          opt.value = chan.id;
+          opt.innerText = `# ${chan.name}`;
+          logChannelSelect.appendChild(opt);
+        });
+        if (oldVal) logChannelSelect.value = oldVal;
+      }
+    }
+
+    async function populateMusicDropdowns(roles) {
+      console.log("[Kaizer] populateMusicDropdowns called with roles:", roles);
+      const djRoleSelect = document.getElementById('music_dj_role');
+      const musicChannelSelect = document.getElementById('music_channel');
+      const voiceChannelSelect = document.getElementById('music_voice_channel');
+
+      if (!djRoleSelect && !musicChannelSelect && !voiceChannelSelect) return;
+
+      let finalRoles = roles || (activeLayoutData ? activeLayoutData.roles : null) || [];
+      let textChans = getTextChannels();
+      let voiceChans = getVoiceChannels();
+
+      if (finalRoles.length === 0 || textChans.length === 0 || voiceChans.length === 0) {
+        console.log("[Kaizer] Music dropdowns: data is empty, attempting to fetch roles/channels directly...");
+        try {
+          const [rRes, cRes] = await Promise.all([
+            fetch(`/api/guild/${guildId}/roles`),
+            fetch(`/api/guild/${guildId}/channels`)
+          ]);
+          const freshRoles = rRes.ok ? await rRes.json() : [];
+          const freshChannels = cRes.ok ? await cRes.json() : [];
+
+          if (finalRoles.length === 0 && freshRoles.length > 0) {
+            finalRoles = freshRoles.filter(r => r.name !== '@everyone');
+          }
+          if (textChans.length === 0 && freshChannels.length > 0) {
+            textChans = freshChannels.filter(c => c.type === 'text' || (c.type || '').toLowerCase().includes('text'));
+          }
+          if (voiceChans.length === 0 && freshChannels.length > 0) {
+            voiceChans = freshChannels.filter(c => c.type === 'voice' || (c.type || '').toLowerCase().includes('voice'));
+          }
+        } catch (e) {
+          console.error("[Kaizer] Failed to self-heal music dropdowns:", e);
+        }
+      }
+
+      if (djRoleSelect) {
+        const oldVal = djRoleSelect.value;
+        djRoleSelect.innerHTML = '<option value="">-- Select DJ Role --</option>';
+        finalRoles.forEach(role => {
+          if (role && role.id) {
+            const opt = document.createElement('option');
+            opt.value = role.id;
+            opt.innerText = role.name || role.id;
+            djRoleSelect.appendChild(opt);
+          }
+        });
+        if (oldVal) djRoleSelect.value = oldVal;
+      }
+
+      if (musicChannelSelect) {
+        const oldVal = musicChannelSelect.value;
+        musicChannelSelect.innerHTML = '<option value="">-- Select Music Text Channel (Any) --</option>';
+        textChans.forEach(chan => {
+          if (chan && chan.id) {
+            const opt = document.createElement('option');
+            opt.value = chan.id;
+            opt.innerText = `# ${chan.name || chan.id}`;
+            musicChannelSelect.appendChild(opt);
+          }
+        });
+        if (oldVal) musicChannelSelect.value = oldVal;
+      }
+
+      if (voiceChannelSelect) {
+        const oldVal = voiceChannelSelect.value;
+        voiceChannelSelect.innerHTML = '<option value="">-- Select Music Voice Channel (Any) --</option>';
+        voiceChans.forEach(chan => {
+          if (chan && chan.id) {
+            const opt = document.createElement('option');
+            opt.value = chan.id;
+            opt.innerText = `🔊 ${chan.name || chan.id}`;
+            voiceChannelSelect.appendChild(opt);
+          }
+        });
+        if (oldVal) voiceChannelSelect.value = oldVal;
+      }
+      console.log("[Kaizer] Music dropdowns populated successfully.");
+    }
+
+    function getVoiceChannels() {
+      const list = [];
+      if (activeLayoutData && activeLayoutData.categories) {
+        activeLayoutData.categories.forEach(cat => {
+          if (cat && Array.isArray(cat.channels)) {
+            cat.channels.forEach(chan => {
+              if (chan && (chan.type === 'voice' || (chan.type || '').toString().toLowerCase().includes('voice'))) {
+                list.push(chan);
+              }
+            });
+          }
+        });
+      }
+      return list;
+    }
+
+    async function createDJRole() {
+      const btn = document.getElementById('btn-create-dj-role');
+      if (!btn) return;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span>Creating...</span>';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create_role', role_name: 'DJ', role_color: '#3498bb' })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success && data.role) {
+          showToast(`DJ role "${data.role.name}" created and configured in Discord!`, 'success');
+
+          if (activeLayoutData) {
+            if (!activeLayoutData.roles) activeLayoutData.roles = [];
+            if (!activeLayoutData.roles.some(r => r.id === data.role.id)) {
+              activeLayoutData.roles.push(data.role);
+            }
+          }
+
+          populateMusicDropdowns(activeLayoutData.roles);
+          const djRoleSelect = document.getElementById('music_dj_role');
+          if (djRoleSelect) djRoleSelect.value = data.role.id;
+        } else {
+          showToast(data.error || 'Failed to create DJ role.', 'error');
+        }
+      } catch (e) {
+        showToast('Network error occurred.', 'error');
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    async function createMuteRole() {
+      const btn = document.getElementById('btn-create-mute-role');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span>Creating...</span>';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create_mute_role' })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success && data.role) {
+          showToast(`Mute role "${data.role.name}" created and configured in Discord!`, 'success');
+
+          if (activeLayoutData) {
+            if (!activeLayoutData.roles) activeLayoutData.roles = [];
+            if (!activeLayoutData.roles.some(r => r.id === data.role.id)) {
+              activeLayoutData.roles.push(data.role);
+            }
+          }
+
+          populateModerationDropdowns(activeLayoutData.roles);
+          const muteRoleSelect = document.getElementById('mod_mute_role');
+          if (muteRoleSelect) muteRoleSelect.value = data.role.id;
+        } else {
+          showToast(data.error || 'Failed to create mute role.', 'error');
+        }
+      } catch (e) {
+        showToast('Network error occurred.', 'error');
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    async function createModLogChannel() {
+      const btn = document.getElementById('btn-create-mod-log-channel');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span>Creating...</span>';
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'create_mod_log_channel' })
+        });
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.success && data.channel) {
+          showToast(`Log channel #${data.channel.name} created successfully!`, 'success');
+
+          if (activeLayoutData) {
+            let cat = activeLayoutData.categories.find(c => c.name.toLowerCase().includes('information') || c.name.toLowerCase().includes('welcome') || c.name.toLowerCase().includes('chat'));
+            if (!cat && activeLayoutData.categories.length > 0) {
+              cat = activeLayoutData.categories[0];
+            }
+            if (cat) {
+              cat.channels.push({ id: data.channel.id, name: data.channel.name, type: 'text' });
+            }
+          }
+
+          populateModerationDropdowns(activeLayoutData.roles);
+          const logChannelSelect = document.getElementById('mod_log_channel');
+          if (logChannelSelect) logChannelSelect.value = data.channel.id;
+        } else {
+          showToast(data.error || 'Failed to create log channel.', 'error');
+        }
+      } catch (e) {
+        showToast('Network error occurred.', 'error');
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    function addAutomodRule() {
+      const trigger = document.getElementById('studio_trigger').value;
+      const count = parseInt(document.getElementById('studio_count').value);
+      const seconds = parseInt(document.getElementById('studio_seconds').value);
+      const action = document.getElementById('studio_action').value;
+
+      if (isNaN(count) || count <= 0 || isNaN(seconds) || seconds <= 0) {
+        showToast('Please enter valid positive numbers for limit and seconds.', 'error');
+        return;
+      }
+
+      const newRule = {
+        id: 'rule_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+        trigger: trigger,
+        count: count,
+        seconds: seconds,
+        action: action
+      };
+
+      currentAutomodRules.push(newRule);
+      document.getElementById('automod_rules').value = JSON.stringify(currentAutomodRules);
+      renderAutomodRulesList();
+      showToast('Rule added! Remember to save settings.', 'success');
+    }
+
+    function removeAutomodRule(ruleId) {
+      currentAutomodRules = currentAutomodRules.filter(r => r.id !== ruleId);
+      document.getElementById('automod_rules').value = JSON.stringify(currentAutomodRules);
+      renderAutomodRulesList();
+      showToast('Rule removed! Remember to save settings.', 'success');
+    }
+
+    function renderAutomodRulesList() {
+      const container = document.getElementById('automod-rules-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (currentAutomodRules.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 0.9rem; font-style: italic; padding: 10px 0;">No custom rules built yet.</div>';
+        return;
+      }
+
+      currentAutomodRules.forEach(rule => {
+        let triggerName = 'Spamming Messages';
+        if (rule.trigger === 'spam_attachments') triggerName = 'Spamming Images/Videos/Files';
+        if (rule.trigger === 'spam_mentions') triggerName = 'Spamming Mentions/Pings';
+
+        let actionName = 'Mute permanently';
+        if (rule.action === 'warn') actionName = 'Delete & Warn';
+        if (rule.action === 'kick') actionName = 'Kick Member';
+        if (rule.action === 'ban') actionName = 'Ban Member';
+
+        const card = document.createElement('div');
+        card.style.display = 'flex';
+        card.style.justifyContent = 'space-between';
+        card.style.alignItems = 'center';
+        card.style.background = 'rgba(255, 255, 255, 0.02)';
+        card.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+        card.style.padding = '10px 15px';
+        card.style.marginBottom = '8px';
+        card.style.borderRadius = '4px';
+        card.style.borderLeft = `3px solid var(--c1)`;
+
+        card.innerHTML = `
+          <div>
+            <span style="font-weight: bold; color: var(--c1); font-family: monospace;">${triggerName}</span>
+            <span style="color: var(--text-muted); margin: 0 8px;">(${rule.count} in ${rule.seconds}s)</span>
+            <span style="color: var(--text-muted); margin: 0 8px;">➜</span>
+            <span style="font-size: 0.85rem; font-family: monospace; font-weight: bold; color: #ef4444;">
+              [Action: ${actionName}]
+            </span>
+          </div>
+          <button type="button" class="btn btn-secondary" style="padding: 6px 12px; font-size: 10px; border-color: var(--c1) !important; color: var(--c1) !important; line-height: 1;" onclick="removeAutomodRule('${rule.id}')">Remove</button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function getTextChannels() {
+      const list = [];
+      if (activeLayoutData && activeLayoutData.categories) {
+        activeLayoutData.categories.forEach(cat => {
+          if (cat && Array.isArray(cat.channels)) {
+            cat.channels.forEach(chan => {
+              if (chan && (chan.type === 'text' || (chan.type || '').toString().toLowerCase().includes('text'))) {
+                list.push(chan);
+              }
+            });
+          }
+        });
+      }
+      return list;
+    }
+
+    // Stats settings helper functions
+    function populateStatsDropdowns() {
+      const voiceSelect = document.getElementById('stat_voice_channel');
+      if (!voiceSelect) return;
+
+      const oldVoiceVal = voiceSelect.value;
+
+      voiceSelect.innerHTML = '<option value="new">-- Create New Voice Channel --</option>';
+
+      const voiceChans = getVoiceChannels();
+      voiceChans.forEach(chan => {
+        const opt = document.createElement('option');
+        opt.value = chan.id;
+        opt.innerText = `☊ ${chan.name}`;
+        voiceSelect.appendChild(opt);
+      });
+
+      if (oldVoiceVal) voiceSelect.value = oldVoiceVal;
+    }
+
+    function insertStatPlaceholder(placeholder) {
+      const formatInput = document.getElementById('stat_format');
+      if (formatInput) {
+        const start = formatInput.selectionStart;
+        const end = formatInput.selectionEnd;
+        const text = formatInput.value;
+        const before = text.substring(0, start);
+        const after = text.substring(end, text.length);
+        formatInput.value = before + placeholder + after;
+        formatInput.focus();
+        formatInput.selectionStart = formatInput.selectionEnd = start + placeholder.length;
+      }
+    }
+
+    function renderActiveStatChannels(settings) {
+      const container = document.getElementById('stats-channels-list');
+      if (!container) return;
+
+      const types = [
+        { key: 'total', label: 'Total Members', color: 'var(--accent-cyan)' },
+        { key: 'online', label: 'Online Members', color: '#10b981' },
+        { key: 'offline', label: 'Offline Members', color: '#6b7280' },
+        { key: 'invc', label: 'In Voice (VC)', color: '#a855f7' }
+      ];
+
+      let configured = [];
+      types.forEach(t => {
+        const chanId = settings[`counter_${t.key}_chan_id`];
+        const fmt = settings[`counter_${t.key}_fmt`];
+        if (chanId) {
+          configured.push({
+            type: t.key,
+            label: t.label,
+            color: t.color,
+            chanId: chanId,
+            format: fmt || `${t.label}: {value}`
+          });
+        }
+      });
+
+      if (configured.length === 0) {
+        container.innerHTML = '<div style="color:var(--text-muted); font-style:italic;">No stat channels configured yet.</div>';
+        return;
+      }
+
+      function findChannelName(id) {
+        if (!activeLayoutData || !activeLayoutData.categories) return id;
+        for (let cat of activeLayoutData.categories) {
+          if (cat.channels) {
+            for (let chan of cat.channels) {
+              if (chan.id === id) return chan.name;
+            }
+          }
+        }
+        return id;
+      }
+
+      let html = '<div style="display:flex; flex-direction:column; gap:12px; margin-bottom:15px;">';
+      configured.forEach(c => {
+        const chanName = findChannelName(c.chanId);
+        html += `
+          <div style="display:flex; justify-content:space-between; align-items:center; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.06); padding:12px; border-radius:8px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background:${c.color};"></span>
+              <div>
+                <div style="font-weight:bold; color:white;">${c.label}</div>
+                <div style="font-size:0.8rem; color:var(--text-muted);">
+                  Channel: <code style="color:var(--accent-cyan); font-family:monospace;">☊ ${chanName}</code> | Format: <code style="color:var(--accent-cyan); font-family:monospace;">${c.format}</code>
+                </div>
+              </div>
+            </div>
+            <button class="btn" onclick="removeStatChannel('${c.type}')" style="background:rgba(239, 68, 68, 0.15); border:1px solid rgba(239, 68, 68, 0.3); color:#f87171; padding:5px 10px; border-radius:4px; font-size:0.8rem; cursor:pointer;">
+              Remove
+            </button>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    async function removeStatChannel(type) {
+      if (!confirm(`Are you sure you want to remove the ${type} stat channel configuration?`)) return;
+      try {
+        showToast("Removing stat channel...", "info");
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'stats_remove', stat_type: type })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast("Stat channel removed successfully!", "success");
+          await fetchServerLayout();
+        } else {
+          showToast(data.error || "Failed to remove stat channel.", "error");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Error removing stat channel.", "error");
+      }
+    }
+
+    async function handleStatsAdd(event) {
+      event.preventDefault();
+      const form = event.target;
+      const submitBtn = form.querySelector("button[type='submit']");
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = "<span>Creating...</span>";
+      submitBtn.disabled = true;
+
+      const stat_type = document.getElementById('stat_type').value;
+      const stat_format = document.getElementById('stat_format').value;
+      const voice_channel_id = document.getElementById('stat_voice_channel').value;
+
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'stats_add',
+            stat_type,
+            stat_format,
+            voice_channel_id
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast("Stat channel configured successfully!", "success");
+          await fetchServerLayout();
+        } else {
+          showToast(data.error || "Failed to configure stat channel.", "error");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Error configuring stat channel.", "error");
+      } finally {
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+      }
+    }
+
+    async function handleStatsRefresh(event) {
+      event.preventDefault();
+      const btn = event.target;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = "<span>Refreshing...</span>";
+      btn.disabled = true;
+
+      try {
+        const res = await fetch(`/api/guild/${guildId}/server-action`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'stats_refresh_all' })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message || "Stats refresh triggered!", "success");
+          await fetchServerLayout();
+        } else {
+          showToast(data.error || "Failed to refresh stats.", "error");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Error refreshing stats.", "error");
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
+    }
+
+    // ── DATA SYNC LOADERS ───────────────────────────────────────────────────
+    async function loadGuildSettings() {
+      try {
+        const res = await fetch(`/api/guild/${guildId}/settings`);
+        if (!res.ok) return;
+        const data = await res.json();
+        
+        // Populate standard settings fields (e.g. anti-nuke switches)
+        Object.keys(data).forEach(key => {
+          const el = document.getElementById(key);
+          if (!el) return;
+          if (el.type === 'checkbox') {
+            el.checked = !!data[key];
+            el.dispatchEvent(new Event('change'));
+          } else {
+            el.value = (typeof data[key] === 'object') ? JSON.stringify(data[key]) : (data[key] || '');
+          }
+        });
+
+        // Render active live stats channels list
+        renderActiveStatChannels(data);
+
+        // Special parsing for welcome and goodbye messages
+        parseWelcomeMessageOnLoad(data.welcome_message);
+        parseGoodbyeMessageOnLoad(data.goodbye_message);
+
+        // Explicitly initialize parent container toggles
+        toggleWelcomeFields();
+        toggleGoodbyeFields();
+
+        // Parse and render automod_rules
+        if (data.automod_rules) {
+          try {
+            currentAutomodRules = typeof data.automod_rules === 'string' ? JSON.parse(data.automod_rules) : data.automod_rules;
+            if (!Array.isArray(currentAutomodRules)) {
+              currentAutomodRules = Object.values(currentAutomodRules);
+            }
+          } catch (e) {
+            console.error("Failed to parse automod_rules:", e);
+            currentAutomodRules = [];
+          }
+        } else {
+          currentAutomodRules = [];
+        }
+        document.getElementById('automod_rules').value = JSON.stringify(currentAutomodRules);
+        renderAutomodRulesList();
+
+        // Render leveling advanced lists
+        renderLevelRolesList();
+        renderLevelPermissionsList();
+
+        // Render bot settings dynamic inputs
+        currentPrefixes = data.prefix ? data.prefix.split(',').map(p => p.trim()).filter(p => p) : [];
+        renderPrefixesList();
+        
+        try {
+          currentAdminRoles = typeof data.admin_roles === 'string' ? JSON.parse(data.admin_roles) : (data.admin_roles || []);
+        } catch (e) { currentAdminRoles = []; }
+        if (!Array.isArray(currentAdminRoles)) currentAdminRoles = [];
+        renderAdminRolesList();
+        
+        try {
+          currentModRoles = typeof data.mod_roles === 'string' ? JSON.parse(data.mod_roles) : (data.mod_roles || []);
+        } catch (e) { currentModRoles = []; }
+        if (!Array.isArray(currentModRoles)) currentModRoles = [];
+        renderModRolesList();
+        
+        // Sync color picker
+        const colorVal = data.embed_color || '#0affe4';
+        const pickerEl = document.getElementById('bot_embed_color_picker');
+        if (pickerEl) pickerEl.value = colorVal;
+      } catch (e) {
+        console.error("Failed to load guild settings:", e);
+      }
+    }
+
+    function parseWelcomeMessageOnLoad(val) {
+      try {
+        const parsed = val ? JSON.parse(val) : null;
+        if (parsed && typeof parsed === 'object') {
+          // If it is the new rich configuration schema
+          if (parsed.message_type) {
+            document.getElementById('welcome_embed_enabled').checked = (parsed.message_type === 'embed');
+            document.getElementById('welcome_message').value = parsed.text || '';
+            
+            if (parsed.embed) {
+              document.getElementById('welcome_embed_title').value = parsed.embed.title || '';
+              document.getElementById('welcome_embed_color_hex').value = parsed.embed.color || '#0affe4';
+              document.getElementById('welcome_embed_color').value = parsed.embed.color || '#0affe4';
+              document.getElementById('welcome_embed_desc').value = parsed.embed.description || '';
+              document.getElementById('welcome_embed_thumbnail').value = parsed.embed.thumbnail || '';
+              document.getElementById('welcome_embed_image').value = parsed.embed.image || '';
+              document.getElementById('welcome_embed_footer').value = parsed.embed.footer || '';
+              document.getElementById('welcome_embed_footer_icon').value = parsed.embed.footer_icon || '';
+            }
+
+            // Image settings
+            document.getElementById('welcome_image_enabled').checked = !!parsed.image_enabled;
+            document.getElementById('welcome_image_style').value = parsed.image_style || 'plain_gradient';
+            document.getElementById('welcome_image_color').value = parsed.image_color || 'cyan_neon';
+            document.getElementById('welcome_custom_bg_url').value = parsed.custom_bg_url || '';
+            
+            if (parsed.image_elements) {
+              document.getElementById('welcome_image_show_avatar').checked = (parsed.image_elements.avatar !== false);
+              document.getElementById('welcome_image_show_username').checked = (parsed.image_elements.username !== false);
+              document.getElementById('welcome_image_show_server').checked = (parsed.image_elements.server_name !== false);
+              document.getElementById('welcome_image_show_count').checked = (parsed.image_elements.member_count !== false);
+              document.getElementById('welcome_image_custom_text').value = parsed.image_elements.custom_text || '';
+            }
+
+            // DM settings
+            document.getElementById('welcome_dm_enabled').checked = !!parsed.dm_enabled;
+            document.getElementById('welcome_dm_embed_enabled').checked = (parsed.dm_type === 'embed');
+            document.getElementById('welcome_dm_text').value = parsed.dm_text || '';
+            
+            if (parsed.dm_embed) {
+              document.getElementById('welcome_dm_embed_title').value = parsed.dm_embed.title || '';
+              document.getElementById('welcome_dm_embed_color_hex').value = parsed.dm_embed.color || '#0affe4';
+              document.getElementById('welcome_dm_embed_color').value = parsed.dm_embed.color || '#0affe4';
+              document.getElementById('welcome_dm_embed_desc').value = parsed.dm_embed.description || '';
+              document.getElementById('welcome_dm_embed_thumbnail').value = parsed.dm_embed.thumbnail || '';
+              document.getElementById('welcome_dm_embed_image').value = parsed.dm_embed.image || '';
+              document.getElementById('welcome_dm_embed_footer').value = parsed.dm_embed.footer || '';
+              document.getElementById('welcome_dm_embed_footer_icon').value = parsed.dm_embed.footer_icon || '';
+            }
+
+            // Activate grids & visual card preview
+            syncActivePresetHighlight('welcome', parsed.image_style, parsed.image_color);
+            toggleWelcomeEmbedEditor();
+            toggleWelcomeImageFields();
+            toggleWelcomeDMFields();
+            toggleWelcomeDMEmbedEditor();
+            updateWelcomeAlertPreview();
+            updateWelcomeDMPreview();
+            return;
+          }
+          // If it is the old embed schema
+          else if (parsed.embed) {
+            document.getElementById('welcome_embed_enabled').checked = true;
+            document.getElementById('welcome_embed_title').value = parsed.title || '';
+            document.getElementById('welcome_embed_color_hex').value = parsed.color || '#0affe4';
+            document.getElementById('welcome_embed_color').value = parsed.color || '#0affe4';
+            document.getElementById('welcome_embed_desc').value = parsed.description || '';
+            document.getElementById('welcome_embed_thumbnail').value = parsed.thumbnail || '';
+            document.getElementById('welcome_embed_image').value = parsed.image || '';
+            document.getElementById('welcome_embed_footer').value = parsed.footer || '';
+            document.getElementById('welcome_embed_footer_icon').value = parsed.footer_icon || '';
+            
+            toggleWelcomeEmbedEditor();
+            toggleWelcomeImageFields();
+            toggleWelcomeDMFields();
+            toggleWelcomeDMEmbedEditor();
+            updateWelcomeAlertPreview();
+            updateWelcomeDMPreview();
+            return;
+          }
+        }
+      } catch (_) {}
+      
+      // Fallback: plain text
+      document.getElementById('welcome_embed_enabled').checked = false;
+      document.getElementById('welcome_message').value = val || 'Welcome {user} to {server}!';
+      toggleWelcomeEmbedEditor();
+      toggleWelcomeImageFields();
+      toggleWelcomeDMFields();
+      toggleWelcomeDMEmbedEditor();
+      updateWelcomeAlertPreview();
+      updateWelcomeDMPreview();
+    }
+
+    function parseGoodbyeMessageOnLoad(val) {
+      try {
+        const parsed = val ? JSON.parse(val) : null;
+        if (parsed && typeof parsed === 'object') {
+          // If it is the new rich configuration schema
+          if (parsed.message_type) {
+            document.getElementById('goodbye_embed_enabled').checked = (parsed.message_type === 'embed');
+            document.getElementById('goodbye_message').value = parsed.text || '';
+            
+            if (parsed.embed) {
+              document.getElementById('goodbye_embed_title').value = parsed.embed.title || '';
+              document.getElementById('goodbye_embed_color_hex').value = parsed.embed.color || '#ef4444';
+              document.getElementById('goodbye_embed_color').value = parsed.embed.color || '#ef4444';
+              document.getElementById('goodbye_embed_desc').value = parsed.embed.description || '';
+              document.getElementById('goodbye_embed_thumbnail').value = parsed.embed.thumbnail || '';
+              document.getElementById('goodbye_embed_image').value = parsed.embed.image || '';
+              document.getElementById('goodbye_embed_footer').value = parsed.embed.footer || '';
+              document.getElementById('goodbye_embed_footer_icon').value = parsed.embed.footer_icon || '';
+            }
+
+            // Image settings
+            document.getElementById('goodbye_image_enabled').checked = !!parsed.image_enabled;
+            document.getElementById('goodbye_image_style').value = parsed.image_style || 'plain_gradient';
+            document.getElementById('goodbye_image_color').value = parsed.image_color || 'cyan_neon';
+            document.getElementById('goodbye_custom_bg_url').value = parsed.custom_bg_url || '';
+            
+            if (parsed.image_elements) {
+              document.getElementById('goodbye_image_show_avatar').checked = (parsed.image_elements.avatar !== false);
+              document.getElementById('goodbye_image_show_username').checked = (parsed.image_elements.username !== false);
+              document.getElementById('goodbye_image_show_server').checked = (parsed.image_elements.server_name !== false);
+              document.getElementById('goodbye_image_show_count').checked = (parsed.image_elements.member_count !== false);
+              document.getElementById('goodbye_image_custom_text').value = parsed.image_elements.custom_text || '';
+            }
+
+            // DM settings
+            document.getElementById('goodbye_dm_enabled').checked = !!parsed.dm_enabled;
+            document.getElementById('goodbye_dm_embed_enabled').checked = (parsed.dm_type === 'embed');
+            document.getElementById('goodbye_dm_text').value = parsed.dm_text || '';
+            
+            if (parsed.dm_embed) {
+              document.getElementById('goodbye_dm_embed_title').value = parsed.dm_embed.title || '';
+              document.getElementById('goodbye_dm_embed_color_hex').value = parsed.dm_embed.color || '#ef4444';
+              document.getElementById('goodbye_dm_embed_color').value = parsed.dm_embed.color || '#ef4444';
+              document.getElementById('goodbye_dm_embed_desc').value = parsed.dm_embed.description || '';
+              document.getElementById('goodbye_dm_embed_thumbnail').value = parsed.dm_embed.thumbnail || '';
+              document.getElementById('goodbye_dm_embed_image').value = parsed.dm_embed.image || '';
+              document.getElementById('goodbye_dm_embed_footer').value = parsed.dm_embed.footer || '';
+              document.getElementById('goodbye_dm_embed_footer_icon').value = parsed.dm_embed.footer_icon || '';
+            }
+
+            // Activate grids & visual card preview
+            syncActivePresetHighlight('goodbye', parsed.image_style, parsed.image_color);
+            toggleGoodbyeEmbedEditor();
+            toggleGoodbyeImageFields();
+            toggleGoodbyeDMFields();
+            toggleGoodbyeDMEmbedEditor();
+            updateGoodbyeAlertPreview();
+            updateGoodbyeDMPreview();
+            return;
+          }
+          // If it is the old embed schema
+          else if (parsed.embed) {
+            document.getElementById('goodbye_embed_enabled').checked = true;
+            document.getElementById('goodbye_embed_title').value = parsed.title || '';
+            document.getElementById('goodbye_embed_color_hex').value = parsed.color || '#ef4444';
+            document.getElementById('goodbye_embed_color').value = parsed.color || '#ef4444';
+            document.getElementById('goodbye_embed_desc').value = parsed.description || '';
+            document.getElementById('goodbye_embed_thumbnail').value = parsed.thumbnail || '';
+            document.getElementById('goodbye_embed_image').value = parsed.image || '';
+            document.getElementById('goodbye_embed_footer').value = parsed.footer || '';
+            document.getElementById('goodbye_embed_footer_icon').value = parsed.footer_icon || '';
+            
+            toggleGoodbyeEmbedEditor();
+            toggleGoodbyeImageFields();
+            toggleGoodbyeDMFields();
+            toggleGoodbyeDMEmbedEditor();
+            updateGoodbyeAlertPreview();
+            updateGoodbyeDMPreview();
+            return;
+          }
+        }
+      } catch (_) {}
+      
+      // Fallback: plain text
+      document.getElementById('goodbye_embed_enabled').checked = false;
+      document.getElementById('goodbye_message').value = val || '{user} left the server.';
+      toggleGoodbyeEmbedEditor();
+      toggleGoodbyeImageFields();
+      toggleGoodbyeDMFields();
+      toggleGoodbyeDMEmbedEditor();
+      updateGoodbyeAlertPreview();
+      updateGoodbyeDMPreview();
+    }
+
+    function syncActivePresetHighlight(prefix, style, color) {
+      const grid = document.getElementById(`${prefix}_presets_grid`);
+      if (!grid) return;
+      grid.querySelectorAll('.preset-btn').forEach(btn => {
+        if (btn.dataset.style === style && btn.dataset.color === color) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+    }
+
+    // ── ECONOMY SHOP MANAGEMENT ─────────────────────────────────────────────
+    async function loadShopItems() {
+      const container = document.getElementById('shop-items-list');
+      if (!container) return;
+      container.innerHTML = '<div style="color: var(--text-muted); font-style: italic;">Loading shop items...</div>';
+      try {
+        const res = await fetch(`/api/guild/${guildId}/shop_items`);
+        const items = await res.json();
+        if (Array.isArray(items)) {
+          renderShopItemsList(items);
+        } else {
+          container.innerHTML = '<div style="color: #ef4444; font-style: italic;">Failed to load shop items.</div>';
+        }
+      } catch (err) {
+        console.error(err);
+        container.innerHTML = '<div style="color: #ef4444; font-style: italic;">Error fetching shop items.</div>';
+      }
+    }
+
+    function renderShopItemsList(items) {
+      const container = document.getElementById('shop-items-list');
+      if (!container) return;
+      if (!items || items.length === 0) {
+        container.innerHTML = '<p style="color: var(--text-muted); font-style: italic; margin: 0;">No shop items created yet.</p>';
+        return;
+      }
+      
+      let html = '<div style="display: flex; flex-direction: column; gap: 10px;">';
+      items.forEach(item => {
+        const emojiStr = item.emoji ? `<span style="margin-right: 5px;">${item.emoji}</span>` : '';
+        const descStr = item.description ? `<div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">${item.description}</div>` : '';
+        const roleLabel = item.role_id ? `<span style="background: rgba(10, 255, 228, 0.12); color: var(--c2); border: 1px solid rgba(10, 255, 228, 0.25); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 8px;">Role linked</span>` : '';
+        
+        html += `
+          <div style="padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.02); border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.06);">
+            <div>
+              <div style="font-weight: bold; color: #fff; font-size: 0.95rem; display: flex; align-items: center;">
+                ${emojiStr}${item.name}
+                <span style="color: var(--c2); margin-left: 10px; font-size: 0.85rem;">(${item.price} coins)</span>
+                <span style="background: rgba(255, 255, 255, 0.06); color: var(--text-muted); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 8px; text-transform: uppercase;">${item.type || 'item'}</span>
+                ${roleLabel}
+              </div>
+              ${descStr}
+            </div>
+            <button class="btn" onclick="deleteShopItem('${item.name}')" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #f87171; padding: 5px 10px; border-radius: 4px; cursor: pointer; transition: all 0.2s; font-size: 0.8rem;" onmouseover="this.style.background='rgba(239, 68, 68, 0.35)'" onmouseout="this.style.background='rgba(239, 68, 68, 0.2)'">
+              Remove
+            </button>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    }
+
+    async function deleteShopItem(itemName) {
+      if (!confirm(`Are you sure you want to delete the shop item "${itemName}"?`)) return;
+      try {
+        showToast("Deleting shop item...", "info");
+        const res = await fetch(`/api/guild/${guildId}/shop_items/${encodeURIComponent(itemName)}`, {
+          method: 'DELETE'
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast(data.message || "Shop item deleted successfully!", "success");
+          loadShopItems();
+        } else {
+          showToast(data.error || "Failed to delete shop item.", "error");
+        }
+      } catch (err) {
+        console.error(err);
+        showToast("Error deleting shop item.", "error");
+      }
+    }
+
+    // Intercept saveSettings to refresh shop list when a new item is added
+    if (typeof window.saveSettings === 'function') {
+      const originalSaveSettings = window.saveSettings;
+      window.saveSettings = async function(event, category) {
+        if (category === 'stats_add') {
+          await handleStatsAdd(event);
+          return;
+        }
+        if (category === 'stats_refresh') {
+          await handleStatsRefresh(event);
+          return;
+        }
+        await originalSaveSettings(event, category);
+        if (category === 'economy_shop_add') {
+          const nameInput = document.getElementById('shop_item_name');
+          if (nameInput) nameInput.value = '';
+          loadShopItems();
+        }
+      };
+    } else {
+      // In case window.saveSettings isn't defined yet at execution time, hook it dynamically
+      const timer = setInterval(() => {
+        if (typeof window.saveSettings === 'function') {
+          clearInterval(timer);
+          const originalSaveSettings = window.saveSettings;
+          window.saveSettings = async function(event, category) {
+            if (category === 'stats_add') {
+              await handleStatsAdd(event);
+              return;
+            }
+            if (category === 'stats_refresh') {
+              await handleStatsRefresh(event);
+              return;
+            }
+            await originalSaveSettings(event, category);
+            if (category === 'economy_shop_add') {
+              const nameInput = document.getElementById('shop_item_name');
+              if (nameInput) nameInput.value = '';
+              loadShopItems();
+            }
+          };
+        }
+      }, 50);
+    }
+
+    // Dom Load
+    document.addEventListener('DOMContentLoaded', () => { 
+      initFontSelectorOptions();
+      renderDecoratorPresets();
+      loadCommandsForCategory('moderation'); 
+      loadActiveTempVCs();
+      fetchServerLayout();
+      previewFont();
+      handleTargetChannelChange();
+      startGiveawayClocks();
+
+
+
+      // Render preset card selectors
+      renderPresetsGrid('welcome');
+      renderPresetsGrid('goodbye');
+
+      
+      loadShopItems();
+      
+    });
+  

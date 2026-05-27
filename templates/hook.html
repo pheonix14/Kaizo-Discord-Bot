@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kaizer Telemetry Gateway</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050608;
+            --card-bg: #0c0d12;
+            --card-border: #1a1d26;
+            --accent-cyan: #0affe4;
+            --accent-cyan-glow: rgba(10, 254, 228, 0.15);
+            --accent-purple: #ab20fd;
+            --accent-purple-glow: rgba(171, 32, 253, 0.2);
+            --text-primary: #f0f3f8;
+            --text-secondary: #8e9cae;
+            --text-muted: #4e5a6a;
+            --status-online: #00ff66;
+            --status-offline: #ff2a5f;
+            --grid-line: rgba(10, 254, 228, 0.02);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow-x: hidden;
+        }
+
+        header {
+            border-bottom: 1px solid var(--card-border);
+            background-color: rgba(12, 13, 18, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 20px 40px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-indicator {
+            width: 12px;
+            height: 12px;
+            background-color: var(--accent-cyan);
+            box-shadow: 0 0 10px var(--accent-cyan);
+            border-radius: 2px;
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
+
+        h1 {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 20px;
+            font-weight: 500;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .system-status {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .pulse-text {
+            color: var(--accent-cyan);
+        }
+
+        main {
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 40px;
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 30px;
+        }
+
+        @media (max-width: 1024px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .dashboard-content {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Uptime metrics */
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .metric-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 24px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .metric-card:hover {
+            border-color: rgba(10, 254, 228, 0.4);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, var(--accent-cyan), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .metric-card:hover::before {
+            opacity: 1;
+        }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .metric-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        .metric-icon {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 18px;
+            color: var(--accent-cyan);
+        }
+
+        .metric-value {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 32px;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .metric-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Radar Widget */
+        .radar-panel {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+            position: relative;
+        }
+
+        .radar-container {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            border: 1px solid rgba(10, 254, 228, 0.1);
+            position: relative;
+            margin-bottom: 25px;
+            background: radial-gradient(circle, rgba(10, 254, 228, 0.02) 0%, transparent 70%);
+            overflow: hidden;
+        }
+
+        .radar-sweep {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            background: linear-gradient(45deg, rgba(10, 254, 228, 0.15) 0%, transparent 100%);
+            transform-origin: bottom right;
+            top: 0;
+            left: 0;
+            border-right: 1px solid rgba(10, 254, 228, 0.3);
+            animation: sweep 4s linear infinite;
+        }
+
+        .radar-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border-radius: 50%;
+            border: 1px dashed rgba(10, 254, 228, 0.1);
+        }
+
+        .radar-circle-1 { width: 140px; height: 140px; }
+        .radar-circle-2 { width: 80px; height: 80px; }
+        .radar-circle-3 { width: 20px; height: 20px; }
+
+        .radar-blip {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background-color: var(--accent-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-cyan);
+            opacity: 0;
+            animation: blip 4s infinite ease-in-out;
+        }
+
+        .blip-1 { top: 40px; left: 60px; animation-delay: 0.5s; }
+        .blip-2 { top: 120px; left: 150px; animation-delay: 1.8s; }
+        .blip-3 { top: 150px; left: 80px; animation-delay: 2.7s; }
+
+        .radar-status {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 15px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+        }
+
+        /* Grid Table of nodes */
+        .node-list-panel {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .panel-title-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 15px;
+        }
+
+        .panel-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-title-icon {
+            color: var(--accent-cyan);
+        }
+
+        .node-table-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--card-border);
+            font-weight: 600;
+        }
+
+        td {
+            padding: 16px;
+            border-bottom: 1px solid rgba(26, 29, 38, 0.5);
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-family: 'Inter', sans-serif;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            color: var(--text-primary);
+            background-color: rgba(255, 255, 255, 0.01);
+        }
+
+        .node-url-cell {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 14px;
+            color: var(--text-primary);
+            letter-spacing: 0.5px;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .badge-online {
+            background-color: rgba(0, 255, 102, 0.1);
+            color: var(--status-online);
+            border: 1px solid rgba(0, 255, 102, 0.2);
+        }
+
+        .badge-offline {
+            background-color: rgba(255, 42, 95, 0.1);
+            color: var(--status-offline);
+            border: 1px solid rgba(255, 42, 95, 0.2);
+        }
+
+        .badge-discovered {
+            background-color: rgba(171, 32, 253, 0.1);
+            color: var(--accent-purple);
+            border: 1px solid rgba(171, 32, 253, 0.2);
+        }
+
+        .indicator-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+        }
+
+        .indicator-dot.online {
+            background-color: var(--status-online);
+            box-shadow: 0 0 6px var(--status-online);
+        }
+
+        .indicator-dot.offline {
+            background-color: var(--status-offline);
+            box-shadow: 0 0 6px var(--status-offline);
+        }
+
+        .ping-count-cell {
+            font-family: 'Share Tech Mono', monospace;
+            color: var(--accent-cyan);
+            font-size: 14px;
+        }
+
+        .peer-connections {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            max-width: 300px;
+        }
+
+        .peer-link-badge {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 10px;
+            background-color: #12151e;
+            border: 1px solid var(--card-border);
+            padding: 2px 6px;
+            border-radius: 3px;
+            color: var(--text-secondary);
+        }
+
+        footer {
+            border-top: 1px solid var(--card-border);
+            background-color: rgba(6, 7, 9, 0.9);
+            padding: 20px 40px;
+            text-align: center;
+        }
+
+        .footer-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-muted);
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .footer-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-cyan);
+        }
+
+        /* Animations */
+        @keyframes pulse-glow {
+            0% { opacity: 0.6; box-shadow: 0 0 6px var(--accent-cyan); }
+            50% { opacity: 1; box-shadow: 0 0 16px var(--accent-cyan); }
+            100% { opacity: 0.6; box-shadow: 0 0 6px var(--accent-cyan); }
+        }
+
+        @keyframes sweep {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes blip {
+            0% { opacity: 0; }
+            5% { opacity: 1; }
+            40% { opacity: 0; }
+            100% { opacity: 0; }
+        }
+
+        /* Flash update transition */
+        .flash-cyan {
+            animation: flash-cyan-anim 0.8s ease-out;
+        }
+
+        @keyframes flash-cyan-anim {
+            0% { background-color: rgba(10, 254, 228, 0.2); }
+            100% { background-color: transparent; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-container">
+            <div class="logo-section">
+                <div class="logo-indicator"></div>
+                <h1>KAIZER telemetry</h1>
+            </div>
+            <div class="system-status">
+                SYSTEM CORE: <span class="pulse-text">ACTIVE</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="dashboard-content">
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">Gateway Uptime</span>
+                        <span class="metric-icon">⧖</span>
+                    </div>
+                    <div class="metric-value" id="uptime-val">{{ uptime }}</div>
+                    <div class="metric-subtitle">
+                        <span>Time since backend initiation</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">Inbound Pulses</span>
+                        <span class="metric-icon">✦</span>
+                    </div>
+                    <div class="metric-value" id="pings-val">{{ total_pings }}</div>
+                    <div class="metric-subtitle">
+                        <span>P2P mesh heartbeats received</span>
+                    </div>
+                </div>
+
+                <div class="metric-card">
+                    <div class="metric-header">
+                        <span class="metric-title">Mesh Network Nodes</span>
+                        <span class="metric-icon">⬪</span>
+                    </div>
+                    <div class="metric-value" id="peers-val">{{ node_count }}</div>
+                    <div class="metric-subtitle">
+                        <span id="active-peers-subtitle">{{ active_count }} active nodes online</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="node-list-panel">
+                <div class="panel-title-bar">
+                    <div class="panel-title">
+                        <span class="panel-title-icon">◈</span>
+                        Network Registry Topology
+                    </div>
+                </div>
+                <div class="node-table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Node Address</th>
+                                <th>Label</th>
+                                <th>Status</th>
+                                <th>Last Seen</th>
+                                <th>Pulse Count</th>
+                                <th>Active Peers</th>
+                            </tr>
+                        </thead>
+                        <tbody id="nodes-tbody">
+                            {% for node in nodes %}
+                            <tr id="node-row-{{ node.node_url | replace('://', '-') | replace('.', '-') | replace(':', '-') | replace('/', '-') }}">
+                                <td class="node-url-cell">{{ node.node_url }}</td>
+                                <td>{{ node.label }}</td>
+                                <td>
+                                    {% if node.status == 'online' %}
+                                    <span class="badge badge-online">
+                                        <span class="indicator-dot online"></span>
+                                        ONLINE
+                                    </span>
+                                    {% else %}
+                                    <span class="badge badge-offline">
+                                        <span class="indicator-dot offline"></span>
+                                        OFFLINE
+                                    </span>
+                                    {% endif %}
+                                </td>
+                                <td class="last-seen-cell" data-timestamp="{{ node.last_seen }}">{{ node.last_seen }}</td>
+                                <td class="ping-count-cell">{{ node.ping_count }}</td>
+                                <td>
+                                    <div class="peer-connections">
+                                        {% for peer in node.peers %}
+                                        <span class="peer-link-badge">{{ peer | replace('https://', '') | replace('http://', '') }}</span>
+                                        {% else %}
+                                        <span style="color: var(--text-muted);">None</span>
+                                        {% endfor %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr id="no-nodes-row">
+                                <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                                    Waiting for mesh network heartbeats...
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="radar-sidebar">
+            <div class="radar-panel">
+                <div class="radar-container">
+                    <div class="radar-sweep" id="radar-sweep-elm"></div>
+                    <div class="radar-circle radar-circle-1"></div>
+                    <div class="radar-circle radar-circle-2"></div>
+                    <div class="radar-circle radar-circle-3"></div>
+                    <div class="radar-blip blip-1"></div>
+                    <div class="radar-blip blip-2"></div>
+                    <div class="radar-blip blip-3"></div>
+                </div>
+                <div class="radar-status" id="radar-status-text">
+                    Scanning Mesh...
+                </div>
+                <div style="font-size: 11px; color: var(--text-muted); margin-top: 15px; font-family: 'Share Tech Mono', monospace;">
+                    Pulse cycle active (30s)
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-container">
+            <div>
+                &copy; 2026 KAIZER PROTOCOL ⬪ UNIVERSAL PULSE EMITTER
+            </div>
+            <div class="footer-links">
+                <a href="/">Dashboard</a>
+                <a href="/help">Help</a>
+                <a href="/health">Health</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Helper to format ISO strings cleanly relative to client time
+        function formatLastSeen(isoString) {
+            if (!isoString || isoString === 'Never') return 'Never';
+            try {
+                const date = new Date(isoString);
+                if (isNaN(date.getTime())) return isoString;
+                
+                const now = new Date();
+                const diffMs = now - date;
+                const diffSec = Math.floor(diffMs / 1000);
+                
+                if (diffSec < 5) return 'Just now';
+                if (diffSec < 60) return `${diffSec}s ago`;
+                
+                const diffMin = Math.floor(diffSec / 60);
+                if (diffMin < 60) return `${diffMin}m ago`;
+                
+                const diffHour = Math.floor(diffMin / 60);
+                if (diffHour < 24) return `${diffHour}h ago`;
+                
+                return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            } catch (e) {
+                return isoString;
+            }
+        }
+
+        // Clean up string to create valid element IDs
+        function sanitizeId(url) {
+            return 'node-row-' + url.replace('://', '-').replace(/\./g, '-').replace(/:/g, '-').replace(/\//g, '-');
+        }
+
+        // Live poller
+        function pollTelemetry() {
+            fetch('/api/awake/status')
+                .then(response => response.json())
+                .then(data => {
+                    // Update counters
+                    document.getElementById('uptime-val').textContent = data.uptime;
+                    document.getElementById('pings-val').textContent = data.total_pings;
+                    document.getElementById('peers-val').textContent = data.node_count;
+                    document.getElementById('active-peers-subtitle').textContent = `${data.active_count} active nodes online`;
+                    
+                    // Adjust radar speed based on active nodes
+                    const sweepElm = document.getElementById('radar-sweep-elm');
+                    if (data.active_count > 0) {
+                        sweepElm.style.animationDuration = Math.max(1, 4 - (data.active_count * 0.5)) + 's';
+                        document.getElementById('radar-status-text').textContent = 'MESH STABLE';
+                        document.getElementById('radar-status-text').style.color = 'var(--accent-cyan)';
+                    } else {
+                        sweepElm.style.animationDuration = '4s';
+                        document.getElementById('radar-status-text').textContent = 'SCANNING MESH...';
+                        document.getElementById('radar-status-text').style.color = 'var(--text-secondary)';
+                    }
+
+                    const tbody = document.getElementById('nodes-tbody');
+                    const noNodesRow = document.getElementById('no-nodes-row');
+                    
+                    if (data.nodes.length > 0 && noNodesRow) {
+                        noNodesRow.remove();
+                    }
+
+                    // Update or insert rows
+                    data.nodes.forEach(node => {
+                        const rowId = sanitizeId(node.node_url);
+                        let row = document.getElementById(rowId);
+                        const isNew = !row;
+
+                        const badgeHtml = node.status === 'online' 
+                            ? `<span class="badge badge-online"><span class="indicator-dot online"></span>ONLINE</span>`
+                            : `<span class="badge badge-offline"><span class="indicator-dot offline"></span>OFFLINE</span>`;
+
+                        let peersHtml = '';
+                        if (node.peers && node.peers.length > 0) {
+                            node.peers.forEach(peer => {
+                                const cleanPeer = peer.replace('https://', '').replace('http://', '');
+                                peersHtml += `<span class="peer-link-badge">${cleanPeer}</span>`;
+                            });
+                        } else {
+                            peersHtml = `<span style="color: var(--text-muted);">None</span>`;
+                        }
+
+                        const innerRowHtml = `
+                            <td class="node-url-cell">${node.node_url}</td>
+                            <td>${node.label}</td>
+                            <td>${badgeHtml}</td>
+                            <td class="last-seen-cell" data-timestamp="${node.last_seen}">${formatLastSeen(node.last_seen)}</td>
+                            <td class="ping-count-cell">${node.ping_count}</td>
+                            <td><div class="peer-connections">${peersHtml}</div></td>
+                        `;
+
+                        if (isNew) {
+                            row = document.createElement('tr');
+                            row.id = rowId;
+                            row.innerHTML = innerRowHtml;
+                            tbody.appendChild(row);
+                            row.classList.add('flash-cyan');
+                        } else {
+                            // Check if values actually changed to flash row
+                            const oldPing = row.querySelector('.ping-count-cell').textContent;
+                            if (oldPing !== String(node.ping_count)) {
+                                row.innerHTML = innerRowHtml;
+                                row.classList.remove('flash-cyan');
+                                void row.offsetWidth; // Trigger reflow for animation restart
+                                row.classList.add('flash-cyan');
+                            } else {
+                                // Just update relative last seen text
+                                const lastSeenCell = row.querySelector('.last-seen-cell');
+                                lastSeenCell.textContent = formatLastSeen(node.last_seen);
+                                lastSeenCell.setAttribute('data-timestamp', node.last_seen);
+                            }
+                        }
+                    });
+                })
+                .catch(err => console.error("Telemetry fetch failed: ", err));
+        }
+
+        // Initialize last seen human-readable strings on load
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.last-seen-cell').forEach(cell => {
+                const ts = cell.getAttribute('data-timestamp');
+                cell.textContent = formatLastSeen(ts);
+            });
+
+            // Start polling every 10 seconds
+            setInterval(pollTelemetry, 10000);
+        });
+    </script>
+</body>
+</html>

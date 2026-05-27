@@ -1,4 +1,4 @@
-- [ ] Create `src/bot/admin_utils.py` with `is_admin(user_id: int) -> bool` reading `config.ADMIN_USER_IDS` and a `admin_only` decorator for discord commands.
+- [x] Create `src/bot/admin_utils.py` with `is_admin(user_id: int) -> bool` reading `config.ADMIN_USER_IDS` and a `admin_only` decorator for discord commands.
 - [ ] Refactor existing admin-restricted commands (`dashboard_command`, `status_command`, etc.) to use `@admin_only` instead of `@commands.has_permissions(administrator=True)`.
 - [ ] Ensure `admin_only` returns a friendly error message when a non‑admin invokes the command.
 - [x] Update `clean_styled_string` in `src/web/fonts.py` to trim outer spacing, hyphens, and underscores.
@@ -15,3 +15,9 @@
   - [x] Implement `createMuteRole` and `createModLogChannel` API call handlers
   - [x] Implement `addAutomodRule`, `removeAutomodule`, and `renderAutomodRulesList`
   - [x] Wire settings load parsing logic to read saved rules and populate UI
+- [x] Giveaway Timing Selectors & Clocks (`server.html`)
+  - [x] Add live GMT / UTC and Local clocks to Giveaways tab
+  - [x] Implement selection of timezone mode (UTC vs Local) for start/end dates
+  - [x] Construct proper ISO 8601 strings ending in Z dynamically in the frontend
+  - [x] Add dynamic helpers under date inputs showing start/end in both timezones
+

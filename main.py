@@ -1,4 +1,21 @@
+import socket
 import warnings
+
+# Monkey-patch socket.getaddrinfo to force IPv4 DNS resolution (prevents IPv6 getaddrinfo failed errors on Windows)
+_original_getaddrinfo = socket.getaddrinfo
+def _patched_getaddrinfo(*args, **kwargs):
+    args = list(args)
+    if 'family' in kwargs:
+        kwargs['family'] = socket.AF_INET
+    elif len(args) >= 3:
+        args[2] = socket.AF_INET
+    else:
+        while len(args) < 3:
+            args.append(0)
+        args[2] = socket.AF_INET
+    return _original_getaddrinfo(*args, **kwargs)
+socket.getaddrinfo = _patched_getaddrinfo
+
 # Ignore RequestsDependencyWarning related to urllib3/chardet mismatch
 warnings.filterwarnings("ignore", message=".*urllib3.*")
 
