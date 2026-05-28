@@ -578,3 +578,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-28] fix(temp-vc): align dynamic voice room creation
 - [2026-05-28] feat(reaction-roles): implement menu customizer
 - [2026-05-28] feat(db): update schema migration runner
+- [2026-05-28] refactor(reaction-roles): streamline menu customizer
