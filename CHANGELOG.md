@@ -570,3 +570,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-27] refactor(tickets): refactor channel permissions
 - [2026-05-27] perf(perf): optimize asyncio task pooling
 - [2026-05-27] feat(economy): update wallet balance
+- [2026-05-28] perf(engine): tune event loop dispatcher
