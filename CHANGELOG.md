@@ -575,3 +575,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-28] style(temp-vc): polish auto channel deletion on empty
 - [2026-05-28] style(utility): polish ping latency
 - [2026-05-28] feat(refactor): update cog modularization
+- [2026-05-28] fix(temp-vc): align dynamic voice room creation
