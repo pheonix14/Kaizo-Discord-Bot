@@ -581,3 +581,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-28] refactor(reaction-roles): streamline menu customizer
 - [2026-05-28] docs(docs): harden README setup instructions
 - [2026-05-29] feat(economy): add p2p transfer validation
+- [2026-05-29] feat(engine): update gateway connection
