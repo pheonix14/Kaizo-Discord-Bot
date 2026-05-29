@@ -585,3 +585,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-29] refactor(refactor): streamline lint cleanup
 - [2026-05-29] docs(docs): update commands guide
 - [2026-05-29] feat(reaction-roles): add role assignment toggle
+- [2026-05-29] refactor(reaction-roles): streamline menu customizer
