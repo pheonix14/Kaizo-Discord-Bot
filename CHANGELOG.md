@@ -587,3 +587,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-29] feat(reaction-roles): add role assignment toggle
 - [2026-05-29] refactor(reaction-roles): streamline menu customizer
 - [2026-05-29] feat(utility): add role info
+- [2026-05-29] fix(economy): align coin minting
