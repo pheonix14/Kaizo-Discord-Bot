@@ -595,3 +595,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-30] feat(zero-emoji): harden ASCII status indicators
 - [2026-05-30] feat(server-builder): add category layout
 - [2026-05-30] feat(music): enhance PyNaCl voice socket
+- [2026-05-30] perf(developer): optimize cog hot reloader
