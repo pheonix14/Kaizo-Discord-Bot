@@ -590,3 +590,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-29] fix(economy): align coin minting
 - [2026-05-29] feat(server-builder): update category layout
 - [2026-05-29] style(db): polish Supabase connection pool
+- [2026-05-30] style(utility): polish serverinfo card
