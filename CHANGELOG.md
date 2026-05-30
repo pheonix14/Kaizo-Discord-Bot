@@ -598,3 +598,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-30] perf(developer): optimize cog hot reloader
 - [2026-05-30] feat(moderation): harden warn tracker
 - [2026-05-30] refactor(stats): streamline active voice count
+- [2026-05-30] refactor(ui): streamline settings forms
