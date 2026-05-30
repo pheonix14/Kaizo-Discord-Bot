@@ -592,3 +592,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-29] style(db): polish Supabase connection pool
 - [2026-05-30] style(utility): polish serverinfo card
 - [2026-05-30] feat(perf): update asyncio task pooling
+- [2026-05-30] feat(zero-emoji): harden ASCII status indicators
