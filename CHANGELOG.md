@@ -599,3 +599,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-30] feat(moderation): harden warn tracker
 - [2026-05-30] refactor(stats): streamline active voice count
 - [2026-05-30] refactor(ui): streamline settings forms
+- [2026-05-30] feat(leveling): harden level up notifications
