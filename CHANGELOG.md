@@ -617,3 +617,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-01] docs(docs): add credits to pheonix14
 - [2026-06-01] perf(web): optimize Flask app initialization
 - [2026-06-01] fix(server-builder): align community preset
+- [2026-06-01] style(stats): polish member count updater
