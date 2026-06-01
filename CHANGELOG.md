@@ -611,3 +611,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-05-31] style(developer): polish telemetry ping
 - [2026-05-31] refactor(stats): streamline server stats voice channels
 - [2026-06-01] refactor(stats): streamline member count updater
+- [2026-06-01] refactor(leveling): streamline leaderboard query
