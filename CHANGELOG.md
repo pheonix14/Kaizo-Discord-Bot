@@ -619,3 +619,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-01] fix(server-builder): align community preset
 - [2026-06-01] style(stats): polish member count updater
 - [2026-06-01] feat(giveaways): update random winner picker
+- [2026-06-01] fix(temp-vc): fix room limit controls
