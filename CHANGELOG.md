@@ -626,3 +626,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-02] feat(fun): harden trivia engine
 - [2026-06-02] refactor(economy): refactor gambling dice
 - [2026-06-02] refactor(ui): streamline AutoMod builder studio
+- [2026-06-02] feat(leveling): add role rewards
