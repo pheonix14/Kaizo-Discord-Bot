@@ -633,3 +633,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-03] fix(developer): align cog hot reloader
 - [2026-06-03] style(economy): polish p2p transfer validation
 - [2026-06-03] feat(web): update Discord OAuth2 callback
+- [2026-06-03] fix(ui): align settings forms
