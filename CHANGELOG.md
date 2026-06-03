@@ -638,3 +638,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-03] feat(utility): update safe math expression evaluator
 - [2026-06-03] refactor(giveaways): refactor reaction entrant collector
 - [2026-06-03] feat(tickets): update close button
+- [2026-06-03] feat(tickets): enhance channel permissions
