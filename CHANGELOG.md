@@ -630,3 +630,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-02] perf(ui): optimize giveaway clocks
 - [2026-06-02] feat(economy): harden gambling dice
 - [2026-06-02] fix(ui): fix AutoMod builder studio
+- [2026-06-03] fix(developer): align cog hot reloader
