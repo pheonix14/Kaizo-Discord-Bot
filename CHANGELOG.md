@@ -635,3 +635,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-03] feat(web): update Discord OAuth2 callback
 - [2026-06-03] fix(ui): align settings forms
 - [2026-06-03] feat(db): harden transaction helper
+- [2026-06-03] feat(utility): update safe math expression evaluator
