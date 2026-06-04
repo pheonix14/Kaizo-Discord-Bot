@@ -189,7 +189,8 @@ def clean_styled_string(text):
     for style_str in styles.values():
         for idx, char in enumerate(style_str):
             if idx < len(ALPHABET):
-                reverse_map[char] = ALPHABET[idx]
+                if char not in ALPHABET and char not in ALPHABET.upper():
+                    reverse_map[char] = ALPHABET[idx]
                 
     keep_chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789 -_"
     

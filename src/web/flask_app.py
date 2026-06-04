@@ -222,6 +222,9 @@ def verify_session() -> bool:
     """Validate the signed session cookie.
     Returns True if the session is valid, False otherwise.
     """
+    from src import config
+    if getattr(config, 'BYPASS_DISCORD', False):
+        return True
     signed = request.cookies.get("session")
     if not signed:
         return False
@@ -236,6 +239,14 @@ def verify_session() -> bool:
 
 def get_user_info(token: str) -> dict:
     """Fetch Discord user information using the provided OAuth token."""
+    from src import config
+    if getattr(config, 'BYPASS_DISCORD', False):
+        return {
+            "id": "123456789012345678",
+            "username": "BypassUser",
+            "discriminator": "0000",
+            "avatar": None
+        }
     import requests
     headers = {"Authorization": f"Bearer {token}"}
     resp = requests.get("https://discord.com/api/users/@me", headers=headers)
@@ -244,6 +255,40 @@ def get_user_info(token: str) -> dict:
 
 def get_user_guilds(token: str) -> list:
     """Fetch guilds the user belongs to (requires the `guilds` scope)."""
+    from src import config
+    if getattr(config, 'BYPASS_DISCORD', False):
+        from src.bot.engine import bot
+        guilds = []
+        if bot and bot.is_ready():
+            for g in bot.guilds:
+                guilds.append({
+                    "id": str(g.id),
+                    "name": g.name,
+                    "icon": g.icon.key if (g.icon and hasattr(g.icon, 'key')) else None,
+                    "permissions": "8"
+                })
+        if not guilds:
+            try:
+                db_resp = supabase.from_("guild_settings").select("guild_id").execute()
+                if db_resp.data:
+                    for item in db_resp.data:
+                        gid = item.get("guild_id")
+                        guilds.append({
+                            "id": str(gid),
+                            "name": f"Kaizer Server {gid}",
+                            "icon": None,
+                            "permissions": "8"
+                        })
+            except Exception:
+                pass
+        if not guilds:
+            guilds.append({
+                "id": "123456789012345678",
+                "name": "Kaizer Mock Guild",
+                "icon": None,
+                "permissions": "8"
+            })
+        return guilds
     import requests
     headers = {"Authorization": f"Bearer {token}"}
     resp = requests.get("https://discord.com/api/users/@me/guilds", headers=headers)
@@ -288,6 +333,26 @@ def index():
 
 @app.route("/login")
 def login():
+    from src import config
+    if getattr(config, 'BYPASS_DISCORD', False):
+        is_https = request.scheme == "https" or os.getenv("HOST_URL", "").startswith("https")
+        session_payload = json.dumps({"expires": time.time() + 30 * 24 * 3600})
+        resp = make_response(redirect("/dashboard?login=success"))
+        resp.set_cookie(
+            "session", session_payload,
+            httponly=True,
+            samesite="None" if is_https else "Lax",
+            secure=is_https,
+        )
+        resp.set_cookie(
+            "discord_token", "bypass_token_mock_val",
+            httponly=True,
+            samesite="None" if is_https else "Lax",
+            secure=is_https,
+        )
+        logger.info("Bypassed Discord OAuth: logged in user BypassUser immediately.")
+        return resp
+
     state = secrets.token_urlsafe(16)
     params = {
         "client_id": config.DISCORD_APP_ID,
@@ -930,13 +995,35 @@ def api_guild_settings(guild_id):
                 except Exception as e:
                     logger.warning(f"Failed to deserialize {key}: {e}")
         
+        # Filter payload to keep only valid DB columns
+        VALID_SETTINGS_COLUMNS = {
+            "guild_id", "guild_name", "anti_ban_limit", "anti_ban_time_frame", 
+            "anti_kick_limit", "anti_kick_time_frame", "anti_channel_delete_limit", 
+            "anti_channel_delete_time_frame", "anti_role_delete_limit", 
+            "anti_role_delete_time_frame", "anti_bot_add", "is_active", "prefix", 
+            "language", "embed_color", "dj_role", "admin_roles", "mod_roles", 
+            "welcome_enabled", "welcome_channel", "welcome_message", "goodbye_enabled", 
+            "goodbye_channel", "goodbye_message", "leveling_enabled", "xp_rate", 
+            "level_up_message_enabled", "level_up_channel", "level_up_message", 
+            "xp_blacklist_channels", "logging_enabled", "log_channel", "log_events", 
+            "k4_defence_enabled", "automod_rules", "warn_thresholds", "mute_role", 
+            "mod_log_channel", "ticket_enabled", "ticket_category", "ticket_support_role", 
+            "ticket_log_channel", "ticket_limit", "ticket_panel_message", "counter_style", 
+            "counter_refresh_interval", "counter_category_id", "counter_tracked_vc_id", 
+            "counter_total_chan_id", "counter_total_fmt", "counter_online_chan_id", 
+            "counter_online_fmt", "counter_offline_chan_id", "counter_offline_fmt", 
+            "counter_invc_chan_id", "counter_invc_fmt", "temp_vc_lobby", "temp_vc_category", 
+            "temp_vc_name_format", "temp_vc_limit", "temp_vc_locked"
+        }
+        db_payload = {k: v for k, v in payload.items() if k in VALID_SETTINGS_COLUMNS}
+
         resp = supabase.from_("guild_settings").select("*").eq("guild_id", guild_id).execute()
         try:
             if resp.data:
-                res = supabase.from_("guild_settings").update(payload).eq("guild_id", guild_id).execute()
+                res = supabase.from_("guild_settings").update(db_payload).eq("guild_id", guild_id).execute()
             else:
-                payload["guild_id"] = guild_id
-                res = supabase.from_("guild_settings").insert(payload).execute()
+                db_payload["guild_id"] = guild_id
+                res = supabase.from_("guild_settings").insert(db_payload).execute()
             from src.db.client import clear_guild_cache
             clear_guild_cache(guild_id)
             return jsonify({"success": True, "message": f"{category.capitalize() + ' s' if category else 'S'}ettings saved successfully!"}), 200
@@ -2313,27 +2400,57 @@ def api_guild_giveaways(guild_id):
 def api_guild_channels(guild_id):
     if not verify_session():
         return jsonify({"error": "unauthorized"}), 401
+    
+    from src import config
     from src.bot.engine import bot
-    if not bot or not bot.is_ready():
-        return jsonify([])
-    guild = bot.get_guild(int(guild_id))
-    if not guild:
-        return jsonify([])
-    channels = [{"id": str(c.id), "name": c.name, "type": str(c.type)} for c in guild.channels]
-    return jsonify(channels)
+    
+    guild = None
+    if bot and bot.is_ready():
+        guild = bot.get_guild(int(guild_id))
+        
+    if guild:
+        channels = [{"id": str(c.id), "name": c.name, "type": str(c.type)} for c in guild.channels]
+        return jsonify(channels)
+        
+    if getattr(config, 'BYPASS_DISCORD', False):
+        return jsonify([
+            {"id": "100000000000000001", "name": "welcome", "type": "text"},
+            {"id": "100000000000000002", "name": "general", "type": "text"},
+            {"id": "100000000000000003", "name": "bot-commands", "type": "text"},
+            {"id": "100000000000000004", "name": "mod-logs", "type": "text"},
+            {"id": "200000000000000001", "name": "Lounge", "type": "voice"},
+            {"id": "200000000000000002", "name": "Join to Create VC", "type": "voice"},
+            {"id": "200000000000000003", "name": "Music VC", "type": "voice"},
+            {"id": "300000000000000001", "name": "Information", "type": "category"},
+            {"id": "300000000000000002", "name": "Text Channels", "type": "category"},
+            {"id": "300000000000000003", "name": "Voice Channels", "type": "category"},
+        ])
+    return jsonify([])
 
 @app.route("/api/guild/<guild_id>/roles")
 def api_guild_roles(guild_id):
     if not verify_session():
         return jsonify({"error": "unauthorized"}), 401
+        
+    from src import config
     from src.bot.engine import bot
-    if not bot or not bot.is_ready():
-        return jsonify([])
-    guild = bot.get_guild(int(guild_id))
-    if not guild:
-        return jsonify([])
-    roles = [{"id": str(r.id), "name": r.name, "color": str(r.color)} for r in guild.roles]
-    return jsonify(roles)
+    
+    guild = None
+    if bot and bot.is_ready():
+        guild = bot.get_guild(int(guild_id))
+        
+    if guild:
+        roles = [{"id": str(r.id), "name": r.name, "color": str(r.color)} for r in guild.roles]
+        return jsonify(roles)
+        
+    if getattr(config, 'BYPASS_DISCORD', False):
+        return jsonify([
+            {"id": "900000000000000001", "name": "Admin", "color": "#ff2d55"},
+            {"id": "900000000000000002", "name": "Moderator", "color": "#0affe4"},
+            {"id": "900000000000000003", "name": "DJ", "color": "#c9a84c"},
+            {"id": "900000000000000004", "name": "Muted", "color": "#6b7280"},
+        ])
+    return jsonify([])
 
 @app.route("/api/guild/logs")
 def api_guild_logs():

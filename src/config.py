@@ -30,6 +30,9 @@ HOST_URL = os.getenv("HOST_URL", f"http://{display_host}:{PORT}")
 # Developer / admin user IDs (comma-separated Discord IDs)
 DEVELOPER_ID = str(os.getenv("DEVELOPER_ID", "")).strip()
 
+# Local auth bypass mode control flag
+BYPASS_DISCORD = False
+
 # Validation
 if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
     raise ValueError("Missing Supabase configuration. Please check your .env file.")
