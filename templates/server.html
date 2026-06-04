@@ -1039,6 +1039,10 @@
                     <option value="spam_messages">Spamming Messages</option>
                     <option value="spam_attachments">Spamming Images/Videos/Files</option>
                     <option value="spam_mentions">Spamming Mentions/Pings</option>
+                    <option value="spam_links">Spamming Links/URLs</option>
+                    <option value="spam_invites">Spamming Discord Invites</option>
+                    <option value="spam_newlines">Wall-of-Text / Newline Flood</option>
+                    <option value="spam_duplicates">Duplicate Content Flood</option>
                   </select>
                 </div>
                 <div>
@@ -1054,8 +1058,6 @@
                   <select class="form-select" id="studio_action">
                     <option value="mute">Mute Permanently (Flag Role)</option>
                     <option value="warn">Delete & Warn</option>
-                    <option value="kick">Kick Member</option>
-                    <option value="ban">Ban Member</option>
                   </select>
                 </div>
                 <div>
@@ -1085,6 +1087,32 @@
             </div>
             <button type="submit" class="btn btn-primary">Save Moderation Settings</button>
           </form>
+        </div>
+
+        <style>
+          @keyframes pulseLog {
+            0% { transform: scale(0.9); opacity: 0.4; }
+            50% { transform: scale(1.15); opacity: 1; }
+            100% { transform: scale(0.9); opacity: 0.4; }
+          }
+        </style>
+        
+        <div class="glass-panel" style="margin-top: 24px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div>
+              <h3 style="margin: 0; display: flex; align-items: center; gap: 10px;">
+                K4 Defence Log
+                <span id="watcher-pulse-dot" style="display: none; width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; animation: pulseLog 1.5s infinite;"></span>
+              </h3>
+              <p style="color: var(--text-muted); font-size: 0.85rem; margin: 5px 0 0 0;">Real-time scrolling log viewer of security events.</p>
+            </div>
+            <button type="button" class="btn btn-secondary" id="btn-toggle-watcher" onclick="toggleK4Watcher()" style="border-radius: 20px; font-size: 0.8rem; padding: 6px 16px; border: 1px solid rgba(255,255,255,0.15);">
+              Start Watcher
+            </button>
+          </div>
+          <div id="k4-log-container" style="max-height: 250px; min-height: 120px; overflow-y: auto; font-family: monospace; background: rgba(0,0,0,0.4); border-radius: 6px; padding: 12px; font-size: 0.82rem; color: #e2e8f0; border: 1px solid rgba(255,255,255,0.05); display: flex; flex-direction: column; gap: 4px;">
+            <div style="color: var(--text-muted); font-style: italic;">Watcher inactive. Click 'Start Watcher' to stream real-time logs.</div>
+          </div>
         </div>
       </div>
 
@@ -2710,8 +2738,18 @@
           <h3 style="margin-bottom:10px;">Setup</h3>
           <form onsubmit="saveSettings(event,'tempvc_setup')">
             <label class="switch" style="margin-bottom:15px;"><input type="checkbox" id="tempvc_enabled" checked><span class="slider"></span><span style="margin-left:55px;color:white;">Enable Temp VC System</span></label>
-            <div class="form-group"><label class="form-label">Join-to-Create Channel ID</label><input type="text" class="form-control" id="tempvc_join_channel" placeholder="Users join this VC to create their own"></div>
-            <div class="form-group"><label class="form-label">Creation Category ID</label><input type="text" class="form-control" id="tempvc_category" placeholder="Where new temp VCs appear"></div>
+            <div class="form-group">
+              <label class="form-label">Join-to-Create Channel</label>
+              <select class="form-control" id="tempvc_join_channel">
+                <option value="">-- Select Voice Channel --</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Creation Category</label>
+              <select class="form-control" id="tempvc_category">
+                <option value="">-- Select Category --</option>
+              </select>
+            </div>
             <div class="form-group"><label class="form-label">Default Name Template (use {user}, {count})</label><input type="text" class="form-control" id="tempvc_name_template" value="{user}'s Channel"></div>
             <div class="form-group"><label class="form-label">Default User Limit (0 = unlimited)</label><input type="number" class="form-control" id="tempvc_default_limit" value="0" min="0" max="99"></div>
             <button type="submit" class="btn btn-primary">Save Temp VC</button>
@@ -2877,7 +2915,7 @@
           <div style="display:flex; gap:15px; margin-bottom:15px; flex-wrap:wrap; align-items: flex-end;">
             <div class="form-group" style="flex:1; min-width:250px; margin-bottom: 0;">
               <label class="form-label">Search Decoration Presets</label>
-              <input type="text" class="form-control" id="decorator_search" placeholder="Search 85+ styles..." onkeyup="filterDecoratorPresets()">
+            <input type="text" class="form-control" id="decorator_search" placeholder="Search 100+ styles..." onkeyup="filterDecoratorPresets()">
             </div>
             
             <div class="form-group" style="flex:1; min-width:200px; margin-bottom: 0;">
@@ -2888,6 +2926,7 @@
 
           <div class="commands-tabs" id="decorator-cat-tabs" style="margin-bottom: 12px; gap: 4px;">
             <button class="cmd-tab active" data-cat="all" onclick="filterDecoratorCategory('all', this)">All</button>
+            <button class="cmd-tab" data-cat="emojis" onclick="filterDecoratorCategory('emojis', this)">Emojis</button>
             <button class="cmd-tab" data-cat="aesthetic" onclick="filterDecoratorCategory('aesthetic', this)">Aesthetic</button>
             <button class="cmd-tab" data-cat="minimalist" onclick="filterDecoratorCategory('minimalist', this)">Minimalist</button>
             <button class="cmd-tab" data-cat="cyberpunk" onclick="filterDecoratorCategory('cyberpunk', this)">Cyberpunk</button>
@@ -3625,7 +3664,21 @@
     }
 
     // ── DECORATOR PRESETS DATABASE (1,530 configs generated dynamically) ─────────────────────────────
-        const BASE_PATTERNS = [
+    const BASE_PATTERNS = [
+      // Category: emojis (12 patterns)
+      { name: "Cosmic Orbit", pattern: "🪐 ₊ {word} ₊ 🪐", cat: "emojis" },
+      { name: "Withered Rose", pattern: "🥀 ⌁ {word} ⌁ 🥀", cat: "emojis" },
+      { name: "Shining Diamond", pattern: "💎 ╎ {word} ╎ 💎", cat: "emojis" },
+      { name: "Crystal Ball", pattern: "🔮 ٫ {word} ‧ 🔮", cat: "emojis" },
+      { name: "Iron Chains", pattern: "⛓️ ╎ {word} ╎ ⛓️", cat: "emojis" },
+      { name: "Spirit Shrine", pattern: "⛩️ ٫ {word} 𖦹 ⛩️", cat: "emojis" },
+      { name: "Gothic Candle", pattern: "🕯️ ₊ {word} ₊ 🕯️", cat: "emojis" },
+      { name: "DNA Lab", pattern: "🧬 ٫ {word} ‧ 🧬", cat: "emojis" },
+      { name: "Drama Masque", pattern: "🎭 ⌁ {word} ⌁ 🎭", cat: "emojis" },
+      { name: "Hunter Bow", pattern: "🏹 ٫ {word} ‧ 🏹", cat: "emojis" },
+      { name: "Alien UFO", pattern: "🛸 ╎ {word} ╎ 🛸", cat: "emojis" },
+      { name: "Pirate Flag", pattern: "🏴‍☠️ ٫ {word} ‧ 🏴‍☠️", cat: "emojis" },
+
       // Category: stars (10 patterns)
       { name: "Solid Star", pattern: "★ {word} ★", cat: "stars" },
       { name: "Hollow Star", pattern: "☆ {word} ☆", cat: "stars" },
@@ -3636,19 +3689,19 @@
       { name: "Pinwheel Star", pattern: "✸ {word} ✸", cat: "stars" },
       { name: "Twelve-Point Star", pattern: "✹ {word} ✹", cat: "stars" },
       { name: "Sunburst Star", pattern: "❂ {word} ❂", cat: "stars" },
-      { name: "Star Line Symm", pattern: "★ ─ {word} ─ ★", cat: "stars" },
+      { name: "Circled Star", pattern: "✪ {word} ✪", cat: "stars" },
 
       // Category: arrows (10 patterns)
-      { name: "Double Arrow Right", pattern: "» {word} «", cat: "arrows" },
-      { name: "Double Arrow Left", pattern: "« {word} »", cat: "arrows" },
-      { name: "Point Right", pattern: "➤ {word} ➤", cat: "arrows" },
-      { name: "Bold Point Right", pattern: "➢ {word} ➢", cat: "arrows" },
-      { name: "Heavy Arrow Right", pattern: "➔ {word} ➔", cat: "arrows" },
-      { name: "Opposite Block Arrows", pattern: "🡲 {word} 🡰", cat: "arrows" },
-      { name: "Opposite Wedge Arrows", pattern: "⮚ {word} ⮘", cat: "arrows" },
-      { name: "Opposite Guide Arrows", pattern: "⮞ {word} ⮜", cat: "arrows" },
-      { name: "Double Arrow Line", pattern: "» ─ {word} ─ «", cat: "arrows" },
-      { name: "Double Arrow Dot", pattern: "« ٫ {word} ‧ »", cat: "arrows" },
+      { name: "Double Angle Right", pattern: "» {word} «", cat: "arrows" },
+      { name: "Double Angle Left", pattern: "« {word} »", cat: "arrows" },
+      { name: "Point Right Arrow", pattern: "➤ {word} ➤", cat: "arrows" },
+      { name: "Thin Arrow", pattern: "➢ {word} ➢", cat: "arrows" },
+      { name: "Heavy Right", pattern: "➔ {word} ➔", cat: "arrows" },
+      { name: "Opposite Blocks", pattern: "🡲 {word} 🡰", cat: "arrows" },
+      { name: "Opposite Wedges", pattern: "⮚ {word} ⮘", cat: "arrows" },
+      { name: "Opposite Guides", pattern: "⮞ {word} ⮜", cat: "arrows" },
+      { name: "Feathered Arrow", pattern: "➸ {word} ➸", cat: "arrows" },
+      { name: "Arching Arrows", pattern: "➴ {word} ➶", cat: "arrows" },
 
       // Category: aesthetic (12 patterns)
       { name: "Glow Diamond", pattern: "◈ {word} ◈", cat: "aesthetic" },
@@ -3656,13 +3709,13 @@
       { name: "Solid Diamond", pattern: "◆ {word} ◆", cat: "aesthetic" },
       { name: "Lozenge", pattern: "⬪ {word} ⬪", cat: "aesthetic" },
       { name: "Hexagon", pattern: "⬡ {word} ⬡", cat: "aesthetic" },
-      { name: "Vertical Bar Dot", pattern: "┇ {word} ‧", cat: "aesthetic" },
-      { name: "Gothic Frame Dot", pattern: "𓆩 ٫ {word} ‧ 𓆪", cat: "aesthetic" },
-      { name: "Solid Diamond Flat", pattern: "⬧ {word} ⬧", cat: "aesthetic" },
-      { name: "Hollow Diamond Flat", pattern: "⬨ {word} ⬨", cat: "aesthetic" },
-      { name: "Symmetric Lozenge Dot", pattern: "⬪ ₊ {word} ₊ ⬪", cat: "aesthetic" },
+      { name: "Hollow Flat Diamond", pattern: "⬨ {word} ⬨", cat: "aesthetic" },
+      { name: "Solid Flat Diamond", pattern: "⬧ {word} ⬧", cat: "aesthetic" },
       { name: "Cartouche Brackets", pattern: "𓊈 {word} 𓊉", cat: "aesthetic" },
-      { name: "Cartouche Brackets Dot", pattern: "𓊈 ٫ {word} ‧ 𓊉", cat: "aesthetic" },
+      { name: "Crescent Accents", pattern: "𓄼 {word} 𓄹", cat: "aesthetic" },
+      { name: "Gothic Wing Frame", pattern: "𓆩 {word} 𓆪", cat: "aesthetic" },
+      { name: "Egyptian Wave", pattern: "𓎂 {word} 𓎂", cat: "aesthetic" },
+      { name: "Hieroglyph Coil", pattern: "𓏲 {word} 𓏲", cat: "aesthetic" },
 
       // Category: minimalist (12 patterns)
       { name: "Clean Raw", pattern: "{word}", cat: "minimalist" },
@@ -3679,9 +3732,7 @@
       { name: "Underline Deco", pattern: "{char}̲", cat: "minimalist" },
 
       // Category: cyberpunk (12 patterns)
-      { name: "Lightning Bolt", pattern: "☇ {word} ☇", cat: "cyberpunk" },
-      { name: "Thunder Bolt", pattern: "☈ {word} ☈", cat: "cyberpunk" },
-      { name: "Gear Spindle", pattern: "⚙ {word} ⚙", cat: "cyberpunk" },
+      { name: "High Voltage", pattern: "⚡ {word} ⚡", cat: "cyberpunk" },
       { name: "Telemetry Loop", pattern: "☌ {word} ☌", cat: "cyberpunk" },
       { name: "Diagonal Link", pattern: "☍ {word} ☍", cat: "cyberpunk" },
       { name: "Hexagon Node", pattern: "⎔ {word} ⎔", cat: "cyberpunk" },
@@ -3691,23 +3742,24 @@
       { name: "Electrical Symbol", pattern: "⏧ {word} ⏧", cat: "cyberpunk" },
       { name: "Benzene Benzol", pattern: "⏣ {word} ⏣", cat: "cyberpunk" },
       { name: "Cyber Terminal Bracket", pattern: "⎾ {word} ⎿", cat: "cyberpunk" },
+      { name: "Electric Spark", pattern: "⌁ {word} ⌁", cat: "cyberpunk" },
+      { name: "Terminal Fork", pattern: "⍖ {word} ⍖", cat: "cyberpunk" },
 
       // Category: fancy (12 patterns)
-      { name: "Lotus Floral", pattern: "𓍢 {word} 𓍢", cat: "fancy" },
       { name: "Rose Floral", pattern: "❀ {word} ❀", cat: "fancy" },
       { name: "Cherry Floral", pattern: "✿ {word} ✿", cat: "fancy" },
       { name: "Spark Floral", pattern: "❊ {word} ❊", cat: "fancy" },
       { name: "Geometric Floral", pattern: "❈ {word} ❈", cat: "fancy" },
       { name: "Snow Floral", pattern: "❉ {word} ❉", cat: "fancy" },
-      { name: "Floral Plus Symm", pattern: "❀ ₊ {word} ₊ ❀", cat: "fancy" },
       { name: "Fancy White Bracket", pattern: "〖 {word} 〗", cat: "fancy" },
       { name: "Floral Heart", pattern: "❦ {word} ❦", cat: "fancy" },
       { name: "Sweet Heart", pattern: "ღ {word} ღ", cat: "fancy" },
-      { name: "Winged Heart", pattern: "𓆩ღ𓆪 {word} 𓆩ღ𓆪", cat: "fancy" },
+      { name: "Winged Heart", pattern: "ʚღɞ {word} ʚღɞ", cat: "fancy" },
       { name: "Heart Exclamation", pattern: "❣ {word} ❣", cat: "fancy" },
+      { name: "Leaf Swirl", pattern: "❧ {word} ❧", cat: "fancy" },
+      { name: "Marigold Floral", pattern: "𑁍 {word} 𑁍", cat: "fancy" },
 
       // Category: symmetric (12 patterns)
-      { name: "Symmetric Lozenge", pattern: "⬪ ₊ {word} ₊ ⬪", cat: "symmetric" },
       { name: "Gothic Cross Symm", pattern: "♰ {word} ♰", cat: "symmetric" },
       { name: "Hollow Cross Symm", pattern: "♱ {word} ♱", cat: "symmetric" },
       { name: "Peace Symm", pattern: "☮ {word} ☮", cat: "symmetric" },
@@ -3719,24 +3771,23 @@
       { name: "Aura Ring Symm", pattern: "°• {word} •°", cat: "symmetric" },
       { name: "Crested Stags", pattern: "𐂂 {word} 𐂂", cat: "symmetric" },
       { name: "Crested Pegasus", pattern: "𐂊 {word} 𐂊", cat: "symmetric" },
+      { name: "Crusader Cross", pattern: "☩ {word} ☩", cat: "symmetric" },
 
       // Category: sparkles (12 patterns)
       { name: "Eight Sparkle", pattern: "✳ {word} ✳", cat: "sparkles" },
-      { name: "Sparkle Star", pattern: "✦ {word} ✦", cat: "sparkles" },
-      { name: "Hollow Sparkle", pattern: "✧ {word} ✧", cat: "sparkles" },
-      { name: "Heavy Sparkle", pattern: "★ {word} ★", cat: "sparkles" },
-      { name: "White Sparkle", pattern: "☆ {word} ☆", cat: "sparkles" },
-      { name: "Sparkle Sun", pattern: "☼ {word} ☼", cat: "sparkles" },
-      { name: "Solar Node Sparkle", pattern: "☉ {word} ☉", cat: "sparkles" },
+      { name: "Star Equal", pattern: "≛ {word} ≛", cat: "sparkles" },
       { name: "Asterisk Sparkle", pattern: "⁂ {word} ⁂", cat: "sparkles" },
       { name: "Petal Sparkle", pattern: "❃ {word} ❃", cat: "sparkles" },
       { name: "Rosette Star", pattern: "𖣔 {word} 𖣔", cat: "sparkles" },
       { name: "Mandala Star", pattern: "𖤓 {word} 𖤓", cat: "sparkles" },
       { name: "Spiral Vortex", pattern: "𖦹 {word} 𖦹", cat: "sparkles" },
+      { name: "Open Starburst", pattern: "✵ {word} ✵", cat: "sparkles" },
+      { name: "Falling Comet", pattern: "☄ {word} ☄", cat: "sparkles" },
+      { name: "Magic Sparkles", pattern: "✨ {word} ✨", cat: "sparkles" },
+      { name: "Eight-Point Starburst", pattern: "✴ {word} ✴", cat: "sparkles" },
+      { name: "Sparkle Diamond", pattern: "❇ {word} ❇", cat: "sparkles" },
 
       // Category: ancient (12 patterns)
-      { name: "Gothic Frame", pattern: "𓆩 {word} 𓆪", cat: "ancient" },
-      { name: "Coil Frame", pattern: "𓏲 {word} 𓏲", cat: "ancient" },
       { name: "Ancient Cross", pattern: "𓏴 {word} 𓏴", cat: "ancient" },
       { name: "Ancient Border", pattern: "𓈀 {word} 𓈀", cat: "ancient" },
       { name: "Ancient Sun", pattern: "𓂋 {word} 𓂋", cat: "ancient" },
@@ -3746,7 +3797,9 @@
       { name: "Horus Eye Frame", pattern: "𓁹 {word} 𓁹", cat: "ancient" },
       { name: "Ankh Cross", pattern: "𓋹 {word} 𓋹", cat: "ancient" },
       { name: "Sacred Cat Frame", pattern: "𓃠 {word} 𓃠", cat: "ancient" },
-      { name: "Scarab Beetle Frame", pattern: "𓆧 {word} 𓆧", cat: "ancient" }
+      { name: "Scarab Beetle Frame", pattern: "𓆧 {word} 𓆧", cat: "ancient" },
+      { name: "Anointed Pharaoh", pattern: "𓀀 {word} 𓀀", cat: "ancient" },
+      { name: "Ancient Owl", pattern: "𓅓 {word} 𓅓", cat: "ancient" }
     ];
 
     const DECORATOR_PRESETS = [];
@@ -3817,7 +3870,10 @@
          const mapChars = Array.from(alphabetMap);
          for (let idx = 0; idx < mapChars.length; idx++) {
             if (idx < ALPHABETS.length) {
-               reverseMap[mapChars[idx]] = ALPHABETS[idx];
+               const mappedChar = mapChars[idx];
+               if (!ALPHABETS.includes(mappedChar) && !ALPHABETS.toUpperCase().includes(mappedChar)) {
+                  reverseMap[mappedChar] = ALPHABETS[idx];
+               }
             }
          }
       });
@@ -4366,6 +4422,7 @@
         populateBotSettingsRoles(layoutRoles);
         await populateMusicDropdowns(layoutRoles);
         populateStatsDropdowns();
+        populateTempVCDropdowns();
         
         // Re-render admin/mod lists to update role names if they were loaded as IDs
         renderAdminRolesList();
@@ -4550,6 +4607,7 @@
           populateBotSettingsRoles(roles);
           await populateMusicDropdowns(roles);
           populateStatsDropdowns();
+          populateTempVCDropdowns();
           loadCustomCommands();
           loadGuildSettings();
         } else {
@@ -7596,6 +7654,10 @@
         let triggerName = 'Spamming Messages';
         if (rule.trigger === 'spam_attachments') triggerName = 'Spamming Images/Videos/Files';
         if (rule.trigger === 'spam_mentions') triggerName = 'Spamming Mentions/Pings';
+        if (rule.trigger === 'spam_links') triggerName = 'Spamming Links/URLs';
+        if (rule.trigger === 'spam_invites') triggerName = 'Spamming Discord Invites';
+        if (rule.trigger === 'spam_newlines') triggerName = 'Wall-of-Text / Newline Flood';
+        if (rule.trigger === 'spam_duplicates') triggerName = 'Duplicate Content Flood';
 
         let actionName = 'Mute permanently';
         if (rule.action === 'warn') actionName = 'Delete & Warn';
@@ -7662,6 +7724,40 @@
       });
 
       if (oldVoiceVal) voiceSelect.value = oldVoiceVal;
+    }
+
+    function populateTempVCDropdowns() {
+      const joinSelect = document.getElementById('tempvc_join_channel');
+      const catSelect = document.getElementById('tempvc_category');
+      if (!joinSelect || !catSelect) return;
+
+      const oldJoinVal = joinSelect.value;
+      const oldCatVal = catSelect.value;
+
+      joinSelect.innerHTML = '<option value="">-- Select Voice Channel --</option>';
+      catSelect.innerHTML = '<option value="">-- Select Category --</option>';
+
+      const voiceChans = getVoiceChannels();
+      voiceChans.forEach(chan => {
+        const opt = document.createElement('option');
+        opt.value = chan.id;
+        opt.innerText = `🔊 ${chan.name || chan.id}`;
+        joinSelect.appendChild(opt);
+      });
+
+      if (activeLayoutData && activeLayoutData.categories) {
+        activeLayoutData.categories.forEach(cat => {
+          if (cat && cat.id && cat.id !== 'none') {
+            const opt = document.createElement('option');
+            opt.value = cat.id;
+            opt.innerText = `📁 ${cat.name || cat.id}`;
+            catSelect.appendChild(opt);
+          }
+        });
+      }
+
+      if (oldJoinVal) joinSelect.value = oldJoinVal;
+      if (oldCatVal) catSelect.value = oldCatVal;
     }
 
     function insertStatPlaceholder(placeholder) {
@@ -8228,6 +8324,65 @@
           };
         }
       }, 50);
+    }
+
+    let k4WatcherInterval = null;
+    async function fetchK4Logs() {
+      const container = document.getElementById('k4-log-container');
+      if (!container) return;
+      try {
+        const res = await fetch(`/api/guild/${guildId}/logs`);
+        if (!res.ok) throw new Error('Failed to fetch logs');
+        const logs = await res.json();
+        if (Array.isArray(logs)) {
+          if (logs.length === 0) {
+            container.innerHTML = '<div style="color: var(--text-muted); font-style: italic;">No security events logged yet.</div>';
+            return;
+          }
+          // Sort ascending for chronological order in scrolling container
+          const sortedLogs = [...logs].reverse();
+          container.innerHTML = sortedLogs.map(log => {
+            const timeStr = new Date(log.created_at).toLocaleTimeString();
+            const type = log.event_type ? log.event_type.toUpperCase() : 'UNKNOWN';
+            const action = log.action_taken ? log.action_taken.toUpperCase() : 'NONE';
+            const details = log.details || '';
+            return `<div style="line-height: 1.4; border-bottom: 1px solid rgba(255,255,255,0.02); padding: 4px 0;">
+              <span style="color: var(--c1); font-weight: bold;">[${timeStr}]</span>
+              <span style="color: var(--c2); font-weight: 500;">[${type}]</span>
+              <span style="color: #f87171; font-weight: bold;">[${action}]</span>
+              <span style="color: #cbd5e1; margin-left: 5px;">${details}</span>
+            </div>`;
+          }).join('');
+          container.scrollTop = container.scrollHeight;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function toggleK4Watcher() {
+      const btn = document.getElementById('btn-toggle-watcher');
+      const pulseDot = document.getElementById('watcher-pulse-dot');
+      const container = document.getElementById('k4-log-container');
+      if (!btn) return;
+      if (k4WatcherInterval) {
+        clearInterval(k4WatcherInterval);
+        k4WatcherInterval = null;
+        btn.innerText = 'Start Watcher';
+        btn.style.background = '';
+        btn.style.borderColor = 'rgba(255,255,255,0.15)';
+        if (pulseDot) pulseDot.style.display = 'none';
+        if (container) {
+          container.innerHTML = '<div style="color: var(--text-muted); font-style: italic;">Watcher inactive. Click \'Start Watcher\' to stream real-time logs.</div>';
+        }
+      } else {
+        btn.innerText = 'Stop Watcher';
+        btn.style.background = 'rgba(16, 185, 129, 0.12)';
+        btn.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+        if (pulseDot) pulseDot.style.display = 'inline-block';
+        fetchK4Logs();
+        k4WatcherInterval = setInterval(fetchK4Logs, 5000);
+      }
     }
 
     // Dom Load

@@ -662,7 +662,21 @@
     }
 
     // ── DECORATOR PRESETS DATABASE (1,530 configs generated dynamically) ─────────────────────────────
-        const BASE_PATTERNS = [
+    const BASE_PATTERNS = [
+      // Category: emojis (12 patterns)
+      { name: "Cosmic Orbit", pattern: "🪐 ₊ {word} ₊ 🪐", cat: "emojis" },
+      { name: "Withered Rose", pattern: "🥀 ⌁ {word} ⌁ 🥀", cat: "emojis" },
+      { name: "Shining Diamond", pattern: "💎 ╎ {word} ╎ 💎", cat: "emojis" },
+      { name: "Crystal Ball", pattern: "🔮 ٫ {word} ‧ 🔮", cat: "emojis" },
+      { name: "Iron Chains", pattern: "⛓️ ╎ {word} ╎ ⛓️", cat: "emojis" },
+      { name: "Spirit Shrine", pattern: "⛩️ ٫ {word} 𖦹 ⛩️", cat: "emojis" },
+      { name: "Gothic Candle", pattern: "🕯️ ₊ {word} ₊ 🕯️", cat: "emojis" },
+      { name: "DNA Lab", pattern: "🧬 ٫ {word} ‧ 🧬", cat: "emojis" },
+      { name: "Drama Masque", pattern: "🎭 ⌁ {word} ⌁ 🎭", cat: "emojis" },
+      { name: "Hunter Bow", pattern: "🏹 ٫ {word} ‧ 🏹", cat: "emojis" },
+      { name: "Alien UFO", pattern: "🛸 ╎ {word} ╎ 🛸", cat: "emojis" },
+      { name: "Pirate Flag", pattern: "🏴‍☠️ ٫ {word} ‧ 🏴‍☠️", cat: "emojis" },
+
       // Category: stars (10 patterns)
       { name: "Solid Star", pattern: "★ {word} ★", cat: "stars" },
       { name: "Hollow Star", pattern: "☆ {word} ☆", cat: "stars" },
@@ -673,19 +687,19 @@
       { name: "Pinwheel Star", pattern: "✸ {word} ✸", cat: "stars" },
       { name: "Twelve-Point Star", pattern: "✹ {word} ✹", cat: "stars" },
       { name: "Sunburst Star", pattern: "❂ {word} ❂", cat: "stars" },
-      { name: "Star Line Symm", pattern: "★ ─ {word} ─ ★", cat: "stars" },
+      { name: "Circled Star", pattern: "✪ {word} ✪", cat: "stars" },
 
       // Category: arrows (10 patterns)
-      { name: "Double Arrow Right", pattern: "» {word} «", cat: "arrows" },
-      { name: "Double Arrow Left", pattern: "« {word} »", cat: "arrows" },
-      { name: "Point Right", pattern: "➤ {word} ➤", cat: "arrows" },
-      { name: "Bold Point Right", pattern: "➢ {word} ➢", cat: "arrows" },
-      { name: "Heavy Arrow Right", pattern: "➔ {word} ➔", cat: "arrows" },
-      { name: "Opposite Block Arrows", pattern: "🡲 {word} 🡰", cat: "arrows" },
-      { name: "Opposite Wedge Arrows", pattern: "⮚ {word} ⮘", cat: "arrows" },
-      { name: "Opposite Guide Arrows", pattern: "⮞ {word} ⮜", cat: "arrows" },
-      { name: "Double Arrow Line", pattern: "» ─ {word} ─ «", cat: "arrows" },
-      { name: "Double Arrow Dot", pattern: "« ٫ {word} ‧ »", cat: "arrows" },
+      { name: "Double Angle Right", pattern: "» {word} «", cat: "arrows" },
+      { name: "Double Angle Left", pattern: "« {word} »", cat: "arrows" },
+      { name: "Point Right Arrow", pattern: "➤ {word} ➤", cat: "arrows" },
+      { name: "Thin Arrow", pattern: "➢ {word} ➢", cat: "arrows" },
+      { name: "Heavy Right", pattern: "➔ {word} ➔", cat: "arrows" },
+      { name: "Opposite Blocks", pattern: "🡲 {word} 🡰", cat: "arrows" },
+      { name: "Opposite Wedges", pattern: "⮚ {word} ⮘", cat: "arrows" },
+      { name: "Opposite Guides", pattern: "⮞ {word} ⮜", cat: "arrows" },
+      { name: "Feathered Arrow", pattern: "➸ {word} ➸", cat: "arrows" },
+      { name: "Arching Arrows", pattern: "➴ {word} ➶", cat: "arrows" },
 
       // Category: aesthetic (12 patterns)
       { name: "Glow Diamond", pattern: "◈ {word} ◈", cat: "aesthetic" },
@@ -693,13 +707,13 @@
       { name: "Solid Diamond", pattern: "◆ {word} ◆", cat: "aesthetic" },
       { name: "Lozenge", pattern: "⬪ {word} ⬪", cat: "aesthetic" },
       { name: "Hexagon", pattern: "⬡ {word} ⬡", cat: "aesthetic" },
-      { name: "Vertical Bar Dot", pattern: "┇ {word} ‧", cat: "aesthetic" },
-      { name: "Gothic Frame Dot", pattern: "𓆩 ٫ {word} ‧ 𓆪", cat: "aesthetic" },
-      { name: "Solid Diamond Flat", pattern: "⬧ {word} ⬧", cat: "aesthetic" },
-      { name: "Hollow Diamond Flat", pattern: "⬨ {word} ⬨", cat: "aesthetic" },
-      { name: "Symmetric Lozenge Dot", pattern: "⬪ ₊ {word} ₊ ⬪", cat: "aesthetic" },
+      { name: "Hollow Flat Diamond", pattern: "⬨ {word} ⬨", cat: "aesthetic" },
+      { name: "Solid Flat Diamond", pattern: "⬧ {word} ⬧", cat: "aesthetic" },
       { name: "Cartouche Brackets", pattern: "𓊈 {word} 𓊉", cat: "aesthetic" },
-      { name: "Cartouche Brackets Dot", pattern: "𓊈 ٫ {word} ‧ 𓊉", cat: "aesthetic" },
+      { name: "Crescent Accents", pattern: "𓄼 {word} 𓄹", cat: "aesthetic" },
+      { name: "Gothic Wing Frame", pattern: "𓆩 {word} 𓆪", cat: "aesthetic" },
+      { name: "Egyptian Wave", pattern: "𓎂 {word} 𓎂", cat: "aesthetic" },
+      { name: "Hieroglyph Coil", pattern: "𓏲 {word} 𓏲", cat: "aesthetic" },
 
       // Category: minimalist (12 patterns)
       { name: "Clean Raw", pattern: "{word}", cat: "minimalist" },
@@ -716,9 +730,7 @@
       { name: "Underline Deco", pattern: "{char}̲", cat: "minimalist" },
 
       // Category: cyberpunk (12 patterns)
-      { name: "Lightning Bolt", pattern: "☇ {word} ☇", cat: "cyberpunk" },
-      { name: "Thunder Bolt", pattern: "☈ {word} ☈", cat: "cyberpunk" },
-      { name: "Gear Spindle", pattern: "⚙ {word} ⚙", cat: "cyberpunk" },
+      { name: "High Voltage", pattern: "⚡ {word} ⚡", cat: "cyberpunk" },
       { name: "Telemetry Loop", pattern: "☌ {word} ☌", cat: "cyberpunk" },
       { name: "Diagonal Link", pattern: "☍ {word} ☍", cat: "cyberpunk" },
       { name: "Hexagon Node", pattern: "⎔ {word} ⎔", cat: "cyberpunk" },
@@ -728,23 +740,24 @@
       { name: "Electrical Symbol", pattern: "⏧ {word} ⏧", cat: "cyberpunk" },
       { name: "Benzene Benzol", pattern: "⏣ {word} ⏣", cat: "cyberpunk" },
       { name: "Cyber Terminal Bracket", pattern: "⎾ {word} ⎿", cat: "cyberpunk" },
+      { name: "Electric Spark", pattern: "⌁ {word} ⌁", cat: "cyberpunk" },
+      { name: "Terminal Fork", pattern: "⍖ {word} ⍖", cat: "cyberpunk" },
 
       // Category: fancy (12 patterns)
-      { name: "Lotus Floral", pattern: "𓍢 {word} 𓍢", cat: "fancy" },
       { name: "Rose Floral", pattern: "❀ {word} ❀", cat: "fancy" },
       { name: "Cherry Floral", pattern: "✿ {word} ✿", cat: "fancy" },
       { name: "Spark Floral", pattern: "❊ {word} ❊", cat: "fancy" },
       { name: "Geometric Floral", pattern: "❈ {word} ❈", cat: "fancy" },
       { name: "Snow Floral", pattern: "❉ {word} ❉", cat: "fancy" },
-      { name: "Floral Plus Symm", pattern: "❀ ₊ {word} ₊ ❀", cat: "fancy" },
       { name: "Fancy White Bracket", pattern: "〖 {word} 〗", cat: "fancy" },
       { name: "Floral Heart", pattern: "❦ {word} ❦", cat: "fancy" },
       { name: "Sweet Heart", pattern: "ღ {word} ღ", cat: "fancy" },
-      { name: "Winged Heart", pattern: "𓆩ღ𓆪 {word} 𓆩ღ𓆪", cat: "fancy" },
+      { name: "Winged Heart", pattern: "ʚღɞ {word} ʚღɞ", cat: "fancy" },
       { name: "Heart Exclamation", pattern: "❣ {word} ❣", cat: "fancy" },
+      { name: "Leaf Swirl", pattern: "❧ {word} ❧", cat: "fancy" },
+      { name: "Marigold Floral", pattern: "𑁍 {word} 𑁍", cat: "fancy" },
 
       // Category: symmetric (12 patterns)
-      { name: "Symmetric Lozenge", pattern: "⬪ ₊ {word} ₊ ⬪", cat: "symmetric" },
       { name: "Gothic Cross Symm", pattern: "♰ {word} ♰", cat: "symmetric" },
       { name: "Hollow Cross Symm", pattern: "♱ {word} ♱", cat: "symmetric" },
       { name: "Peace Symm", pattern: "☮ {word} ☮", cat: "symmetric" },
@@ -756,24 +769,23 @@
       { name: "Aura Ring Symm", pattern: "°• {word} •°", cat: "symmetric" },
       { name: "Crested Stags", pattern: "𐂂 {word} 𐂂", cat: "symmetric" },
       { name: "Crested Pegasus", pattern: "𐂊 {word} 𐂊", cat: "symmetric" },
+      { name: "Crusader Cross", pattern: "☩ {word} ☩", cat: "symmetric" },
 
       // Category: sparkles (12 patterns)
       { name: "Eight Sparkle", pattern: "✳ {word} ✳", cat: "sparkles" },
-      { name: "Sparkle Star", pattern: "✦ {word} ✦", cat: "sparkles" },
-      { name: "Hollow Sparkle", pattern: "✧ {word} ✧", cat: "sparkles" },
-      { name: "Heavy Sparkle", pattern: "★ {word} ★", cat: "sparkles" },
-      { name: "White Sparkle", pattern: "☆ {word} ☆", cat: "sparkles" },
-      { name: "Sparkle Sun", pattern: "☼ {word} ☼", cat: "sparkles" },
-      { name: "Solar Node Sparkle", pattern: "☉ {word} ☉", cat: "sparkles" },
+      { name: "Star Equal", pattern: "≛ {word} ≛", cat: "sparkles" },
       { name: "Asterisk Sparkle", pattern: "⁂ {word} ⁂", cat: "sparkles" },
       { name: "Petal Sparkle", pattern: "❃ {word} ❃", cat: "sparkles" },
       { name: "Rosette Star", pattern: "𖣔 {word} 𖣔", cat: "sparkles" },
       { name: "Mandala Star", pattern: "𖤓 {word} 𖤓", cat: "sparkles" },
       { name: "Spiral Vortex", pattern: "𖦹 {word} 𖦹", cat: "sparkles" },
+      { name: "Open Starburst", pattern: "✵ {word} ✵", cat: "sparkles" },
+      { name: "Falling Comet", pattern: "☄ {word} ☄", cat: "sparkles" },
+      { name: "Magic Sparkles", pattern: "✨ {word} ✨", cat: "sparkles" },
+      { name: "Eight-Point Starburst", pattern: "✴ {word} ✴", cat: "sparkles" },
+      { name: "Sparkle Diamond", pattern: "❇ {word} ❇", cat: "sparkles" },
 
       // Category: ancient (12 patterns)
-      { name: "Gothic Frame", pattern: "𓆩 {word} 𓆪", cat: "ancient" },
-      { name: "Coil Frame", pattern: "𓏲 {word} 𓏲", cat: "ancient" },
       { name: "Ancient Cross", pattern: "𓏴 {word} 𓏴", cat: "ancient" },
       { name: "Ancient Border", pattern: "𓈀 {word} 𓈀", cat: "ancient" },
       { name: "Ancient Sun", pattern: "𓂋 {word} 𓂋", cat: "ancient" },
@@ -783,7 +795,9 @@
       { name: "Horus Eye Frame", pattern: "𓁹 {word} 𓁹", cat: "ancient" },
       { name: "Ankh Cross", pattern: "𓋹 {word} 𓋹", cat: "ancient" },
       { name: "Sacred Cat Frame", pattern: "𓃠 {word} 𓃠", cat: "ancient" },
-      { name: "Scarab Beetle Frame", pattern: "𓆧 {word} 𓆧", cat: "ancient" }
+      { name: "Scarab Beetle Frame", pattern: "𓆧 {word} 𓆧", cat: "ancient" },
+      { name: "Anointed Pharaoh", pattern: "𓀀 {word} 𓀀", cat: "ancient" },
+      { name: "Ancient Owl", pattern: "𓅓 {word} 𓅓", cat: "ancient" }
     ];
 
     const DECORATOR_PRESETS = [];
@@ -854,7 +868,10 @@
          const mapChars = Array.from(alphabetMap);
          for (let idx = 0; idx < mapChars.length; idx++) {
             if (idx < ALPHABETS.length) {
-               reverseMap[mapChars[idx]] = ALPHABETS[idx];
+               const mappedChar = mapChars[idx];
+               if (!ALPHABETS.includes(mappedChar) && !ALPHABETS.toUpperCase().includes(mappedChar)) {
+                  reverseMap[mappedChar] = ALPHABETS[idx];
+               }
             }
          }
       });
@@ -1403,6 +1420,7 @@
         populateBotSettingsRoles(layoutRoles);
         await populateMusicDropdowns(layoutRoles);
         populateStatsDropdowns();
+        populateTempVCDropdowns();
         
         // Re-render admin/mod lists to update role names if they were loaded as IDs
         renderAdminRolesList();
@@ -1587,6 +1605,7 @@
           populateBotSettingsRoles(roles);
           await populateMusicDropdowns(roles);
           populateStatsDropdowns();
+          populateTempVCDropdowns();
           loadCustomCommands();
           loadGuildSettings();
         } else {
@@ -4698,6 +4717,40 @@
       });
 
       if (oldVoiceVal) voiceSelect.value = oldVoiceVal;
+    }
+
+    function populateTempVCDropdowns() {
+      const joinSelect = document.getElementById('tempvc_join_channel');
+      const catSelect = document.getElementById('tempvc_category');
+      if (!joinSelect || !catSelect) return;
+
+      const oldJoinVal = joinSelect.value;
+      const oldCatVal = catSelect.value;
+
+      joinSelect.innerHTML = '<option value="">-- Select Voice Channel --</option>';
+      catSelect.innerHTML = '<option value="">-- Select Category --</option>';
+
+      const voiceChans = getVoiceChannels();
+      voiceChans.forEach(chan => {
+        const opt = document.createElement('option');
+        opt.value = chan.id;
+        opt.innerText = `🔊 ${chan.name || chan.id}`;
+        joinSelect.appendChild(opt);
+      });
+
+      if (activeLayoutData && activeLayoutData.categories) {
+        activeLayoutData.categories.forEach(cat => {
+          if (cat && cat.id && cat.id !== 'none') {
+            const opt = document.createElement('option');
+            opt.value = cat.id;
+            opt.innerText = `📁 ${cat.name || cat.id}`;
+            catSelect.appendChild(opt);
+          }
+        });
+      }
+
+      if (oldJoinVal) joinSelect.value = oldJoinVal;
+      if (oldCatVal) catSelect.value = oldCatVal;
     }
 
     function insertStatPlaceholder(placeholder) {

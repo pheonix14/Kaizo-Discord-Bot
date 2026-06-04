@@ -45,7 +45,7 @@ class KaizerChangeHandler(FileSystemEventHandler):
         try:
             env = os.environ.copy()
             env["KAIZER_WATCHDOG"] = "1"
-            self.process = subprocess.Popen([PYTHON_BIN, "main.py"], env=env)
+            self.process = subprocess.Popen([PYTHON_BIN, "main.py"], env=env, stdin=sys.stdin)
         except Exception as e:
             print(f"[ERROR] Failed to launch main.py: {e}")
 
@@ -56,7 +56,7 @@ class KaizerChangeHandler(FileSystemEventHandler):
         filepath = event.src_path
         
         # Ignored paths and formats
-        ignore_keywords = [".venv", ".git", "__pycache__", ".idea", ".vscode", "test_supabase.py"]
+        ignore_keywords = [".venv", ".git", "__pycache__", ".idea", ".vscode", "test_supabase.py", "node_modules", "logs", "database", ".gemini"]
         if any(kw in filepath for kw in ignore_keywords):
             return
 

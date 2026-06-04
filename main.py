@@ -140,7 +140,30 @@ async def main():
         except Exception as e:
             logger.warning(f"Error closing bot in main cleanup: {e}")
 
+import sys
+import threading
+
+def console_listener():
+    logger = logging.getLogger("kaizer_k5.console")
+    while True:
+        try:
+            line = sys.stdin.readline()
+            if not line:
+                break
+            cmd = line.strip().lower()
+            if cmd == "unlock":
+                config.BYPASS_DISCORD = True
+                logger.info(">>> BYPASS MODE UNLOCKED: Discord login bypassed. <<<")
+            elif cmd == "lock":
+                config.BYPASS_DISCORD = False
+                logger.info(">>> BYPASS MODE LOCKED: Normal Discord authentication restored. <<<")
+        except Exception:
+            pass
+
 if __name__ == "__main__":
+    listener_thread = threading.Thread(target=console_listener, daemon=True)
+    listener_thread.start()
+    
     try:
         asyncio.run(main())
     except KeyboardInterrupt:

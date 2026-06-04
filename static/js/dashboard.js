@@ -567,6 +567,13 @@ function initDashboard() {
             keysToRemove.forEach(k => delete payload[k]);
         }
 
+        // Clean up UI-only studio, warn threshold, and button helper keys from any payload
+        Object.keys(payload).forEach(k => {
+            if (k.startsWith('studio_') || k.startsWith('btn-') || k.startsWith('warn_count_') || k.startsWith('warn_action_')) {
+                delete payload[k];
+            }
+        });
+
         // Use the global guildId variable defined in server.html
         if (typeof guildId === 'undefined') {
             showToast("Guild ID not found.", "error");

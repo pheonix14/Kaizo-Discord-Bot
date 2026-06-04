@@ -1,101 +1,301 @@
-# 🛡️ Project Kaizer K5 - Discord Security Guard & Admin Suite
+# Acorn
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
-[![Run on Replit](https://replit.com/badge/github/username/repo)](https://replit.com/new/github/username/repo)
-[![Deploy to Wasmer](https://img.shields.io/badge/Deploy_to_Wasmer-black?logo=wasmer&logoColor=white)](https://wasmer.io)
+A tiny, fast JavaScript parser written in JavaScript.
 
-Project Kaizer K5 is a high-fidelity Discord server protection bot and administrative dashboard. It tracks and mitigates nuke attempts (mass bans, mass kicks, mass channel/role deletions, rogue bot invites) in real-time, backed by a secure Supabase database and a responsive glassmorphic web interface.
+## Community
 
----
+Acorn is open source software released under an
+[MIT license](https://github.com/acornjs/acorn/blob/master/acorn/LICENSE).
 
-## 🌟 Key Features & Systems
+You are welcome to
+[report bugs](https://github.com/acornjs/acorn/issues) or create pull
+requests on [github](https://github.com/acornjs/acorn).
 
-### 1. Security & Anti-Nuke
-- **Mass Ban/Kick Protection**: Bans any administrator who exceeds a customizable limit within a specified timeframe, and automatically unbans/re-invites victims.
-- **Mass Channel/Role Deletion Protection**: Restores channels/roles deleted by unauthorized administrators and strips their permissions.
-- **Anti-Bot Invitation**: Instantly bans unauthorized bots invited to the server and the administrator who invited them.
-- **Anti-Spam / Anti-Raid**: Advanced anti-spam and anti-raid parameters managed via K4 Defense (`.k4defence`).
+## Installation
 
-### 2. Upgraded Paginated Help Systems
-All major cogs now support interactive, paginated lists with `◀ Previous` (blue) and `Next ▶` (grey) buttons. Only the command author can interact with the buttons:
-- **`Utility`** (`.util`, `/util`): Paginated commands with direct aliases (e.g. `/ping`, `.uptime`).
-- **`Moderation`** (`.mod`, `/mod`): Paginated overview for all kick, ban, mute, and warn commands.
-- **`Fun`** (`.fun`): Paginated overview for game commands.
-- **`Economy`** (`.economy`): Paginated overview for wallet, bank, shop, items, and gambling.
-- **`Music`** (`.music`, `/music`): Paginated lists for player control, playlists, filters, and downloads.
-- **`Temp VC`** (`.voice`, `/voice`, `.vc`, `/vc`): Paginated commands for temporary voice channels and setup.
-- **`Tickets`** (`.tickets`, `/tickets`): Paginated commands for ticket setup, user access, and transcripts.
-- **`Welcome`** (`.welcome`, `/welcome`): Paginated help for procedural cards, Themes, Fonts, and custom templates.
-- **`Logging`** (`.logging`, `/logging`, `.logs`, `/logs`): Paginated setups for channels and logs.
-- **`AutoMod`** (`.automod`, `/automod`): Paginated listings of security states, whitelist, and K4 Defense parameters.
-- **`Giveaways`** (`.giveaways`, `/giveaways`): Paginated commands for starting, ending, and rerolling giveaways.
-- **`Server Builder`** (`.builder`, `/builder`): Paginated layouts for exporting, importing, cloning, and auditing guild layouts.
-- **`Live Stats`** (`.stats`): Paginated live member counter configuration guides.
+The easiest way to install acorn is from [`npm`](https://www.npmjs.com/):
 
-### 3. Direct Command Aliases
-All commands under utility, fun, and economy cogs can be executed directly without writing their cog prefixes (e.g., `/ping` instead of `/utility ping`, `/bal` or `.bal` instead of `/economy balance`, `/work` instead of `/economy work`).
-
-### 4. Interactive Web Dashboard
-A gorgeous, glassmorphic dark-mode web console (`http://localhost:8000`) containing:
-- **Server Selector**: Easy login via secure 6-digit Discord PINs (`k!dashboard`).
-- **Leveling Customization**: Dynamic drop-down channel selectors to configure default announcement channels for member level-ups.
-- **Giveaway Scheduler**: GMT/UTC real-time clocks and a interactive visual calendar start and end date selector.
-- **Real-Time Security Logs (`/logs`)**:
-  - Upgraded luxury theme inspired by modern high-end showcase pages.
-  - Interactive custom cursor tracker, vignettes, noise grains, and dynamic radial color bleeds.
-  - Interactive preloader animation.
-  - Glowing Glassmorphic log terminal displaying severity colors (`type-critical`, `type-warn`, `type-info`) and custom scrollbars.
-  - Real-time polling engine updating logs every 3 seconds from Supabase.
-  - HTML5 browser push notifications and animated sliding toasts (`#notif-toast`) to alert server administrators immediately when events are caught.
-
----
-
-## 🛠️ Quick Setup Guide
-
-### 1. Discord Bot Setup
-1. Go to the [Discord Developer Portal](https://discord.com/developers/applications).
-2. Enable **Privileged Gateway Intents** (Presence Intent, Server Members Intent, and Message Content Intent) in the **Bot** tab.
-3. Invite the bot using: `https://discord.com/oauth2/authorize?client_id=<YOUR_CLIENT_ID>&permissions=8&scope=bot%20applications.commands`.
-4. **Hierarchy warning**: The bot's role **MUST** be placed above all other administrators' roles in your server settings.
-
-### 2. Supabase Database Setup
-1. Create a project in [Supabase](https://supabase.com).
-2. Copy the contents of the database schema file and execute them in the **SQL Editor** to create tables and configure Row Level Security (RLS).
-
-### 3. Environment Variables
-Your `.env` file should contain:
-- `SUPABASE_URL`: Your Supabase project URL
-- `SUPABASE_ANON_KEY`: Your Supabase anonymous key
-- `SUPABASE_SERVICE_ROLE_KEY`: Your Supabase service role key (bypasses RLS for system operations)
-- `DISCORD_BOT_TOKEN`: Your Discord bot token
-- `DISCORD_APP_ID`: Your Discord application ID
-- `FLASK_SECRET_KEY`: Web session secret key
-
-### 4. Running Locally
-Install requirements:
-```bash
-pip install -r requirements.txt
-```
-Run bot & web server:
-```bash
-python main.py
+```sh
+npm install acorn
 ```
 
----
+Alternately, you can download the source and build acorn yourself:
 
-## 🚀 Concurrency & Event Loop Optimization (Render Support)
-To ensure high responsiveness and stability when deployed to single-core cloud containers (like Render), all database client calls (Supabase HTTP operations) have been fully refactored:
-- **Non-blocking Operations**: Synchronous postgrest/httpx calls are offloaded using `asyncio.to_thread` to prevent event loop starvation.
-- **WebSocket Gateway Stability**: This offloading prevents database latency from blocking the gateway thread, ensuring that gateway heartbeats are sent consistently and preventing the bot from becoming unresponsive or disconnects on Render.
-- **Concurrent Flask App**: The Flask web dashboard runs on a background OS thread (`asyncio.to_thread(run_web)`) which leaves the main thread completely free for the Discord bot client.
+```sh
+git clone https://github.com/acornjs/acorn.git
+cd acorn
+npm install
+```
+## Importing acorn
 
----
+ESM as well as CommonJS is supported for all 3: `acorn`, `acorn-walk` and `acorn-loose`.
 
-## 💻 Discord Commands
+ESM example for `acorn`:
 
-All admin commands require **Administrator** permissions on the target server.
-- `.dashboard` / `k!dashboard` - Generates a 6-digit login PIN and DMs it to the admin.
-- `.stats` / `.automod` / `.builder` / `.giveaways` / `.welcome` / `.tickets` / `.voice` / `.logging` - Displays interactive paginated help overviews.
-- `.ping` / `.uptime` / `.info` - Direct utility commands.
-- `.bal` / `.work` / `.daily` / `.shop` - Direct economy commands.
-- `.slots` / `.blackjack` / `.coinflip` - Direct gambling commands.
+```js
+import * as acorn from "acorn"
+```
+
+CommonJS example for `acorn`:
+
+```js
+let acorn = require("acorn")
+```
+
+ESM is preferred, as it allows better editor auto-completions by offering TypeScript support.
+For this reason, following examples will use ESM imports.
+
+## Interface
+
+**parse**`(input, options)` is the main interface to the library. The
+`input` parameter is a string, `options` must be an object setting
+some of the options listed below. The return value will be an abstract
+syntax tree object as specified by the [ESTree
+spec](https://github.com/estree/estree).
+
+```javascript
+import * as acorn from "acorn"
+console.log(acorn.parse("1 + 1", {ecmaVersion: 2020}))
+```
+
+When encountering a syntax error, the parser will raise a
+`SyntaxError` object with a meaningful message. The error object will
+have a `pos` property that indicates the string offset at which the
+error occurred, and a `loc` object that contains a `{line, column}`
+object referring to that same position.
+
+Options are provided by in a second argument, which should be an
+object containing any of these fields (only `ecmaVersion` is
+required):
+
+- **ecmaVersion**: Indicates the ECMAScript version to parse. Can be a
+  number, either in year (`2022`) or plain version number (`6`) form,
+  or `"latest"` (the latest the library supports). This influences
+  support for strict mode, the set of reserved words, and support for
+  new syntax features.
+
+  **NOTE**: Only 'stage 4' (finalized) ECMAScript features are being
+  implemented by Acorn. Other proposed new features must be
+  implemented through plugins.
+
+- **sourceType**: Indicate the mode the code should be parsed in. Can be
+  either `"script"`, `"module"` or `"commonjs"`. This influences global strict mode
+  and parsing of `import` and `export` declarations.
+
+  **NOTE**: If set to `"module"`, then static `import` / `export` syntax
+  will be valid, even if `ecmaVersion` is less than 6. If set to `"commonjs"`,
+  it is the same as `"script"` except that the top-level scope behaves like a function.
+
+- **onInsertedSemicolon**: If given a callback, that callback will be
+  called whenever a missing semicolon is inserted by the parser. The
+  callback will be given the character offset of the point where the
+  semicolon is inserted as argument, and if `locations` is on, also a
+  `{line, column}` object representing this position.
+
+- **onTrailingComma**: Like `onInsertedSemicolon`, but for trailing
+  commas.
+
+- **allowReserved**: If `false`, using a reserved word will generate
+  an error. Defaults to `true` for `ecmaVersion` 3, `false` for higher
+  versions. When given the value `"never"`, reserved words and
+  keywords can also not be used as property names (as in Internet
+  Explorer's old parser).
+
+- **allowReturnOutsideFunction**: By default, a return statement at
+  the top level raises an error. Set this to `true` to accept such
+  code.
+
+- **allowImportExportEverywhere**: By default, `import` and `export`
+  declarations can only appear at a program's top level. Setting this
+  option to `true` allows them anywhere where a statement is allowed,
+  and also allows `import.meta` expressions to appear in scripts
+  (when `sourceType` is not `"module"`).
+
+- **allowAwaitOutsideFunction**: If `false`, `await` expressions can
+  only appear inside `async` functions. Defaults to `true` in modules
+  for `ecmaVersion` 2022 and later, `false` for lower versions.
+  Setting this option to `true` allows to have top-level `await`
+  expressions. They are still not allowed in non-`async` functions,
+  though. Setting this option to `true` is not allowed when `sourceType: "commonjs"`.
+
+- **allowSuperOutsideMethod**: By default, `super` outside a method
+  raises an error. Set this to `true` to accept such code.
+
+- **allowHashBang**: When this is enabled, if the code starts with the
+  characters `#!` (as in a shellscript), the first line will be
+  treated as a comment. Defaults to true when `ecmaVersion` >= 2023.
+
+- **checkPrivateFields**: By default, the parser will verify that
+  private properties are only used in places where they are valid and
+  have been declared. Set this to false to turn such checks off.
+
+- **locations**: When `true`, each node has a `loc` object attached
+  with `start` and `end` subobjects, each of which contains the
+  one-based line and zero-based column numbers in `{line, column}`
+  form. Default is `false`.
+
+- **onToken**: If a function is passed for this option, each found
+  token will be passed in same format as tokens returned from
+  `tokenizer().getToken()`.
+
+  If array is passed, each found token is pushed to it.
+
+  Note that you are not allowed to call the parser from the
+  callback—that will corrupt its internal state.
+
+- **onComment**: If a function is passed for this option, whenever a
+  comment is encountered the function will be called with the
+  following parameters:
+
+  - `block`: `true` if the comment is a block comment, false if it
+    is a line comment.
+  - `text`: The content of the comment.
+  - `start`: Character offset of the start of the comment.
+  - `end`: Character offset of the end of the comment.
+
+  When the `locations` options is on, the `{line, column}` locations
+  of the comment’s start and end are passed as two additional
+  parameters.
+
+  If array is passed for this option, each found comment is pushed
+  to it as object in Esprima format:
+
+  ```javascript
+  {
+    "type": "Line" | "Block",
+    "value": "comment text",
+    "start": Number,
+    "end": Number,
+    // If `locations` option is on:
+    "loc": {
+      "start": {line: Number, column: Number}
+      "end": {line: Number, column: Number}
+    },
+    // If `ranges` option is on:
+    "range": [Number, Number]
+  }
+  ```
+
+  Note that you are not allowed to call the parser from the
+  callback—that will corrupt its internal state.
+
+- **ranges**: Nodes have their start and end characters offsets
+  recorded in `start` and `end` properties (directly on the node,
+  rather than the `loc` object, which holds line/column data. To also
+  add a
+  [semi-standardized](https://bugzilla.mozilla.org/show_bug.cgi?id=745678)
+  `range` property holding a `[start, end]` array with the same
+  numbers, set the `ranges` option to `true`.
+
+- **program**: It is possible to parse multiple files into a single
+  AST by passing the tree produced by parsing the first file as the
+  `program` option in subsequent parses. This will add the toplevel
+  forms of the parsed file to the "Program" (top) node of an existing
+  parse tree.
+
+- **sourceFile**: When the `locations` option is `true`, you can pass
+  this option to add a `source` attribute in every node’s `loc`
+  object. Note that the contents of this option are not examined or
+  processed in any way; you are free to use whatever format you
+  choose.
+
+- **directSourceFile**: Like `sourceFile`, but a `sourceFile` property
+  will be added (regardless of the `location` option) directly to the
+  nodes, rather than the `loc` object.
+
+- **preserveParens**: If this option is `true`, parenthesized expressions
+  are represented by (non-standard) `ParenthesizedExpression` nodes
+  that have a single `expression` property containing the expression
+  inside parentheses.
+
+**parseExpressionAt**`(input, offset, options)` will parse a single
+expression in a string, and return its AST. It will not complain if
+there is more of the string left after the expression.
+
+**tokenizer**`(input, options)` returns an object with a `getToken`
+method that can be called repeatedly to get the next token, a `{start,
+end, type, value}` object (with added `loc` property when the
+`locations` option is enabled and `range` property when the `ranges`
+option is enabled). When the token's type is `tokTypes.eof`, you
+should stop calling the method, since it will keep returning that same
+token forever.
+
+Note that tokenizing JavaScript without parsing it is, in modern
+versions of the language, not really possible due to the way syntax is
+overloaded in ways that can only be disambiguated by the parse
+context. This package applies a bunch of heuristics to try and do a
+reasonable job, but you are advised to use `parse` with the `onToken`
+option instead of this.
+
+In ES6 environment, returned result can be used as any other
+protocol-compliant iterable:
+
+```javascript
+for (let token of acorn.tokenizer(str)) {
+  // iterate over the tokens
+}
+
+// transform code to array of tokens:
+var tokens = [...acorn.tokenizer(str)]
+```
+
+**tokTypes** holds an object mapping names to the token type objects
+that end up in the `type` properties of tokens.
+
+**getLineInfo**`(input, offset)` can be used to get a `{line,
+column}` object for a given program string and offset.
+
+### The `Parser` class
+
+Instances of the **`Parser`** class contain all the state and logic
+that drives a parse. It has static methods `parse`,
+`parseExpressionAt`, and `tokenizer` that match the top-level
+functions by the same name.
+
+When extending the parser with plugins, you need to call these methods
+on the extended version of the class. To extend a parser with plugins,
+you can use its static `extend` method.
+
+```javascript
+var acorn = require("acorn")
+var jsx = require("acorn-jsx")
+var JSXParser = acorn.Parser.extend(jsx())
+JSXParser.parse("foo(<bar/>)", {ecmaVersion: 2020})
+```
+
+The `extend` method takes any number of plugin values, and returns a
+new `Parser` class that includes the extra parser logic provided by
+the plugins.
+
+## Command line interface
+
+The `bin/acorn` utility can be used to parse a file from the command
+line. It accepts as arguments its input file and the following
+options:
+
+- `--ecma3|--ecma5|--ecma6|--ecma7|--ecma8|--ecma9|--ecma10`: Sets the ECMAScript version
+  to parse. Default is version 9.
+
+- `--module`: Sets the parsing mode to `"module"`. Is set to `"script"` otherwise.
+
+- `--locations`: Attaches a "loc" object to each node with "start" and
+  "end" subobjects, each of which contains the one-based line and
+  zero-based column numbers in `{line, column}` form.
+
+- `--allow-hash-bang`: If the code starts with the characters #! (as
+  in a shellscript), the first line will be treated as a comment.
+
+- `--allow-await-outside-function`: Allows top-level `await` expressions.
+  See the `allowAwaitOutsideFunction` option for more information.
+
+- `--compact`: No whitespace is used in the AST output.
+
+- `--silent`: Do not output the AST, just return the exit status.
+
+- `--help`: Print the usage information and quit.
+
+The utility spits out the syntax tree as JSON data.
+
+## Existing plugins
+
+ - [`acorn-jsx`](https://github.com/RReverser/acorn-jsx): Parse [Facebook JSX syntax extensions](https://github.com/facebook/jsx)
