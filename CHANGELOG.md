@@ -647,3 +647,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-04] perf(automod): optimize caps limit
 - [2026-06-04] refactor(docs): streamline command specifications
 - [2026-06-04] perf(zero-emoji): tune strict zero-emoji architecture
+- [2026-06-04] feat(reaction-roles): update role assignment toggle
