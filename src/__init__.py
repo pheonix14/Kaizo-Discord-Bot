@@ -1,1 +1,1 @@
-# Package entrypoint for project kaizer k5
+# Web dashboard package
