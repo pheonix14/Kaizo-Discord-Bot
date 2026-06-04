@@ -644,3 +644,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-04] style(perf): polish query index optimization
 - [2026-06-04] feat(ui): update settings forms
 - [2026-06-04] refactor(automod): streamline mention mass limiter
+- [2026-06-04] perf(automod): optimize caps limit
