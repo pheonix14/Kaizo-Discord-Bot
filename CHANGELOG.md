@@ -655,3 +655,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-05] feat(giveaways): harden scheduler
 - [2026-06-05] perf(stats): tune bot count tracker
 - [2026-06-05] fix(perf): fix audio stream buffer tuning
+- [2026-06-05] feat(moderation): enhance purge messages
