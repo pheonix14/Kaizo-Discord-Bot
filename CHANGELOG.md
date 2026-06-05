@@ -659,3 +659,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-05] refactor(automod): refactor invite filter
 - [2026-06-05] perf(web): tune session management
 - [2026-06-05] feat(fun): add ascii art cards
+- [2026-06-05] feat(utility): add userinfo embed
