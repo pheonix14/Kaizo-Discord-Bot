@@ -665,3 +665,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-06] feat(reaction-roles): add role assignment toggle
 - [2026-06-06] feat(stats): update server stats voice channels
 - [2026-06-06] feat(reaction-roles): implement menu customizer
+- [2026-06-06] feat(utility): update serverinfo card
