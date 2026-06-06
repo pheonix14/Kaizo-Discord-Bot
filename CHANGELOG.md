@@ -661,3 +661,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-05] feat(fun): add ascii art cards
 - [2026-06-05] feat(utility): add userinfo embed
 - [2026-06-06] perf(db): optimize guild config cache
+- [2026-06-06] style(stats): polish member count updater
