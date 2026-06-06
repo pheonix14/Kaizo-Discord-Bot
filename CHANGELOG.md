@@ -663,3 +663,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-06] perf(db): optimize guild config cache
 - [2026-06-06] style(stats): polish member count updater
 - [2026-06-06] feat(reaction-roles): add role assignment toggle
+- [2026-06-06] feat(stats): update server stats voice channels
