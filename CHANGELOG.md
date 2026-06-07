@@ -677,3 +677,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-07] perf(tickets): optimize transcript exporter
 - [2026-06-07] refactor(zero-emoji): streamline clean logging output
 - [2026-06-07] refactor(security): refactor anti-nuke lock
+- [2026-06-07] feat(economy): add wallet balance
