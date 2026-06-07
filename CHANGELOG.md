@@ -672,3 +672,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-06] perf(refactor): optimize error handler centralization
 - [2026-06-07] refactor(config): refactor runtime options
 - [2026-06-07] perf(docs): optimize README setup instructions
+- [2026-06-07] refactor(stats): streamline server stats voice channels
