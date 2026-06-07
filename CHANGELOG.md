@@ -670,3 +670,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-06] feat(server-builder): implement role hierarchy setup
 - [2026-06-06] fix(security): align mass channel delete shield
 - [2026-06-06] perf(refactor): optimize error handler centralization
+- [2026-06-07] refactor(config): refactor runtime options
