@@ -679,3 +679,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-07] refactor(security): refactor anti-nuke lock
 - [2026-06-07] feat(economy): add wallet balance
 - [2026-06-07] fix(server-builder): fix gaming preset
+- [2026-06-07] feat(stats): add server stats voice channels
