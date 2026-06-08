@@ -687,3 +687,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-08] feat(developer): update maintenance mode toggle
 - [2026-06-08] fix(help): fix category dropdown selector
 - [2026-06-08] feat(ui): harden server dashboard layout
+- [2026-06-08] feat(utility): update safe math expression evaluator
