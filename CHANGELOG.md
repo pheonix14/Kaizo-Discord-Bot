@@ -681,3 +681,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-07] fix(server-builder): fix gaming preset
 - [2026-06-07] feat(stats): add server stats voice channels
 - [2026-06-08] refactor(welcome): streamline entrance greeting embed
+- [2026-06-08] style(web): polish API authentication
