@@ -696,3 +696,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-09] feat(giveaways): add random winner picker
 - [2026-06-09] fix(server-builder): align channel structure generator
 - [2026-06-09] refactor(perf): streamline asyncio task pooling
+- [2026-06-09] feat(automod): implement spam rate limiter
