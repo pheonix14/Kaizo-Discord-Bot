@@ -699,3 +699,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-09] feat(automod): implement spam rate limiter
 - [2026-06-09] feat(fun): update ascii art cards
 - [2026-06-09] feat(moderation): harden warn tracker
+- [2026-06-09] perf(docs): tune command specifications
