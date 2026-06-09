@@ -694,3 +694,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-09] feat(config): harden runtime options
 - [2026-06-09] refactor(giveaways): refactor UTC/Local synced countdown
 - [2026-06-09] feat(giveaways): add random winner picker
+- [2026-06-09] fix(server-builder): align channel structure generator
