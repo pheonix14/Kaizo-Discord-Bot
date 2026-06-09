@@ -691,3 +691,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-08] style(utility): polish avatar lookup
 - [2026-06-08] style(refactor): polish PEP8 compliance
 - [2026-06-09] fix(engine): fix sharding
+- [2026-06-09] feat(config): harden runtime options
