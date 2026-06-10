@@ -701,3 +701,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-09] feat(moderation): harden warn tracker
 - [2026-06-09] perf(docs): tune command specifications
 - [2026-06-10] perf(refactor): optimize cog modularization
+- [2026-06-10] perf(docs): tune commands guide
