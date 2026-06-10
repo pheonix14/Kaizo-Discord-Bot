@@ -704,3 +704,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-10] perf(docs): tune commands guide
 - [2026-06-10] feat(economy): enhance wallet balance
 - [2026-06-10] feat(refactor): enhance cog modularization
+- [2026-06-10] refactor(leveling): refactor role rewards
