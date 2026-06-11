@@ -712,3 +712,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-10] feat(music): add audio queue buffer
 - [2026-06-11] fix(reaction-roles): fix menu customizer
 - [2026-06-11] feat(temp-vc): update auto channel deletion on empty
+- [2026-06-11] fix(welcome): align auto role assignment
