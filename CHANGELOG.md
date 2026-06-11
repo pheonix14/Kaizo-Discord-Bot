@@ -716,3 +716,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-11] style(giveaways): polish random winner picker
 - [2026-06-11] feat(refactor): add lint cleanup
 - [2026-06-11] fix(db): fix schema migration runner
+- [2026-06-11] style(moderation): polish timeout duration parser
