@@ -719,3 +719,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-11] style(moderation): polish timeout duration parser
 - [2026-06-11] feat(leveling): add activity XP formula
 - [2026-06-11] feat(leveling): harden level up notifications
+- [2026-06-11] perf(economy): tune shop inventory
