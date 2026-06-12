@@ -729,3 +729,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-12] style(giveaways): polish reaction entrant collector
 - [2026-06-12] perf(engine): optimize heartbeat listener
 - [2026-06-12] perf(ui): tune server dashboard layout
+- [2026-06-12] feat(automod): add caps limit
