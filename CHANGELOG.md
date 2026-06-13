@@ -735,3 +735,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-13] refactor(config): streamline default fallbacks
 - [2026-06-13] perf(ui): tune giveaway clocks
 - [2026-06-13] perf(giveaways): tune UTC/Local synced countdown
+- [2026-06-13] perf(help): optimize command argument specs
