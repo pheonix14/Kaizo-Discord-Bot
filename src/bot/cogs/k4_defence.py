@@ -380,6 +380,71 @@ class K4DefenceCog(commands.Cog, name="K4 Defence"):
                 triggered = True
                 reason = f"Discord invite spam ({total_invites} invites in 10 seconds)."
 
+        # NEW RULE 8: Banned/Blacklisted words check (profanity filter)
+        if not triggered:
+            banned_words = {"fuck", "shit", "bitch", "asshole", "nigger", "retard", "cunt", "bastard"}
+            if message.content:
+                content_lower = message.content.lower()
+                for word in banned_words:
+                    pattern = r"\b" + re.escape(word) + r"\b"
+                    if re.search(pattern, content_lower):
+                        # Triggered Rule 8!
+                        # Delete the last message (this message)
+                        try:
+                            await message.delete()
+                        except discord.NotFound:
+                            pass
+                        except discord.Forbidden:
+                            pass
+                        
+                        reason = f"Banned word detected: '{word}'"
+                        
+                        # Store in Supabase
+                        await asyncio.to_thread(
+                            db_client.log_protection_event,
+                            guild_id,
+                            "k4_defence",
+                            str(self.bot.user.id),
+                            "System",
+                            "Message Deleted",
+                            f"Target: {user_id}. Reason: {reason}"
+                        )
+                        
+                        # Clearly show what happened in the channel
+                        embed = discord.Embed(
+                            title="🛡️ [K4 Defence] Message Deleted",
+                            description=f"{message.author.mention}, your message was deleted for violating the K4 Defense rules.\n**Reason:** {reason}",
+                            color=discord.Color.red(),
+                            timestamp=discord.utils.utcnow()
+                        )
+                        try:
+                            await message.channel.send(embed=embed, delete_after=10)
+                        except discord.Forbidden:
+                            pass
+                            
+                        # Log to mod log channel if configured
+                        modlog_id = settings.get("mod_log_channel")
+                        if modlog_id:
+                            modlog = message.guild.get_channel(int(modlog_id))
+                            if modlog:
+                                embed_log = discord.Embed(
+                                    title="[K4 Defence] Banned Word Filter Triggered",
+                                    description=f"**User:** {message.author.mention} ({message.author.id})\n**Action:** Message Deleted\n**Reason:** {reason}\n**Message Content:** {message.content}",
+                                    color=discord.Color.orange(),
+                                    timestamp=discord.utils.utcnow()
+                                )
+                                try:
+                                    await modlog.send(embed=embed_log)
+                                except discord.Forbidden:
+                                    pass
+
+                        # Remove this message from the cache so it doesn't skew other rule evaluations
+                        if self.message_cache.get(user_id):
+                            self.message_cache[user_id].pop()
+                        if self.message_objects.get(user_id):
+                            self.message_objects[user_id].pop()
+                        return
+
         if triggered:
             # 1. Punish User
             await self.punish_user(message.author, message.guild, reason)

