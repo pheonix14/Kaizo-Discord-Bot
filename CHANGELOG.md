@@ -732,3 +732,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-12] feat(automod): add caps limit
 - [2026-06-13] feat(perf): harden asyncio task pooling
 - [2026-06-13] fix(giveaways): fix scheduler
+- [2026-06-13] refactor(config): streamline default fallbacks
