@@ -256,5 +256,30 @@ class TestK4DefenceSystem(unittest.IsolatedAsyncioTestCase):
         # Grace should be muted instead
         member.add_roles.assert_called_once()
 
+    @patch('src.db.client.get_guild_whitelist', return_value=[])
+    @patch('src.db.client.get_guild_settings')
+    @patch('src.db.client.log_protection_event')
+    async def test_banned_word_rule(self, mock_log, mock_settings, mock_whitelist):
+        # RULE 8: Banned/Blacklisted words check
+        mock_settings.return_value = {
+            "k4_defence_enabled": True,
+            "mute_role": "111",
+            "mod_log_channel": "222"
+        }
+        member = MockMember(8888, "BannedWordUser")
+        channel = MockChannel(333, "general")
+        
+        msg = MockMessage(member, channel, "This is a shit message")
+        msg.guild = self.guild
+        
+        await self.cog.on_message(msg)
+        
+        # Message should be deleted
+        msg.delete.assert_called_once()
+        # Database log should be created
+        mock_log.assert_called_once()
+        # The user should NOT be muted (add_roles not called)
+        member.add_roles.assert_not_called()
+
 if __name__ == "__main__":
     unittest.main()
