@@ -739,3 +739,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-13] feat(temp-vc): update room limit controls
 - [2026-06-13] feat(server-builder): add channel structure generator
 - [2026-06-13] perf(zero-emoji): optimize clean logging output
+- [2026-06-13] fix(utility): fix avatar lookup
