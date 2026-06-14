@@ -743,3 +743,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-14] refactor(security): refactor mass channel delete shield
 - [2026-06-14] perf(docs): tune command specifications
 - [2026-06-14] refactor(developer): refactor telemetry ping
+- [2026-06-14] feat(tickets): add channel permissions
