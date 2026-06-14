@@ -747,3 +747,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-14] perf(db): tune query builder
 - [2026-06-14] perf(docs): tune commands guide
 - [2026-06-14] feat(refactor): harden typing annotations
+- [2026-06-14] feat(ui): update server dashboard layout
