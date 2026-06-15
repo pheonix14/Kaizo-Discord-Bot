@@ -752,3 +752,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-14] perf(economy): optimize gambling dice
 - [2026-06-15] fix(docs): align command specifications
 - [2026-06-15] feat(refactor): update PEP8 compliance
+- [2026-06-15] feat(server-builder): add category layout
