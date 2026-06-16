@@ -762,3 +762,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-15] fix(docs): align README setup instructions
 - [2026-06-16] fix(utility): fix role info
 - [2026-06-16] feat(help): add category dropdown selector
+- [2026-06-16] feat(leveling): harden activity XP formula
