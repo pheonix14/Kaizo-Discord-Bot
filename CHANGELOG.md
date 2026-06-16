@@ -760,3 +760,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-15] refactor(automod): streamline invite filter
 - [2026-06-15] refactor(db): refactor transaction helper
 - [2026-06-15] fix(docs): align README setup instructions
+- [2026-06-16] fix(utility): fix role info
