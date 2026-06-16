@@ -764,3 +764,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-16] feat(help): add category dropdown selector
 - [2026-06-16] feat(leveling): harden activity XP formula
 - [2026-06-16] perf(stats): tune bot count tracker
+- [2026-06-16] style(automod): polish action triggers
