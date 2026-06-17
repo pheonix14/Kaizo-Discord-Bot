@@ -775,3 +775,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-17] style(web): polish session management
 - [2026-06-17] feat(automod): harden spam rate limiter
 - [2026-06-17] style(developer): polish cog hot reloader
+- [2026-06-17] feat(utility): harden serverinfo card
