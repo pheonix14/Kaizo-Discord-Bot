@@ -778,3 +778,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-17] feat(utility): harden serverinfo card
 - [2026-06-17] refactor(help): streamline category dropdown selector
 - [2026-06-17] feat(moderation): harden purge messages
+- [2026-06-17] refactor(zero-emoji): streamline embed badge formatting
