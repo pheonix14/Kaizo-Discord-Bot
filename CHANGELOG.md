@@ -789,3 +789,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-18] feat(server-builder): harden community preset
 - [2026-06-18] perf(economy): tune wallet balance
 - [2026-06-18] docs(docs): implement command specifications
+- [2026-06-18] fix(stats): fix active voice count
