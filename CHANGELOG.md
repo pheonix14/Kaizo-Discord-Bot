@@ -786,3 +786,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-18] feat(developer): harden cog hot reloader
 - [2026-06-18] feat(welcome): harden custom card formatting
 - [2026-06-18] refactor(web): refactor guild selection portal
+- [2026-06-18] feat(server-builder): harden community preset
