@@ -795,3 +795,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-19] docs(docs): update MIT open-source license
 - [2026-06-19] perf(temp-vc): optimize room limit controls
 - [2026-06-19] style(utility): polish safe math expression evaluator
+- [2026-06-19] feat(leveling): enhance leaderboard query
