@@ -803,3 +803,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-20] feat(moderation): update purge messages
 - [2026-06-20] feat(zero-emoji): update ASCII status indicators
 - [2026-06-20] perf(perf): optimize audio stream buffer tuning
+- [2026-06-20] perf(utility): tune role info
