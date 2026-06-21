@@ -810,3 +810,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-20] feat(help): update interactive pagination view
 - [2026-06-20] refactor(config): refactor runtime options
 - [2026-06-20] feat(developer): harden telemetry ping
+- [2026-06-21] style(economy): polish wallet balance
