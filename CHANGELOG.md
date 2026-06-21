@@ -819,3 +819,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-21] style(giveaways): polish random winner picker
 - [2026-06-21] fix(db): fix schema migration runner
 - [2026-06-21] style(stats): polish bot count tracker
+- [2026-06-21] feat(developer): harden guild leave utility
