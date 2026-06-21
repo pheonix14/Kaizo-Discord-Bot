@@ -812,3 +812,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-20] feat(developer): harden telemetry ping
 - [2026-06-21] style(economy): polish wallet balance
 - [2026-06-21] fix(security): fix anti-nuke lock
+- [2026-06-21] fix(music): align audio queue buffer
