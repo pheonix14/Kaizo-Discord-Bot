@@ -827,3 +827,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-22] style(temp-vc): polish dynamic voice room creation
 - [2026-06-22] feat(config): implement default fallbacks
 - [2026-06-22] docs(docs): update README setup instructions
+- [2026-06-22] perf(utility): tune serverinfo card
