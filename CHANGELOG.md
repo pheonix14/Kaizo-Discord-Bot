@@ -825,3 +825,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-22] feat(fun): update coinflip randomness
 - [2026-06-22] refactor(tickets): streamline transcript exporter
 - [2026-06-22] style(temp-vc): polish dynamic voice room creation
+- [2026-06-22] feat(config): implement default fallbacks
