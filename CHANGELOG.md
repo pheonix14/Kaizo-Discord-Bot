@@ -829,3 +829,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-22] docs(docs): update README setup instructions
 - [2026-06-22] perf(utility): tune serverinfo card
 - [2026-06-22] style(developer): polish maintenance mode toggle
+- [2026-06-22] refactor(leveling): streamline level up notifications
