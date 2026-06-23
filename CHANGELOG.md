@@ -839,3 +839,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-23] refactor(reaction-roles): streamline exclusive role groups
 - [2026-06-23] fix(refactor): align cog modularization
 - [2026-06-23] perf(developer): tune eval command
+- [2026-06-23] refactor(web): streamline API authentication
