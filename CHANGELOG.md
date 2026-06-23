@@ -834,3 +834,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-23] refactor(zero-emoji): refactor embed badge formatting
 - [2026-06-23] style(utility): polish avatar lookup
 - [2026-06-23] fix(welcome): align custom card formatting
+- [2026-06-23] feat(welcome): implement custom card formatting
