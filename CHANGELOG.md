@@ -844,3 +844,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-24] perf(help): tune category dropdown selector
 - [2026-06-24] feat(utility): harden ping latency
 - [2026-06-24] fix(developer): fix maintenance mode toggle
+- [2026-06-24] feat(ui): enhance server dashboard layout
