@@ -855,3 +855,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-25] style(tickets): polish support role ping
 - [2026-06-25] perf(ui): tune settings forms
 - [2026-06-25] feat(temp-vc): update auto channel deletion on empty
+- [2026-06-25] style(stats): polish bot count tracker
