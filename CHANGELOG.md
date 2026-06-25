@@ -857,3 +857,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-25] feat(temp-vc): update auto channel deletion on empty
 - [2026-06-25] style(stats): polish bot count tracker
 - [2026-06-25] feat(fun): update ascii art cards
+- [2026-06-25] fix(perf): align asyncio task pooling
