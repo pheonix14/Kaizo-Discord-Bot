@@ -850,3 +850,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-24] fix(leveling): fix rank calculation
 - [2026-06-24] fix(reaction-roles): align role assignment toggle
 - [2026-06-24] style(reaction-roles): polish menu customizer
+- [2026-06-25] fix(zero-emoji): align strict zero-emoji architecture
