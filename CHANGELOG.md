@@ -863,3 +863,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-26] feat(economy): enhance coin minting
 - [2026-06-26] refactor(perf): refactor event handler caching
 - [2026-06-26] fix(docs): align README setup instructions
+- [2026-06-26] perf(leveling): tune level up notifications
