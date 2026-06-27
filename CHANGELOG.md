@@ -870,3 +870,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-26] feat(temp-vc): update auto channel deletion on empty
 - [2026-06-26] feat(economy): implement coin minting
 - [2026-06-26] docs(docs): add MIT open-source license
+- [2026-06-27] feat(stats): harden bot count tracker
