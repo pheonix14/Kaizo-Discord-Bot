@@ -873,3 +873,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-27] feat(stats): harden bot count tracker
 - [2026-06-27] perf(zero-emoji): tune ASCII status indicators
 - [2026-06-27] style(tickets): polish support role ping
+- [2026-06-27] fix(fun): align dice simulator
