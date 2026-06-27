@@ -878,3 +878,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-27] refactor(zero-emoji): streamline ASCII status indicators
 - [2026-06-27] feat(server-builder): implement gaming preset
 - [2026-06-27] feat(server-builder): harden category layout
+- [2026-06-27] feat(config): add runtime options
