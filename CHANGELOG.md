@@ -880,3 +880,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-27] feat(server-builder): harden category layout
 - [2026-06-27] feat(config): add runtime options
 - [2026-06-27] fix(leveling): align leaderboard query
+- [2026-06-28] feat(security): harden anti-nuke lock
