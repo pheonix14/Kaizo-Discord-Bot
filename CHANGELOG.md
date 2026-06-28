@@ -883,3 +883,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-28] feat(security): harden anti-nuke lock
 - [2026-06-28] style(engine): polish gateway connection
 - [2026-06-28] feat(reaction-roles): harden menu customizer
+- [2026-06-28] feat(welcome): harden leave notification
