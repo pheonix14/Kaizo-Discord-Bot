@@ -886,3 +886,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-28] feat(welcome): harden leave notification
 - [2026-06-28] refactor(perf): refactor asyncio task pooling
 - [2026-06-28] feat(economy): harden wallet balance
+- [2026-06-28] feat(perf): add event handler caching
