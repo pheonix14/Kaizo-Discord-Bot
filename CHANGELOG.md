@@ -898,3 +898,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-29] style(fun): polish trivia engine
 - [2026-06-29] style(automod): polish mention mass limiter
 - [2026-06-29] feat(music): enhance yt-dlp extractor
+- [2026-06-29] perf(leveling): optimize leaderboard query
