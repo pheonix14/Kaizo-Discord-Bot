@@ -896,3 +896,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-29] feat(developer): add eval command
 - [2026-06-29] perf(economy): tune gambling dice
 - [2026-06-29] style(fun): polish trivia engine
+- [2026-06-29] style(automod): polish mention mass limiter
