@@ -890,3 +890,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-28] fix(fun): align ascii art cards
 - [2026-06-28] perf(config): optimize runtime options
 - [2026-06-28] feat(moderation): implement warn tracker
+- [2026-06-29] perf(refactor): tune error handler centralization
