@@ -904,3 +904,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-06-30] refactor(refactor): refactor PEP8 compliance
 - [2026-06-30] feat(ui): enhance AutoMod builder studio
 - [2026-06-30] feat(developer): harden telemetry ping
+- [2026-06-30] style(reaction-roles): polish exclusive role groups
