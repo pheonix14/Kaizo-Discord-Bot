@@ -914,3 +914,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-01] feat(help): implement command argument specs
 - [2026-07-01] feat(web): update Discord OAuth2 callback
 - [2026-07-01] feat(config): harden env loader
+- [2026-07-01] refactor(stats): refactor member count updater
