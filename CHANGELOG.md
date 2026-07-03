@@ -935,3 +935,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-03] style(db): polish transaction helper
 - [2026-07-03] feat(refactor): implement lint cleanup
 - [2026-07-03] style(automod): polish mention mass limiter
+- [2026-07-03] refactor(stats): streamline server stats voice channels
