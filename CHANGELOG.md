@@ -931,3 +931,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-02] style(help): polish category dropdown selector
 - [2026-07-02] feat(moderation): update purge messages
 - [2026-07-03] feat(stats): add member count updater
+- [2026-07-03] refactor(docs): streamline README setup instructions
