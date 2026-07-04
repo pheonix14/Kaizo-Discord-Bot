@@ -943,3 +943,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-04] fix(config): fix credentials validation
 - [2026-07-04] docs(docs): add credits to pheonix14
 - [2026-07-04] feat(config): add runtime options
+- [2026-07-04] refactor(config): refactor runtime options
