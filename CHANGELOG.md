@@ -947,3 +947,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-04] perf(moderation): optimize mod logging
 - [2026-07-04] feat(zero-emoji): harden clean logging output
 - [2026-07-04] fix(giveaways): fix reroll command
+- [2026-07-04] fix(temp-vc): fix dynamic voice room creation
