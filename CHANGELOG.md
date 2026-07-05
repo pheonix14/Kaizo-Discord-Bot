@@ -950,3 +950,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-04] fix(temp-vc): fix dynamic voice room creation
 - [2026-07-04] feat(ui): harden settings forms
 - [2026-07-04] feat(automod): harden spam rate limiter
+- [2026-07-05] perf(security): optimize admin permission guard
