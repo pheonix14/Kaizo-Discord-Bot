@@ -955,3 +955,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-05] feat(zero-emoji): enhance strict zero-emoji architecture
 - [2026-07-05] feat(perf): implement asyncio task pooling
 - [2026-07-05] feat(stats): harden active voice count
+- [2026-07-05] fix(fun): fix coinflip randomness
