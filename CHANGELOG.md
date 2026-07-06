@@ -963,3 +963,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-06] feat(developer): implement maintenance mode toggle
 - [2026-07-06] feat(tickets): add ticket creation modal
 - [2026-07-06] feat(developer): implement telemetry ping
+- [2026-07-06] feat(developer): harden cog hot reloader
