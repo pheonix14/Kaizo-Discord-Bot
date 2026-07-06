@@ -968,3 +968,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-06] perf(temp-vc): tune auto channel deletion on empty
 - [2026-07-06] feat(fun): enhance 8ball answers
 - [2026-07-06] style(automod): polish spam rate limiter
+- [2026-07-06] fix(server-builder): align gaming preset
