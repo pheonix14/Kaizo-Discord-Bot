@@ -978,3 +978,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-07] perf(zero-emoji): optimize clean logging output
 - [2026-07-07] perf(fun): tune 8ball answers
 - [2026-07-07] feat(giveaways): harden reroll command
+- [2026-07-07] style(refactor): polish typing annotations
