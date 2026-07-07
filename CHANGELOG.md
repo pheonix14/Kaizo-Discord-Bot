@@ -973,3 +973,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-07] feat(perf): harden asyncio task pooling
 - [2026-07-07] refactor(server-builder): refactor category layout
 - [2026-07-07] style(ui): polish AutoMod builder studio
+- [2026-07-07] refactor(reaction-roles): refactor exclusive role groups
