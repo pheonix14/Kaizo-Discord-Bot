@@ -987,3 +987,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-08] style(config): polish runtime options
 - [2026-07-08] style(reaction-roles): polish role assignment toggle
 - [2026-07-08] feat(temp-vc): enhance room limit controls
+- [2026-07-08] feat(tickets): update ticket creation modal
