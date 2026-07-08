@@ -983,3 +983,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-08] refactor(automod): refactor mention mass limiter
 - [2026-07-08] style(moderation): polish warn tracker
 - [2026-07-08] feat(server-builder): enhance role hierarchy setup
+- [2026-07-08] perf(docs): optimize README setup instructions
