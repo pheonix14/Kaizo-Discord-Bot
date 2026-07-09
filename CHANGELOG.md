@@ -992,3 +992,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-08] fix(fun): align coinflip randomness
 - [2026-07-09] refactor(config): refactor runtime options
 - [2026-07-09] refactor(ui): streamline settings forms
+- [2026-07-09] feat(config): add default fallbacks
