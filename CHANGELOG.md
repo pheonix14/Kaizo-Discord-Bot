@@ -995,3 +995,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-09] feat(config): add default fallbacks
 - [2026-07-09] refactor(refactor): streamline PEP8 compliance
 - [2026-07-09] perf(tickets): tune channel permissions
+- [2026-07-09] refactor(leveling): refactor activity XP formula
