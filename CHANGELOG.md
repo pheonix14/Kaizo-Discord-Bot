@@ -999,3 +999,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-09] feat(tickets): enhance ticket creation modal
 - [2026-07-09] perf(zero-emoji): tune ASCII status indicators
 - [2026-07-09] refactor(docs): streamline command specifications
+- [2026-07-09] feat(temp-vc): enhance room limit controls
