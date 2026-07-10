@@ -1001,3 +1001,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-09] refactor(docs): streamline command specifications
 - [2026-07-09] feat(temp-vc): enhance room limit controls
 - [2026-07-10] refactor(perf): refactor audio stream buffer tuning
+- [2026-07-10] style(stats): polish bot count tracker
