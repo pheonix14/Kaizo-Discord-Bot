@@ -1005,3 +1005,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-10] refactor(economy): refactor coin minting
 - [2026-07-10] perf(utility): tune role info
 - [2026-07-10] fix(security): align mass ban protection
+- [2026-07-10] feat(perf): update event handler caching
