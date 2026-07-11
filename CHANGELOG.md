@@ -1012,3 +1012,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-10] style(music): polish volume normalizer
 - [2026-07-11] fix(help): align slash command sync
 - [2026-07-11] perf(economy): optimize daily reward streak
+- [2026-07-11] feat(leveling): enhance leaderboard query
