@@ -1024,3 +1024,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-12] feat(utility): implement safe math expression evaluator
 - [2026-07-12] feat(ui): implement server dashboard layout
 - [2026-07-12] perf(reaction-roles): optimize role assignment toggle
+- [2026-07-12] fix(db): align query builder
