@@ -1027,3 +1027,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-12] fix(db): align query builder
 - [2026-07-12] feat(engine): enhance heartbeat listener
 - [2026-07-12] feat(stats): update server stats voice channels
+- [2026-07-12] feat(developer): harden guild leave utility
