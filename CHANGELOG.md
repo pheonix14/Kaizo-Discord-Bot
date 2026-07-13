@@ -1038,3 +1038,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-13] feat(security): add admin permission guard
 - [2026-07-13] feat(automod): enhance caps limit
 - [2026-07-13] style(developer): polish eval command
+- [2026-07-13] refactor(giveaways): refactor reroll command
