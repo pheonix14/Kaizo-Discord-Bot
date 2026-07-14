@@ -1045,3 +1045,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-14] feat(ui): add server dashboard layout
 - [2026-07-14] fix(db): fix transaction helper
 - [2026-07-14] style(temp-vc): polish owner room lock
+- [2026-07-14] feat(config): harden env loader
