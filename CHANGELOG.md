@@ -1061,3 +1061,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-15] style(ui): polish giveaway clocks
 - [2026-07-15] fix(temp-vc): align auto channel deletion on empty
 - [2026-07-16] fix(refactor): align cog modularization
+- [2026-07-16] fix(utility): align userinfo embed
