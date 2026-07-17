@@ -1073,3 +1073,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-17] fix(ui): fix server dashboard layout
 - [2026-07-17] refactor(perf): streamline asyncio task pooling
 - [2026-07-17] feat(refactor): enhance cog modularization
+- [2026-07-17] refactor(db): refactor query builder
