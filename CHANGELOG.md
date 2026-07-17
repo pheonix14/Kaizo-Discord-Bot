@@ -1075,3 +1075,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-17] feat(refactor): enhance cog modularization
 - [2026-07-17] refactor(db): refactor query builder
 - [2026-07-17] fix(temp-vc): align auto channel deletion on empty
+- [2026-07-17] fix(zero-emoji): fix embed badge formatting
