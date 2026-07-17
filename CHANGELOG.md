@@ -1070,3 +1070,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-16] feat(welcome): enhance custom card formatting
 - [2026-07-16] fix(fun): fix trivia engine
 - [2026-07-16] feat(moderation): harden purge messages
+- [2026-07-17] fix(ui): fix server dashboard layout
