@@ -1086,3 +1086,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-18] refactor(developer): streamline eval command
 - [2026-07-18] feat(temp-vc): implement room limit controls
 - [2026-07-18] fix(reaction-roles): fix persistent button component
+- [2026-07-18] style(zero-emoji): polish ASCII status indicators
