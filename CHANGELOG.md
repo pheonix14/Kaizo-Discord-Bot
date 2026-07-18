@@ -1084,3 +1084,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-18] feat(security): implement K4 defense system
 - [2026-07-18] style(giveaways): polish UTC/Local synced countdown
 - [2026-07-18] refactor(developer): streamline eval command
+- [2026-07-18] feat(temp-vc): implement room limit controls
