@@ -1098,3 +1098,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-19] perf(web): tune API authentication
 - [2026-07-19] feat(developer): enhance telemetry ping
 - [2026-07-19] perf(security): optimize mass channel delete shield
+- [2026-07-19] fix(engine): fix reconnect backoff
