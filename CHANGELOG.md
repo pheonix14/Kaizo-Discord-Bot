@@ -1093,3 +1093,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-19] perf(music): tune PyNaCl voice socket
 - [2026-07-19] perf(db): optimize transaction helper
 - [2026-07-19] fix(music): fix audio queue buffer
+- [2026-07-19] feat(welcome): add custom card formatting
