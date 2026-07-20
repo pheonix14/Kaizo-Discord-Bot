@@ -1100,3 +1100,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-19] perf(security): optimize mass channel delete shield
 - [2026-07-19] fix(engine): fix reconnect backoff
 - [2026-07-19] fix(developer): fix eval command
+- [2026-07-20] feat(stats): update active voice count
