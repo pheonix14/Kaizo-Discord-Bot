@@ -1109,3 +1109,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-20] feat(help): enhance command argument specs
 - [2026-07-20] refactor(temp-vc): refactor owner room lock
 - [2026-07-20] feat(giveaways): add scheduler
+- [2026-07-20] refactor(tickets): streamline transcript exporter
