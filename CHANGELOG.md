@@ -1106,3 +1106,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-20] docs(docs): enhance README setup instructions
 - [2026-07-20] perf(leveling): optimize leaderboard query
 - [2026-07-20] refactor(leveling): refactor leaderboard query
+- [2026-07-20] feat(help): enhance command argument specs
