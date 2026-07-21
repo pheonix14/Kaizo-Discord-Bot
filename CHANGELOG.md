@@ -1116,3 +1116,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-21] refactor(refactor): refactor cog modularization
 - [2026-07-21] fix(refactor): fix lint cleanup
 - [2026-07-21] feat(automod): harden spam rate limiter
+- [2026-07-21] refactor(server-builder): refactor category layout
