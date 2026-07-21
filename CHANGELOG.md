@@ -1111,3 +1111,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-20] feat(giveaways): add scheduler
 - [2026-07-20] refactor(tickets): streamline transcript exporter
 - [2026-07-21] feat(moderation): harden purge messages
+- [2026-07-21] fix(engine): align sharding
