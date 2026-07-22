@@ -1121,3 +1121,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-21] perf(db): tune schema migration runner
 - [2026-07-21] refactor(welcome): streamline auto role assignment
 - [2026-07-22] style(fun): polish ascii art cards
+- [2026-07-22] style(reaction-roles): polish persistent button component
