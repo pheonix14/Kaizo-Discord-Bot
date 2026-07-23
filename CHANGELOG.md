@@ -1133,3 +1133,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-23] style(zero-emoji): polish ASCII status indicators
 - [2026-07-23] feat(stats): update active voice count
 - [2026-07-23] feat(stats): harden member count updater
+- [2026-07-23] feat(giveaways): implement reroll command
