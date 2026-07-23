@@ -1139,3 +1139,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-23] refactor(giveaways): refactor random winner picker
 - [2026-07-23] feat(stats): enhance active voice count
 - [2026-07-23] perf(giveaways): tune UTC/Local synced countdown
+- [2026-07-23] fix(stats): align active voice count
