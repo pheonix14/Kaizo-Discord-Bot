@@ -1143,3 +1143,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-24] feat(leveling): add level up notifications
 - [2026-07-24] fix(config): align env loader
 - [2026-07-24] feat(engine): update event loop dispatcher
+- [2026-07-24] feat(security): harden anti-nuke lock
