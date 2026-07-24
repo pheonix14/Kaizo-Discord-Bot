@@ -1148,3 +1148,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-24] perf(fun): optimize dice simulator
 - [2026-07-24] fix(fun): fix trivia engine
 - [2026-07-24] fix(server-builder): fix category layout
+- [2026-07-24] feat(moderation): harden mod logging
