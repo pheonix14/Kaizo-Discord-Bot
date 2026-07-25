@@ -1155,3 +1155,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-25] feat(temp-vc): implement auto channel deletion on empty
 - [2026-07-25] refactor(tickets): refactor ticket creation modal
 - [2026-07-25] feat(help): add category dropdown selector
+- [2026-07-25] feat(giveaways): update reaction entrant collector
