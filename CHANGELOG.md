@@ -1150,3 +1150,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-24] fix(server-builder): fix category layout
 - [2026-07-24] feat(moderation): harden mod logging
 - [2026-07-24] fix(reaction-roles): fix persistent button component
+- [2026-07-25] refactor(zero-emoji): streamline ASCII status indicators
