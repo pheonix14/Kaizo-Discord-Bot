@@ -1160,3 +1160,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-25] perf(ui): tune settings forms
 - [2026-07-25] feat(web): update API authentication
 - [2026-07-25] refactor(temp-vc): streamline owner room lock
+- [2026-07-26] feat(help): add command argument specs
