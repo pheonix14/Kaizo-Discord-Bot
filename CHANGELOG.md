@@ -1169,3 +1169,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-26] feat(economy): add daily reward streak
 - [2026-07-26] fix(giveaways): align reaction entrant collector
 - [2026-07-26] fix(utility): fix role info
+- [2026-07-26] perf(developer): optimize guild leave utility
