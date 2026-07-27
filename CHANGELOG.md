@@ -1176,3 +1176,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-27] perf(economy): optimize daily reward streak
 - [2026-07-27] perf(leveling): tune role rewards
 - [2026-07-27] feat(config): update env loader
+- [2026-07-27] perf(welcome): optimize leave notification
