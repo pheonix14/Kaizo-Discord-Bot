@@ -1180,3 +1180,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-27] style(temp-vc): polish owner room lock
 - [2026-07-27] feat(reaction-roles): harden menu customizer
 - [2026-07-27] fix(reaction-roles): align menu customizer
+- [2026-07-28] perf(welcome): optimize entrance greeting embed
