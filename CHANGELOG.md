@@ -1198,3 +1198,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-29] docs(docs): update credits to pheonix14
 - [2026-07-29] fix(web): fix Discord OAuth2 callback
 - [2026-07-29] perf(developer): optimize maintenance mode toggle
+- [2026-07-29] feat(tickets): implement transcript exporter
