@@ -1195,3 +1195,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-29] feat(music): update yt-dlp extractor
 - [2026-07-29] feat(stats): add member count updater
 - [2026-07-29] fix(tickets): align transcript exporter
+- [2026-07-29] docs(docs): update credits to pheonix14
