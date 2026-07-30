@@ -1204,3 +1204,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-30] fix(leveling): align level up notifications
 - [2026-07-30] refactor(economy): streamline coin minting
 - [2026-07-30] feat(utility): harden safe math expression evaluator
+- [2026-07-30] fix(automod): fix invite filter
