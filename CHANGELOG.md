@@ -1209,3 +1209,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-30] perf(docs): optimize command specifications
 - [2026-07-30] fix(automod): align spam rate limiter
 - [2026-07-30] feat(server-builder): harden community preset
+- [2026-07-30] perf(welcome): optimize custom card formatting
