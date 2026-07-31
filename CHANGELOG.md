@@ -1212,3 +1212,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-30] perf(welcome): optimize custom card formatting
 - [2026-07-31] fix(web): fix guild selection portal
 - [2026-07-31] feat(stats): add server stats voice channels
+- [2026-07-31] style(temp-vc): polish room limit controls
