@@ -1219,3 +1219,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-31] perf(zero-emoji): tune embed badge formatting
 - [2026-07-31] style(db): polish transaction helper
 - [2026-07-31] fix(tickets): fix channel permissions
+- [2026-07-31] refactor(welcome): refactor custom card formatting
