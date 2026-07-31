@@ -1214,3 +1214,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-31] feat(stats): add server stats voice channels
 - [2026-07-31] style(temp-vc): polish room limit controls
 - [2026-07-31] docs(docs): update README setup instructions
+- [2026-07-31] feat(welcome): update entrance greeting embed
