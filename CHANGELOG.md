@@ -1220,3 +1220,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-07-31] style(db): polish transaction helper
 - [2026-07-31] fix(tickets): fix channel permissions
 - [2026-07-31] refactor(welcome): refactor custom card formatting
+- [2026-08-01] feat(economy): update shop inventory
