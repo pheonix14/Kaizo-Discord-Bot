@@ -1223,3 +1223,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-01] feat(economy): update shop inventory
 - [2026-08-01] perf(help): optimize slash command sync
 - [2026-08-01] feat(refactor): update cog modularization
+- [2026-08-01] feat(config): add runtime options
