@@ -1225,3 +1225,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-01] feat(refactor): update cog modularization
 - [2026-08-01] feat(config): add runtime options
 - [2026-08-01] feat(engine): add gateway connection
+- [2026-08-01] perf(stats): tune server stats voice channels
