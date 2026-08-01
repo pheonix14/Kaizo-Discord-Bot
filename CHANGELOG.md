@@ -1227,3 +1227,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-01] feat(engine): add gateway connection
 - [2026-08-01] perf(stats): tune server stats voice channels
 - [2026-08-01] feat(reaction-roles): enhance role assignment toggle
+- [2026-08-01] refactor(web): refactor Discord OAuth2 callback
