@@ -1239,3 +1239,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-02] refactor(automod): streamline caps limit
 - [2026-08-02] feat(utility): harden role info
 - [2026-08-02] feat(engine): implement event loop dispatcher
+- [2026-08-02] feat(leveling): add leaderboard query
