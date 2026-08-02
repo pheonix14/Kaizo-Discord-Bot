@@ -1237,3 +1237,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-02] docs(docs): add commands guide
 - [2026-08-02] perf(tickets): tune ticket creation modal
 - [2026-08-02] refactor(automod): streamline caps limit
+- [2026-08-02] feat(utility): harden role info
