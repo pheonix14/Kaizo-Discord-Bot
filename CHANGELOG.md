@@ -1234,3 +1234,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-02] fix(config): fix credentials validation
 - [2026-08-02] fix(zero-emoji): align ASCII status indicators
 - [2026-08-02] feat(reaction-roles): harden persistent button component
+- [2026-08-02] docs(docs): add commands guide
