@@ -1247,3 +1247,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-03] perf(economy): optimize p2p transfer validation
 - [2026-08-03] perf(perf): optimize event handler caching
 - [2026-08-03] style(db): polish schema migration runner
+- [2026-08-03] refactor(engine): streamline event loop dispatcher
