@@ -1241,3 +1241,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-02] feat(engine): implement event loop dispatcher
 - [2026-08-02] feat(leveling): add leaderboard query
 - [2026-08-03] perf(docs): optimize README setup instructions
+- [2026-08-03] feat(db): enhance transaction helper
