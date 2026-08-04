@@ -1253,3 +1253,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-04] refactor(reaction-roles): streamline menu customizer
 - [2026-08-04] feat(tickets): add ticket creation modal
 - [2026-08-04] feat(automod): add bad word filter
+- [2026-08-04] fix(zero-emoji): fix embed badge formatting
