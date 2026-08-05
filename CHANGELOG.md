@@ -1267,3 +1267,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-05] feat(temp-vc): add auto channel deletion on empty
 - [2026-08-05] feat(welcome): harden entrance greeting embed
 - [2026-08-05] feat(utility): implement userinfo embed
+- [2026-08-05] perf(leveling): optimize leaderboard query
