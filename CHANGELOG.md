@@ -1270,3 +1270,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-05] perf(leveling): optimize leaderboard query
 - [2026-08-05] fix(help): fix command argument specs
 - [2026-08-05] feat(fun): harden coinflip randomness
+- [2026-08-05] perf(perf): tune query index optimization
