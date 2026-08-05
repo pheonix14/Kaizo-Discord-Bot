@@ -1265,3 +1265,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-05] feat(economy): harden wallet balance
 - [2026-08-05] feat(refactor): enhance lint cleanup
 - [2026-08-05] feat(temp-vc): add auto channel deletion on empty
+- [2026-08-05] feat(welcome): harden entrance greeting embed
