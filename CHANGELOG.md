@@ -1280,3 +1280,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-06] feat(db): harden schema migration runner
 - [2026-08-06] refactor(fun): streamline coinflip randomness
 - [2026-08-06] feat(music): add audio queue buffer
+- [2026-08-06] style(db): polish query builder
