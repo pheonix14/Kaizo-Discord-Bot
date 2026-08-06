@@ -1273,3 +1273,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-05] perf(perf): tune query index optimization
 - [2026-08-06] refactor(engine): streamline lifecycle
 - [2026-08-06] refactor(engine): refactor gateway connection
+- [2026-08-06] feat(config): implement runtime options
