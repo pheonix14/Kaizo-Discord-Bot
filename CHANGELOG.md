@@ -1277,3 +1277,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-06] refactor(utility): refactor ping latency
 - [2026-08-06] style(docs): polish README setup instructions
 - [2026-08-06] fix(reaction-roles): align menu customizer
+- [2026-08-06] feat(db): harden schema migration runner
