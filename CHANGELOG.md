@@ -1290,3 +1290,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-07] perf(security): tune admin permission guard
 - [2026-08-07] feat(developer): implement eval command
 - [2026-08-07] fix(ui): align AutoMod builder studio
+- [2026-08-07] feat(security): implement anti-nuke lock
