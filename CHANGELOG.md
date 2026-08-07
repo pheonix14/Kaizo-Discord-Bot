@@ -1284,3 +1284,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-07] perf(refactor): optimize PEP8 compliance
 - [2026-08-07] fix(leveling): fix role rewards
 - [2026-08-07] feat(web): harden Flask app initialization
+- [2026-08-07] fix(economy): align p2p transfer validation
