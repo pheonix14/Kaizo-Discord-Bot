@@ -1282,3 +1282,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-06] feat(music): add audio queue buffer
 - [2026-08-06] style(db): polish query builder
 - [2026-08-07] perf(refactor): optimize PEP8 compliance
+- [2026-08-07] fix(leveling): fix role rewards
