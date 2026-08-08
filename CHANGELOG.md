@@ -1297,3 +1297,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-08] refactor(zero-emoji): refactor strict zero-emoji architecture
 - [2026-08-08] feat(perf): implement asyncio task pooling
 - [2026-08-08] fix(refactor): fix typing annotations
+- [2026-08-08] feat(utility): add userinfo embed
