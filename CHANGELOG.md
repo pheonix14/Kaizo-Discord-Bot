@@ -1310,3 +1310,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-09] fix(giveaways): fix reaction entrant collector
 - [2026-08-09] feat(moderation): implement purge messages
 - [2026-08-09] fix(refactor): align lint cleanup
+- [2026-08-09] feat(server-builder): update category layout
