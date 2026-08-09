@@ -1301,3 +1301,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-08] refactor(docs): streamline commands guide
 - [2026-08-08] perf(welcome): tune custom card formatting
 - [2026-08-08] perf(config): tune host port bindings
+- [2026-08-09] feat(moderation): update kick handler
