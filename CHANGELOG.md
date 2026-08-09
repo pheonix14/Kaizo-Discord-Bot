@@ -1305,3 +1305,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-09] feat(music): add volume normalizer
 - [2026-08-09] fix(ui): align server dashboard layout
 - [2026-08-09] fix(server-builder): align gaming preset
+- [2026-08-09] feat(engine): implement lifecycle
