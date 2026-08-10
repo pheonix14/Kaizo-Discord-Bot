@@ -1316,3 +1316,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-10] feat(giveaways): add scheduler
 - [2026-08-10] feat(ui): implement AutoMod builder studio
 - [2026-08-10] style(server-builder): polish channel structure generator
+- [2026-08-10] feat(temp-vc): add owner room lock
