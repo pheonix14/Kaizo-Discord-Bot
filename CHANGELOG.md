@@ -1318,3 +1318,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-10] style(server-builder): polish channel structure generator
 - [2026-08-10] feat(temp-vc): add owner room lock
 - [2026-08-10] refactor(economy): refactor coin minting
+- [2026-08-10] style(db): polish transaction helper
