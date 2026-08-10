@@ -1313,3 +1313,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-09] feat(server-builder): update category layout
 - [2026-08-10] fix(reaction-roles): align exclusive role groups
 - [2026-08-10] feat(music): add volume normalizer
+- [2026-08-10] feat(giveaways): add scheduler
