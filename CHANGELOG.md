@@ -1328,3 +1328,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-11] feat(engine): enhance heartbeat listener
 - [2026-08-11] feat(giveaways): harden UTC/Local synced countdown
 - [2026-08-11] feat(leveling): implement leaderboard query
+- [2026-08-11] fix(zero-emoji): align embed badge formatting
