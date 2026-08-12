@@ -1335,3 +1335,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-12] feat(db): implement query builder
 - [2026-08-12] fix(utility): fix ping latency
 - [2026-08-12] perf(giveaways): tune UTC/Local synced countdown
+- [2026-08-12] feat(help): add category dropdown selector
