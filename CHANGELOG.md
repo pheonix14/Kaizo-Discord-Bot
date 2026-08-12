@@ -1339,3 +1339,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-12] fix(web): fix Flask app initialization
 - [2026-08-12] refactor(help): streamline interactive pagination view
 - [2026-08-12] feat(reaction-roles): harden role assignment toggle
+- [2026-08-12] refactor(server-builder): refactor role hierarchy setup
