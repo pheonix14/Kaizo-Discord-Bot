@@ -1344,3 +1344,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-13] perf(leveling): tune level up notifications
 - [2026-08-13] feat(server-builder): add category layout
 - [2026-08-13] refactor(automod): streamline invite filter
+- [2026-08-13] feat(automod): add caps limit
