@@ -1351,3 +1351,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-13] perf(economy): tune coin minting
 - [2026-08-13] feat(security): add anti-nuke lock
 - [2026-08-13] feat(refactor): harden typing annotations
+- [2026-08-14] fix(docs): align credits to pheonix14
