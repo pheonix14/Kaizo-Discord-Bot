@@ -1354,3 +1354,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-14] fix(docs): align credits to pheonix14
 - [2026-08-14] feat(config): enhance credentials validation
 - [2026-08-14] feat(automod): add action triggers
+- [2026-08-14] feat(server-builder): update community preset
