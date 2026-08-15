@@ -1364,3 +1364,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-15] feat(engine): implement gateway connection
 - [2026-08-15] feat(automod): enhance mention mass limiter
 - [2026-08-15] feat(giveaways): harden UTC/Local synced countdown
+- [2026-08-15] refactor(help): streamline command argument specs
