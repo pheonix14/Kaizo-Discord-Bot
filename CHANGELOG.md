@@ -1370,3 +1370,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-15] perf(refactor): optimize cog modularization
 - [2026-08-15] feat(refactor): update cog modularization
 - [2026-08-15] perf(config): tune env loader
+- [2026-08-15] refactor(moderation): streamline warn tracker
