@@ -1362,3 +1362,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-14] feat(server-builder): add community preset
 - [2026-08-14] perf(security): optimize K4 defense system
 - [2026-08-15] feat(engine): implement gateway connection
+- [2026-08-15] feat(automod): enhance mention mass limiter
