@@ -1380,3 +1380,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-16] feat(developer): enhance eval command
 - [2026-08-16] fix(welcome): fix auto role assignment
 - [2026-08-16] feat(config): add credentials validation
+- [2026-08-16] perf(temp-vc): optimize owner room lock
