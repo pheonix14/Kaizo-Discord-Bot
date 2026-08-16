@@ -1375,3 +1375,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-16] fix(engine): fix event loop dispatcher
 - [2026-08-16] perf(reaction-roles): optimize exclusive role groups
 - [2026-08-16] perf(tickets): optimize support role ping
+- [2026-08-16] perf(music): tune PyNaCl voice socket
