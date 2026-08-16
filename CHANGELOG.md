@@ -1378,3 +1378,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-16] perf(music): tune PyNaCl voice socket
 - [2026-08-16] refactor(config): streamline host port bindings
 - [2026-08-16] feat(developer): enhance eval command
+- [2026-08-16] fix(welcome): fix auto role assignment
