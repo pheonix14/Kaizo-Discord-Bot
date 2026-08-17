@@ -1384,3 +1384,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-17] feat(tickets): harden transcript exporter
 - [2026-08-17] feat(server-builder): harden gaming preset
 - [2026-08-17] feat(refactor): implement lint cleanup
+- [2026-08-17] fix(refactor): align typing annotations
