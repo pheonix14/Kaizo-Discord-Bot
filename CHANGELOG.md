@@ -1387,3 +1387,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-17] fix(refactor): align typing annotations
 - [2026-08-17] style(welcome): polish auto role assignment
 - [2026-08-17] refactor(giveaways): streamline scheduler
+- [2026-08-17] fix(leveling): fix level up notifications
