@@ -1404,3 +1404,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-19] refactor(help): streamline category dropdown selector
 - [2026-08-19] feat(help): enhance slash command sync
 - [2026-08-19] refactor(fun): refactor coinflip randomness
+- [2026-08-19] feat(welcome): implement entrance greeting embed
