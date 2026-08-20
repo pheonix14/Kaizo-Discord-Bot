@@ -1420,3 +1420,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-20] fix(moderation): align warn tracker
 - [2026-08-20] feat(refactor): harden lint cleanup
 - [2026-08-20] feat(web): update Discord OAuth2 callback
+- [2026-08-20] style(docs): polish credits to pheonix14
