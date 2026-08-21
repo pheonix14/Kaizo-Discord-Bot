@@ -1423,3 +1423,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-20] style(docs): polish credits to pheonix14
 - [2026-08-21] feat(refactor): update error handler centralization
 - [2026-08-21] refactor(ui): streamline AutoMod builder studio
+- [2026-08-21] refactor(temp-vc): refactor room limit controls
