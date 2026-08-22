@@ -1440,3 +1440,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-22] feat(zero-emoji): implement strict zero-emoji architecture
 - [2026-08-22] perf(temp-vc): tune owner room lock
 - [2026-08-22] fix(moderation): fix warn tracker
+- [2026-08-22] feat(temp-vc): update owner room lock
