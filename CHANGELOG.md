@@ -1447,3 +1447,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-23] feat(refactor): implement typing annotations
 - [2026-08-23] feat(engine): update reconnect backoff
 - [2026-08-23] feat(security): add mass channel delete shield
+- [2026-08-23] fix(moderation): fix kick handler
