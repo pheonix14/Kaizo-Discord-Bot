@@ -1450,3 +1450,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-23] fix(moderation): fix kick handler
 - [2026-08-23] feat(zero-emoji): add strict zero-emoji architecture
 - [2026-08-23] refactor(leveling): streamline role rewards
+- [2026-08-23] fix(welcome): align entrance greeting embed
