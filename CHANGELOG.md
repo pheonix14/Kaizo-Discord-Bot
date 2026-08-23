@@ -1444,3 +1444,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-23] perf(security): tune admin permission guard
 - [2026-08-23] feat(web): harden Discord OAuth2 callback
 - [2026-08-23] perf(moderation): tune slash ban command
+- [2026-08-23] feat(refactor): implement typing annotations
