@@ -1454,3 +1454,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-24] feat(reaction-roles): harden role assignment toggle
 - [2026-08-24] fix(developer): fix maintenance mode toggle
 - [2026-08-24] feat(config): add credentials validation
+- [2026-08-24] feat(tickets): enhance close button
