@@ -1470,3 +1470,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-25] fix(refactor): fix lint cleanup
 - [2026-08-25] feat(welcome): harden custom card formatting
 - [2026-08-25] feat(db): harden schema migration runner
+- [2026-08-25] perf(temp-vc): optimize room limit controls
