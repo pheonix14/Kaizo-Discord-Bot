@@ -1461,3 +1461,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-24] fix(config): fix host port bindings
 - [2026-08-24] perf(fun): tune coinflip randomness
 - [2026-08-24] feat(config): update env loader
+- [2026-08-25] feat(reaction-roles): add exclusive role groups
