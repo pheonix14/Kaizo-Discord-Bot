@@ -1463,3 +1463,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-24] feat(config): update env loader
 - [2026-08-25] feat(reaction-roles): add exclusive role groups
 - [2026-08-25] feat(ui): harden settings forms
+- [2026-08-25] feat(welcome): enhance entrance greeting embed
