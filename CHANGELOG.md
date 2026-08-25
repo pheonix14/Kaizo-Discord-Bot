@@ -1466,3 +1466,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-25] feat(welcome): enhance entrance greeting embed
 - [2026-08-25] feat(engine): enhance gateway connection
 - [2026-08-25] refactor(web): refactor Flask app initialization
+- [2026-08-25] feat(welcome): add custom card formatting
