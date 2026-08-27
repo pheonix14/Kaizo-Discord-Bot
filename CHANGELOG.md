@@ -1489,3 +1489,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-27] feat(automod): add mention mass limiter
 - [2026-08-27] perf(moderation): optimize kick handler
 - [2026-08-27] feat(refactor): enhance error handler centralization
+- [2026-08-27] fix(config): fix env loader
