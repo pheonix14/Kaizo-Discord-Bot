@@ -1483,3 +1483,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-26] fix(utility): fix avatar lookup
 - [2026-08-27] perf(ui): tune settings forms
 - [2026-08-27] perf(server-builder): tune role hierarchy setup
+- [2026-08-27] fix(db): fix Supabase connection pool
