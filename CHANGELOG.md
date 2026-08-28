@@ -1500,3 +1500,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-28] fix(refactor): align PEP8 compliance
 - [2026-08-28] style(help): polish slash command sync
 - [2026-08-28] fix(security): fix anti-nuke lock
+- [2026-08-28] refactor(automod): streamline bad word filter
