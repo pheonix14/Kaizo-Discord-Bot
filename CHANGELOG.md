@@ -1509,3 +1509,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-29] perf(config): optimize credentials validation
 - [2026-08-29] perf(temp-vc): optimize owner room lock
 - [2026-08-29] fix(config): fix credentials validation
+- [2026-08-29] docs(docs): enhance commands guide
