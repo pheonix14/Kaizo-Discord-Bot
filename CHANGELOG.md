@@ -1504,3 +1504,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-29] feat(help): add interactive pagination view
 - [2026-08-29] feat(help): add command argument specs
 - [2026-08-29] feat(fun): update trivia engine
+- [2026-08-29] fix(music): fix filters
