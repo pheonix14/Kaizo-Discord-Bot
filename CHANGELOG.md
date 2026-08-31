@@ -1522,3 +1522,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-30] fix(reaction-roles): align menu customizer
 - [2026-08-30] style(perf): polish asyncio task pooling
 - [2026-08-31] style(config): polish default fallbacks
+- [2026-08-31] refactor(db): refactor schema migration runner
