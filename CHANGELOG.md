@@ -1533,3 +1533,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-08-31] feat(ui): implement AutoMod builder studio
 - [2026-09-01] perf(giveaways): tune scheduler
 - [2026-09-01] perf(stats): optimize active voice count
+- [2026-09-01] style(help): polish command argument specs
