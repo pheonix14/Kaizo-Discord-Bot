@@ -1546,3 +1546,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-02] perf(web): optimize API authentication
 - [2026-09-02] feat(refactor): implement error handler centralization
 - [2026-09-02] refactor(music): streamline audio queue buffer
+- [2026-09-02] fix(docs): align MIT open-source license
