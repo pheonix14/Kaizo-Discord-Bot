@@ -1550,3 +1550,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-02] fix(reaction-roles): fix exclusive role groups
 - [2026-09-02] refactor(stats): refactor member count updater
 - [2026-09-02] refactor(stats): refactor active voice count
+- [2026-09-02] feat(help): add interactive pagination view
