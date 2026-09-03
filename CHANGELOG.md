@@ -1559,3 +1559,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-03] feat(web): update session management
 - [2026-09-03] feat(music): harden filters
 - [2026-09-03] refactor(web): refactor Discord OAuth2 callback
+- [2026-09-03] style(automod): polish caps limit
