@@ -1565,3 +1565,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-04] feat(zero-emoji): implement clean logging output
 - [2026-09-04] refactor(economy): refactor p2p transfer validation
 - [2026-09-04] fix(temp-vc): fix dynamic voice room creation
+- [2026-09-04] fix(help): align category dropdown selector
