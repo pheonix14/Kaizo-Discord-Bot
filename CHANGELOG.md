@@ -1584,3 +1584,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-06] feat(welcome): enhance entrance greeting embed
 - [2026-09-06] fix(ui): fix settings forms
 - [2026-09-06] fix(economy): fix wallet balance
+- [2026-09-06] perf(automod): optimize caps limit
