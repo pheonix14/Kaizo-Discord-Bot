@@ -1589,3 +1589,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-06] perf(stats): optimize bot count tracker
 - [2026-09-06] perf(docs): optimize commands guide
 - [2026-09-06] feat(welcome): update leave notification
+- [2026-09-06] feat(leveling): harden activity XP formula
