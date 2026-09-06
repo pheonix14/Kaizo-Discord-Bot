@@ -1581,3 +1581,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-05] feat(stats): add active voice count
 - [2026-09-05] feat(config): harden host port bindings
 - [2026-09-05] refactor(help): streamline interactive pagination view
+- [2026-09-06] feat(welcome): enhance entrance greeting embed
