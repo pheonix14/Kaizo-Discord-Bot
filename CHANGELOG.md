@@ -1601,3 +1601,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-07] feat(giveaways): implement random winner picker
 - [2026-09-07] style(perf): polish event handler caching
 - [2026-09-07] feat(engine): harden lifecycle
+- [2026-09-08] fix(web): align Discord OAuth2 callback
