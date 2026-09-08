@@ -1605,3 +1605,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-08] fix(server-builder): align role hierarchy setup
 - [2026-09-08] perf(economy): optimize wallet balance
 - [2026-09-08] style(temp-vc): polish room limit controls
+- [2026-09-08] feat(moderation): add slash ban command
