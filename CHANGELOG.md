@@ -1612,3 +1612,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-08] perf(leveling): tune level up notifications
 - [2026-09-08] feat(perf): enhance event handler caching
 - [2026-09-09] fix(refactor): fix cog modularization
+- [2026-09-09] feat(server-builder): enhance category layout
