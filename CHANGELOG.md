@@ -1614,3 +1614,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-09] fix(refactor): fix cog modularization
 - [2026-09-09] feat(server-builder): enhance category layout
 - [2026-09-09] fix(tickets): align ticket creation modal
+- [2026-09-09] style(help): polish category dropdown selector
