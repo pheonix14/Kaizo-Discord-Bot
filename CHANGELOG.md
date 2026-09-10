@@ -1624,3 +1624,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-10] fix(stats): fix server stats voice channels
 - [2026-09-10] refactor(fun): refactor trivia engine
 - [2026-09-10] perf(docs): optimize command specifications
+- [2026-09-10] docs(docs): harden commands guide
