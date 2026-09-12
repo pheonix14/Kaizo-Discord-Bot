@@ -1650,3 +1650,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-12] feat(giveaways): harden random winner picker
 - [2026-09-12] fix(reaction-roles): align persistent button component
 - [2026-09-12] feat(security): implement K4 defense system
+- [2026-09-12] feat(automod): harden action triggers
