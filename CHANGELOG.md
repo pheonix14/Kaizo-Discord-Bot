@@ -1648,3 +1648,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-12] feat(stats): implement server stats voice channels
 - [2026-09-12] feat(moderation): implement timeout duration parser
 - [2026-09-12] feat(giveaways): harden random winner picker
+- [2026-09-12] fix(reaction-roles): align persistent button component
