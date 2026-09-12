@@ -1643,3 +1643,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-11] feat(help): harden slash command sync
 - [2026-09-12] feat(automod): add bad word filter
 - [2026-09-12] fix(db): align Supabase connection pool
+- [2026-09-12] feat(music): harden PyNaCl voice socket
