@@ -1654,3 +1654,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-13] feat(moderation): update timeout duration parser
 - [2026-09-13] refactor(stats): streamline bot count tracker
 - [2026-09-13] feat(zero-emoji): add embed badge formatting
+- [2026-09-13] perf(leveling): optimize activity XP formula
