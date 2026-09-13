@@ -1656,3 +1656,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-13] feat(zero-emoji): add embed badge formatting
 - [2026-09-13] perf(leveling): optimize activity XP formula
 - [2026-09-13] fix(temp-vc): fix owner room lock
+- [2026-09-13] fix(music): fix filters
