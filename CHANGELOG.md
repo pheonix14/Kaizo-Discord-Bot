@@ -1665,3 +1665,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-14] feat(perf): update query index optimization
 - [2026-09-14] fix(ui): align AutoMod builder studio
 - [2026-09-14] perf(welcome): tune entrance greeting embed
+- [2026-09-14] perf(reaction-roles): tune persistent button component
