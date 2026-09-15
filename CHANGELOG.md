@@ -1673,3 +1673,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-14] feat(ui): update settings forms
 - [2026-09-15] fix(utility): align ping latency
 - [2026-09-15] feat(developer): add telemetry ping
+- [2026-09-15] fix(ui): align AutoMod builder studio
