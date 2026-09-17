@@ -1696,3 +1696,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-17] feat(leveling): update activity XP formula
 - [2026-09-17] perf(server-builder): tune role hierarchy setup
 - [2026-09-17] refactor(fun): streamline text scrambler
+- [2026-09-17] fix(welcome): align custom card formatting
