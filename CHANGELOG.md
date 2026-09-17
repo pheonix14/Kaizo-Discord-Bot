@@ -1692,3 +1692,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-16] feat(engine): add heartbeat listener
 - [2026-09-16] feat(developer): harden eval command
 - [2026-09-17] style(utility): polish serverinfo card
+- [2026-09-17] feat(web): harden guild selection portal
