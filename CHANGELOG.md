@@ -1700,3 +1700,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-17] perf(docs): tune commands guide
 - [2026-09-17] feat(security): harden anti-nuke lock
 - [2026-09-17] feat(engine): update reconnect backoff
+- [2026-09-17] refactor(web): refactor API authentication
