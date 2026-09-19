@@ -1715,3 +1715,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-19] perf(automod): tune invite filter
 - [2026-09-19] fix(utility): align safe math expression evaluator
 - [2026-09-19] fix(fun): fix text scrambler
+- [2026-09-19] style(welcome): polish leave notification
