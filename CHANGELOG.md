@@ -1712,3 +1712,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-18] feat(web): harden API authentication
 - [2026-09-18] perf(security): tune mass ban protection
 - [2026-09-19] refactor(ui): streamline settings forms
+- [2026-09-19] perf(automod): tune invite filter
