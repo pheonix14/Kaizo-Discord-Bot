@@ -1719,3 +1719,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-19] refactor(docs): streamline command specifications
 - [2026-09-19] perf(zero-emoji): optimize strict zero-emoji architecture
 - [2026-09-19] feat(temp-vc): harden room limit controls
+- [2026-09-19] fix(utility): fix role info
