@@ -1728,3 +1728,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-20] fix(economy): align shop inventory
 - [2026-09-20] fix(leveling): align role rewards
 - [2026-09-20] feat(web): enhance Discord OAuth2 callback
+- [2026-09-20] refactor(tickets): streamline support role ping
