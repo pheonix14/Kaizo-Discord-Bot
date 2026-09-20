@@ -1726,3 +1726,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-20] fix(automod): fix bad word filter
 - [2026-09-20] fix(docs): align credits to pheonix14
 - [2026-09-20] fix(economy): align shop inventory
+- [2026-09-20] fix(leveling): align role rewards
