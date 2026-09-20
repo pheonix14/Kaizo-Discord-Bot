@@ -1723,3 +1723,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-19] fix(developer): align maintenance mode toggle
 - [2026-09-20] fix(music): fix audio queue buffer
 - [2026-09-20] perf(economy): tune daily reward streak
+- [2026-09-20] fix(automod): fix bad word filter
