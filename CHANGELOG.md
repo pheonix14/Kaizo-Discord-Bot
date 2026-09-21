@@ -1735,3 +1735,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-21] feat(web): update Flask app initialization
 - [2026-09-21] feat(perf): update audio stream buffer tuning
 - [2026-09-21] refactor(help): streamline slash command sync
+- [2026-09-21] fix(ui): align settings forms
