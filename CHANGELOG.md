@@ -1747,3 +1747,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-22] perf(giveaways): tune UTC/Local synced countdown
 - [2026-09-22] feat(developer): harden guild leave utility
 - [2026-09-22] fix(server-builder): align gaming preset
+- [2026-09-22] feat(temp-vc): enhance room limit controls
