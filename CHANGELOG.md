@@ -1761,3 +1761,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-23] feat(ui): add AutoMod builder studio
 - [2026-09-23] fix(moderation): align purge messages
 - [2026-09-23] fix(security): fix K4 defense system
+- [2026-09-24] refactor(reaction-roles): refactor exclusive role groups
