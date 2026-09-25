@@ -1772,3 +1772,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-24] feat(giveaways): add random winner picker
 - [2026-09-24] feat(utility): enhance serverinfo card
 - [2026-09-25] feat(utility): add avatar lookup
+- [2026-09-25] fix(moderation): fix purge messages
