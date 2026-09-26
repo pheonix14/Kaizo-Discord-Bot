@@ -1781,3 +1781,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-25] feat(fun): harden 8ball answers
 - [2026-09-25] feat(security): harden mass channel delete shield
 - [2026-09-25] feat(stats): enhance member count updater
+- [2026-09-26] feat(config): harden credentials validation
