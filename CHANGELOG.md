@@ -1790,3 +1790,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-26] feat(web): enhance session management
 - [2026-09-26] feat(utility): add safe math expression evaluator
 - [2026-09-26] style(moderation): polish purge messages
+- [2026-09-26] feat(engine): harden lifecycle
