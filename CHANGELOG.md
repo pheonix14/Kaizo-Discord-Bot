@@ -1793,3 +1793,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-26] feat(engine): harden lifecycle
 - [2026-09-27] feat(tickets): harden channel permissions
 - [2026-09-27] fix(ui): fix server dashboard layout
+- [2026-09-27] style(tickets): polish close button
