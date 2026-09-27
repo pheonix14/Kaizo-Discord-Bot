@@ -1797,3 +1797,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-27] feat(web): add Discord OAuth2 callback
 - [2026-09-27] perf(engine): tune event loop dispatcher
 - [2026-09-27] feat(leveling): implement activity XP formula
+- [2026-09-27] feat(db): implement query builder
