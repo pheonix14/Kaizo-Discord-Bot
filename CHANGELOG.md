@@ -1801,3 +1801,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-27] refactor(refactor): refactor PEP8 compliance
 - [2026-09-27] refactor(db): streamline query builder
 - [2026-09-27] fix(music): fix skip and pause controls
+- [2026-09-28] feat(stats): harden active voice count
