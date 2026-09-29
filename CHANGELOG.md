@@ -1813,3 +1813,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-28] feat(developer): add eval command
 - [2026-09-29] perf(perf): tune audio stream buffer tuning
 - [2026-09-29] feat(temp-vc): harden dynamic voice room creation
+- [2026-09-29] perf(welcome): optimize leave notification
