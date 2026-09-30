@@ -1824,3 +1824,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-09-30] style(temp-vc): polish dynamic voice room creation
 - [2026-09-30] feat(economy): enhance gambling dice
 - [2026-09-30] fix(zero-emoji): align embed badge formatting
+- [2026-09-30] fix(tickets): fix transcript exporter
