@@ -1838,3 +1838,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-01] feat(ui): harden AutoMod builder studio
 - [2026-10-01] refactor(security): refactor admin permission guard
 - [2026-10-01] feat(db): enhance guild config cache
+- [2026-10-01] perf(welcome): tune custom card formatting
