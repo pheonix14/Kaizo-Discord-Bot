@@ -1850,3 +1850,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-02] perf(welcome): tune auto role assignment
 - [2026-10-02] refactor(giveaways): refactor reroll command
 - [2026-10-02] feat(fun): add coinflip randomness
+- [2026-10-02] refactor(web): streamline Flask app initialization
