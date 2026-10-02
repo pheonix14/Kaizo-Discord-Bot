@@ -1841,3 +1841,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-01] perf(welcome): tune custom card formatting
 - [2026-10-01] feat(developer): harden eval command
 - [2026-10-01] refactor(docs): streamline command specifications
+- [2026-10-02] refactor(help): streamline command argument specs
