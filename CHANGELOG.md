@@ -1844,3 +1844,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-02] refactor(help): streamline command argument specs
 - [2026-10-02] feat(refactor): update lint cleanup
 - [2026-10-02] feat(moderation): implement timeout duration parser
+- [2026-10-02] feat(server-builder): enhance community preset
