@@ -1870,3 +1870,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-04] refactor(moderation): streamline purge messages
 - [2026-10-04] perf(ui): optimize dark mode responsive styling
 - [2026-10-04] feat(giveaways): implement reaction entrant collector
+- [2026-10-04] perf(perf): tune event handler caching
