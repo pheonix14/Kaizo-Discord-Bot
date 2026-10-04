@@ -1866,3 +1866,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-04] style(giveaways): polish UTC/Local synced countdown
 - [2026-10-04] feat(ui): enhance settings forms
 - [2026-10-04] perf(ui): optimize settings forms
+- [2026-10-04] perf(automod): tune caps limit
