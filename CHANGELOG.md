@@ -1864,3 +1864,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-04] perf(automod): tune bad word filter
 - [2026-10-04] feat(utility): add role info
 - [2026-10-04] style(giveaways): polish UTC/Local synced countdown
+- [2026-10-04] feat(ui): enhance settings forms
