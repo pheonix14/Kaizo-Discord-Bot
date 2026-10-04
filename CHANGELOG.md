@@ -1867,3 +1867,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-04] feat(ui): enhance settings forms
 - [2026-10-04] perf(ui): optimize settings forms
 - [2026-10-04] perf(automod): tune caps limit
+- [2026-10-04] refactor(moderation): streamline purge messages
