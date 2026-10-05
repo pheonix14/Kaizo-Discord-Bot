@@ -1875,3 +1875,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-05] feat(server-builder): implement category layout
 - [2026-10-05] feat(utility): update role info
 - [2026-10-05] perf(welcome): tune entrance greeting embed
+- [2026-10-05] feat(config): harden credentials validation
