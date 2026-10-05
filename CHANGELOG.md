@@ -1873,3 +1873,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-04] perf(perf): tune event handler caching
 - [2026-10-05] refactor(db): refactor guild config cache
 - [2026-10-05] feat(server-builder): implement category layout
+- [2026-10-05] feat(utility): update role info
