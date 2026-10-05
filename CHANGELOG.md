@@ -1877,3 +1877,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-05] perf(welcome): tune entrance greeting embed
 - [2026-10-05] feat(config): harden credentials validation
 - [2026-10-05] fix(security): align admin permission guard
+- [2026-10-05] refactor(web): refactor session management
