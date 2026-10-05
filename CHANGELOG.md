@@ -1880,3 +1880,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-05] refactor(web): refactor session management
 - [2026-10-05] style(help): polish category dropdown selector
 - [2026-10-05] feat(temp-vc): harden owner room lock
+- [2026-10-05] refactor(giveaways): streamline UTC/Local synced countdown
