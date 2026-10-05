@@ -1878,3 +1878,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-05] feat(config): harden credentials validation
 - [2026-10-05] fix(security): align admin permission guard
 - [2026-10-05] refactor(web): refactor session management
+- [2026-10-05] style(help): polish category dropdown selector
