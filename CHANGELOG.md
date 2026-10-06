@@ -1889,3 +1889,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-06] perf(stats): optimize member count updater
 - [2026-10-06] style(db): polish guild config cache
 - [2026-10-06] perf(tickets): optimize channel permissions
+- [2026-10-06] feat(moderation): update purge messages
