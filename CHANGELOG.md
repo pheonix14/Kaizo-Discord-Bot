@@ -1899,3 +1899,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-07] refactor(help): streamline category dropdown selector
 - [2026-10-07] feat(automod): harden bad word filter
 - [2026-10-07] refactor(config): streamline default fallbacks
+- [2026-10-07] perf(config): optimize credentials validation
