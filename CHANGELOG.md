@@ -1896,3 +1896,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-07] feat(welcome): enhance leave notification
 - [2026-10-07] fix(web): fix Flask app initialization
 - [2026-10-07] feat(server-builder): implement category layout
+- [2026-10-07] refactor(help): streamline category dropdown selector
