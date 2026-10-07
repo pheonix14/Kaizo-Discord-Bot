@@ -1894,3 +1894,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-07] feat(reaction-roles): update persistent button component
 - [2026-10-07] feat(welcome): harden auto role assignment
 - [2026-10-07] feat(welcome): enhance leave notification
+- [2026-10-07] fix(web): fix Flask app initialization
