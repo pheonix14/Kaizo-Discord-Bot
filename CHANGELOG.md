@@ -1910,3 +1910,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-08] perf(perf): optimize asyncio task pooling
 - [2026-10-08] fix(moderation): align mod logging
 - [2026-10-08] perf(leveling): tune role rewards
+- [2026-10-08] feat(help): add category dropdown selector
