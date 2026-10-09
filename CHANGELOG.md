@@ -1919,3 +1919,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-09] feat(developer): implement guild leave utility
 - [2026-10-09] feat(utility): add safe math expression evaluator
 - [2026-10-09] feat(welcome): harden leave notification
+- [2026-10-09] style(developer): polish cog hot reloader
