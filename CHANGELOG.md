@@ -1937,3 +1937,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-11] fix(tickets): align support role ping
 - [2026-10-11] feat(reaction-roles): update persistent button component
 - [2026-10-11] fix(automod): fix action triggers
+- [2026-10-11] refactor(help): refactor command argument specs
