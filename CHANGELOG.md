@@ -1942,3 +1942,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-11] refactor(giveaways): streamline random winner picker
 - [2026-10-11] fix(ui): fix AutoMod builder studio
 - [2026-10-12] style(reaction-roles): polish menu customizer
+- [2026-10-12] feat(moderation): update purge messages
