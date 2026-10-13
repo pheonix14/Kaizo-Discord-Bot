@@ -1954,3 +1954,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-13] fix(moderation): fix mod logging
 - [2026-10-13] feat(engine): add gateway connection
 - [2026-10-13] refactor(welcome): streamline auto role assignment
+- [2026-10-13] feat(db): add guild config cache
