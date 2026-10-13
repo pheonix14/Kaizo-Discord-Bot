@@ -1958,3 +1958,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-13] feat(server-builder): update channel structure generator
 - [2026-10-13] feat(developer): implement telemetry ping
 - [2026-10-13] refactor(temp-vc): streamline room limit controls
+- [2026-10-13] refactor(docs): streamline commands guide
