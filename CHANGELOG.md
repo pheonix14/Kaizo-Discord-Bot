@@ -1964,3 +1964,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-14] style(ui): polish giveaway clocks
 - [2026-10-14] feat(tickets): implement transcript exporter
 - [2026-10-14] style(utility): polish ping latency
+- [2026-10-14] refactor(server-builder): streamline category layout
