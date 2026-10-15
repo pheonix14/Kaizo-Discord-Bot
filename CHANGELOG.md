@@ -1980,3 +1980,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-15] perf(music): optimize skip and pause controls
 - [2026-10-15] feat(utility): add avatar lookup
 - [2026-10-15] style(db): polish guild config cache
+- [2026-10-15] feat(leveling): add role rewards
