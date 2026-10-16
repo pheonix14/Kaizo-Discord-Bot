@@ -1982,3 +1982,4 @@ Comprehensive open-source development log for Kaizo Discord Bot, credited to phe
 - [2026-10-15] style(db): polish guild config cache
 - [2026-10-15] feat(leveling): add role rewards
 - [2026-10-16] style(music): polish volume normalizer
+- [2026-10-16] fix(music): align skip and pause controls
